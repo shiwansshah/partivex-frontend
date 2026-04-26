@@ -2,7 +2,7 @@ function Dashboard() {
   return (
     <section className="card">
       <div className="page-header">
-        <h2>Dashboard</h2>
+        <h2>Admin Dashboard</h2>
         <p>Overview of staff and customer management will be displayed here.</p>
       </div>
 
