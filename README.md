@@ -24,6 +24,12 @@ Run the development server:
 npm run dev
 ```
 
+Set the backend base URL in a local `.env` file when it differs from the default:
+
+```bash
+VITE_API_BASE_URL=https://localhost:7000/api
+```
+
 Build the project:
 
 ```bash

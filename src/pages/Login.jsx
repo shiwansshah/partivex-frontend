@@ -3,7 +3,8 @@ import { useState } from 'react'
 import AuthForm from '../components/forms/AuthForm'
 import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
-import { login } from '../services/api'
+import { login } from '../api/authApi'
+import { getRequestErrorMessage } from '../api/axiosClient'
 import { isEmail, required } from '../utils/validator'
 
 const initialValues = {
@@ -45,8 +46,8 @@ function Login() {
       setIsSubmitting(true)
       await login(values)
       navigate('/admin')
-    } catch {
-      setStatus('Invalid email or password.')
+    } catch (error) {
+      setStatus(getRequestErrorMessage(error, 'Invalid email or password.'))
     } finally {
       setIsSubmitting(false)
     }

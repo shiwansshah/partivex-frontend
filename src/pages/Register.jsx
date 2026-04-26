@@ -3,7 +3,8 @@ import { useState } from 'react'
 import AuthForm from '../components/forms/AuthForm'
 import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
-import { register } from '../services/api'
+import { register } from '../api/authApi'
+import { getRequestErrorMessage } from '../api/axiosClient'
 import { isEmail, passwordsMatch, required } from '../utils/validator'
 
 const initialValues = {
@@ -56,8 +57,10 @@ function Register() {
         role: 'Customer',
       })
       navigate('/login')
-    } catch {
-      setStatus('Registration failed. Check the details and try again.')
+    } catch (error) {
+      setStatus(
+        getRequestErrorMessage(error, 'Registration failed. Check the details and try again.')
+      )
     } finally {
       setIsSubmitting(false)
     }
