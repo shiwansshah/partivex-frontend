@@ -5,6 +5,9 @@ import Register from './pages/Register'
 import Dashboard from './pages/admin/Dashboard'
 import StaffManagement from './pages/admin/StaffManagement'
 import CustomerManagement from './pages/admin/CustomerManagement'
+import AddCustomer from './pages/customers/AddCustomer'
+import CustomerDetails from './pages/customers/CustomerDetails'
+import AddVehicle from './pages/customers/AddVehicle'
 
 function App() {
   return (
@@ -16,6 +19,9 @@ function App() {
         <Route index element={<Dashboard />} />
         <Route path="staff" element={<StaffManagement />} />
         <Route path="customers" element={<CustomerManagement />} />
+        <Route path="customers/add" element={<AddCustomer />} />
+        <Route path="customers/:id" element={<CustomerDetails />} />
+        <Route path="customers/:id/add-vehicle" element={<AddVehicle />} />
       </Route>
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>

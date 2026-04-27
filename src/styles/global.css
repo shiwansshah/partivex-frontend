@@ -14,7 +14,8 @@ a {
 }
 
 button,
-input {
+input,
+textarea {
   font: inherit;
 }
 
@@ -137,6 +138,15 @@ input {
   background: #163b5c;
 }
 
+.button-secondary {
+  color: #102a43;
+  background: #edf2f7;
+}
+
+.button-secondary:hover {
+  background: #d9e2ec;
+}
+
 .button:disabled {
   cursor: not-allowed;
   opacity: 0.72;
@@ -216,6 +226,13 @@ input {
   margin-bottom: 24px;
 }
 
+.page-header.with-actions {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
 .section-heading {
   display: flex;
   align-items: flex-start;
@@ -285,6 +302,41 @@ input {
   color: #102a43;
 }
 
+.table-action {
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.table-action:hover {
+  text-decoration: underline;
+}
+
+.form-card {
+  display: grid;
+  gap: 18px;
+  max-width: 680px;
+}
+
+.form-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.form-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.muted-text {
+  color: #52606d;
+}
+
+.page-link {
+  margin-top: 16px;
+}
+
 @media (max-width: 760px) {
   .admin-shell {
     grid-template-columns: 1fr;
@@ -295,7 +347,9 @@ input {
   }
 
   .admin-nav,
-  .section-heading {
+  .section-heading,
+  .page-header.with-actions,
+  .form-grid {
     display: grid;
   }
 

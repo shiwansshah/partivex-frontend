@@ -1,7 +1,6 @@
 import axios from 'axios'
 
 const DEFAULT_API_BASE_URL = 'https://localhost:7000/api'
-console.log('BASE URL:', import.meta.env.VITE_API_BASE_URL)
 const envApiBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim()
 
 export const apiBaseUrl = (envApiBaseUrl || DEFAULT_API_BASE_URL).replace(/\/+$/, '')
@@ -18,7 +17,21 @@ export function getRequestErrorMessage(error, fallbackMessage) {
     return `Cannot reach the API at ${apiBaseUrl}. Start the backend or set VITE_API_BASE_URL in your .env file.`
   }
 
-  return error?.response?.data?.message || fallbackMessage
+  const responseData = error?.response?.data
+
+  if (typeof responseData === 'string') {
+    return responseData
+  }
+
+  if (responseData?.message) {
+    return responseData.message
+  }
+
+  if (responseData?.title) {
+    return responseData.title
+  }
+
+  return fallbackMessage
 }
 
 export default axiosClient
