@@ -64,8 +64,13 @@ function CustomerForm({
   }
 
   return (
-    <form className="form-card" onSubmit={handleSubmit}>
+    <form className="form-card customer-form" onSubmit={handleSubmit}>
       {serverError && <div className="form-alert">{serverError}</div>}
+
+      <div className="customer-form-note">
+        <span>Required</span>
+        <p>Full name and phone number are needed to create a customer record.</p>
+      </div>
 
       <Input
         id="fullName"
@@ -104,7 +109,7 @@ function CustomerForm({
       />
 
       <div className="form-actions">
-        <Button type="submit" disabled={isSubmitting}>
+        <Button type="submit" className="customer-submit-button" disabled={isSubmitting}>
           {isSubmitting ? 'Saving...' : submitLabel}
         </Button>
       </div>

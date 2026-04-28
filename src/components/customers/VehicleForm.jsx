@@ -64,8 +64,13 @@ function VehicleForm({
   }
 
   return (
-    <form className="form-card" onSubmit={handleSubmit}>
+    <form className="form-card customer-form" onSubmit={handleSubmit}>
       {serverError && <div className="form-alert">{serverError}</div>}
+
+      <div className="customer-form-note">
+        <span>Vehicle Details</span>
+        <p>Vehicle number is required. Other details help staff identify the vehicle faster.</p>
+      </div>
 
       <Input
         id="vehicleNumber"
@@ -126,7 +131,7 @@ function VehicleForm({
       </div>
 
       <div className="form-actions">
-        <Button type="submit" disabled={isSubmitting}>
+        <Button type="submit" className="customer-submit-button" disabled={isSubmitting}>
           {isSubmitting ? 'Saving...' : submitLabel}
         </Button>
       </div>

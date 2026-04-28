@@ -42,7 +42,7 @@ function CustomerList() {
     email: customer.email || '-',
     address: customer.address || '-',
     actions: (
-      <Link className="table-action" to={`/admin/customers/${customer.id}`}>
+      <Link className="table-action customer-table-action" to={`/admin/customers/${customer.id}`}>
         View Details
       </Link>
     ),
@@ -57,17 +57,31 @@ function CustomerList() {
   ]
 
   return (
-    <div className="stack">
-      <section className="card">
-        <div className="section-heading">
+    <div className="stack customer-workspace">
+      <section className="customer-hero">
+        <div>
+          <span className="customer-kicker">Customer & Vehicle Module</span>
+          <h2>Customer Management</h2>
+          <p>Manage customer records, contact details, and registered vehicles.</p>
+        </div>
+
+        <Link className="button customer-primary-action" to="/admin/customers/add">
+          Add Customer
+        </Link>
+      </section>
+
+      <section className="card customer-card">
+        <div className="section-heading customer-section-heading">
           <div>
-            <h2>Customer Management</h2>
-            <p>View customer records and manage customer vehicles.</p>
+            <span className="customer-kicker">Records</span>
+            <h2>Customer List</h2>
+            <p>Customers loaded from the backend customer records API.</p>
           </div>
 
-          <Link className="button" to="/admin/customers/add">
-            Add Customer
-          </Link>
+          <div className="customer-count-card">
+            <span>Total Customers</span>
+            <strong>{customers.length}</strong>
+          </div>
         </div>
 
         {isLoading && <p className="muted-text">Loading customers...</p>}

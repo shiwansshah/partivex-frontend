@@ -63,7 +63,7 @@ function CustomerDetails() {
 
   if (isLoading) {
     return (
-      <section className="card">
+      <section className="card customer-card customer-workspace">
         <p className="muted-text">Loading customer details...</p>
       </section>
     )
@@ -71,7 +71,7 @@ function CustomerDetails() {
 
   if (error) {
     return (
-      <section className="card">
+      <section className="card customer-card customer-workspace">
         <div className="form-alert">{error}</div>
         <Link className="button button-secondary page-link" to="/admin/customers">
           Back to Customers
@@ -81,10 +81,11 @@ function CustomerDetails() {
   }
 
   return (
-    <div className="stack">
-      <section className="card">
-        <div className="page-header with-actions">
+    <div className="stack customer-workspace">
+      <section className="card customer-card customer-profile-card">
+        <div className="page-header with-actions customer-form-header">
           <div>
+            <span className="customer-kicker">Profile</span>
             <h2>Customer Details</h2>
             <p>Customer profile and registered vehicles.</p>
           </div>
@@ -94,7 +95,18 @@ function CustomerDetails() {
           </Link>
         </div>
 
-        <div className="details-grid">
+        <div className="customer-profile-summary">
+          <div className="customer-avatar" aria-hidden="true">
+            {(customer?.fullName || 'C').charAt(0).toUpperCase()}
+          </div>
+          <div>
+            <span className="customer-kicker">Selected Customer</span>
+            <h3>{customer?.fullName || 'Customer'}</h3>
+            <p>{customer?.phone || 'No phone number'}</p>
+          </div>
+        </div>
+
+        <div className="details-grid customer-details-grid">
           <div>
             <span>Full Name</span>
             <strong>{customer?.fullName || '-'}</strong>
@@ -114,14 +126,15 @@ function CustomerDetails() {
         </div>
       </section>
 
-      <section className="card">
-        <div className="section-heading">
+      <section className="card customer-card">
+        <div className="section-heading customer-section-heading">
           <div>
+            <span className="customer-kicker">Garage</span>
             <h2>Vehicles</h2>
             <p>Vehicles registered for this customer.</p>
           </div>
 
-          <Link className="button" to={`/admin/customers/${id}/add-vehicle`}>
+          <Link className="button customer-primary-action" to={`/admin/customers/${id}/add-vehicle`}>
             Add Vehicle
           </Link>
         </div>

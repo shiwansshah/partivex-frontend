@@ -24,9 +24,10 @@ function AddCustomer() {
   }
 
   return (
-    <section className="card">
-      <div className="page-header with-actions">
+    <section className="card customer-card customer-workspace">
+      <div className="page-header with-actions customer-form-header">
         <div>
+          <span className="customer-kicker">New Record</span>
           <h2>Add Customer</h2>
           <p>Register a customer record for vehicle and service tracking.</p>
         </div>

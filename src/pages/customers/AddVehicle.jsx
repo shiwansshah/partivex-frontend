@@ -25,9 +25,10 @@ function AddVehicle() {
   }
 
   return (
-    <section className="card">
-      <div className="page-header with-actions">
+    <section className="card customer-card customer-workspace">
+      <div className="page-header with-actions customer-form-header">
         <div>
+          <span className="customer-kicker">Vehicle Record</span>
           <h2>Add Vehicle</h2>
           <p>Register a vehicle for the selected customer.</p>
         </div>
