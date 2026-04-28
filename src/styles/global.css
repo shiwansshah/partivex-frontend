@@ -14,7 +14,9 @@ a {
 }
 
 button,
-input {
+input,
+select,
+textarea {
   font: inherit;
 }
 
@@ -120,6 +122,24 @@ input {
   background: #fff4f2;
 }
 
+.inventory-notice {
+  padding: 12px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.inventory-notice.is-success {
+  color: #116329;
+  border: 1px solid #a7e0b4;
+  background: #edf9f0;
+}
+
+.inventory-notice.is-error {
+  color: #b42318;
+  border: 1px solid #f4b4ae;
+  background: #fff4f2;
+}
+
 .button {
   display: inline-flex;
   align-items: center;
@@ -135,6 +155,23 @@ input {
 
 .button:hover {
   background: #163b5c;
+}
+
+.button.button-secondary {
+  color: #1f4f7a;
+  background: #edf4fb;
+}
+
+.button.button-secondary:hover {
+  background: #dceaf8;
+}
+
+.button.button-danger {
+  background: #b42318;
+}
+
+.button.button-danger:hover {
+  background: #8f1c13;
 }
 
 .button:disabled {
@@ -262,6 +299,188 @@ input {
   color: #102a43;
 }
 
+.inventory-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  border-color: #c8d7e5;
+  background:
+    radial-gradient(circle at top right, rgba(31, 79, 122, 0.16), transparent 34%),
+    linear-gradient(135deg, #ffffff 0%, #f2f7fb 100%);
+}
+
+.inventory-hero-copy {
+  display: grid;
+  gap: 12px;
+}
+
+.inventory-hero-copy h2 {
+  margin: 0;
+  color: #102a43;
+  font-size: 30px;
+}
+
+.inventory-hero-copy p {
+  max-width: 760px;
+  margin: 0;
+  color: #52606d;
+  line-height: 1.7;
+}
+
+.inventory-hero-actions {
+  flex-shrink: 0;
+}
+
+.inventory-management-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.9fr);
+  gap: 18px;
+}
+
+.inventory-form-card,
+.inventory-workflow-card {
+  align-self: start;
+}
+
+.inventory-form,
+.inventory-workflow-list {
+  display: grid;
+  gap: 18px;
+}
+
+.inventory-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.inventory-form-span-2 {
+  grid-column: 1 / -1;
+}
+
+.inventory-textarea {
+  resize: vertical;
+  min-height: 120px;
+}
+
+.inventory-form-actions,
+.inventory-action-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.inventory-workflow-list > div {
+  padding: 14px 16px;
+  border: 1px solid #d9e2ec;
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.inventory-workflow-list strong {
+  color: #102a43;
+}
+
+.inventory-workflow-list p {
+  margin: 8px 0 0;
+  color: #52606d;
+  line-height: 1.6;
+}
+
+.inventory-meta {
+  text-align: right;
+}
+
+.inventory-meta span,
+.inventory-part-cell span,
+.inventory-stock-cell span,
+.change-type {
+  display: block;
+  color: #52606d;
+  font-size: 13px;
+}
+
+.inventory-meta strong,
+.inventory-part-cell strong,
+.inventory-stock-cell strong,
+.inventory-change-cell strong {
+  color: #102a43;
+}
+
+.inventory-stats-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.stat-card-alert {
+  border-color: #f4b4ae;
+  background: #fff7f5;
+}
+
+.inventory-table td {
+  vertical-align: top;
+}
+
+.inventory-toolbar {
+  display: flex;
+  align-items: end;
+  gap: 16px;
+}
+
+.inventory-toolbar-field {
+  min-width: 320px;
+}
+
+.inventory-toolbar-field .form-group,
+.inventory-toolbar-select {
+  margin: 0;
+}
+
+.inventory-action-button {
+  min-width: 88px;
+}
+
+.inventory-part-cell,
+.inventory-stock-cell,
+.inventory-change-cell {
+  display: grid;
+  gap: 4px;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 92px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.status-pill.is-good {
+  color: #116329;
+  background: #e8f7ec;
+}
+
+.status-pill.is-alert {
+  color: #b42318;
+  background: #fff0ee;
+}
+
+.change-gain {
+  color: #116329;
+}
+
+.change-loss {
+  color: #b42318;
+}
+
+.table-empty {
+  color: #52606d;
+  text-align: center;
+}
+
 .table-wrap {
   width: 100%;
   overflow-x: auto;
@@ -302,5 +521,33 @@ input {
   .stats-grid,
   .details-grid {
     grid-template-columns: 1fr;
+  }
+
+  .inventory-hero,
+  .section-heading {
+    grid-template-columns: 1fr;
+  }
+
+  .inventory-management-grid,
+  .inventory-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .inventory-hero {
+    display: grid;
+  }
+
+  .inventory-hero-actions,
+  .inventory-meta {
+    text-align: left;
+  }
+
+  .inventory-toolbar {
+    display: grid;
+    width: 100%;
+  }
+
+  .inventory-toolbar-field {
+    min-width: 0;
   }
 }
