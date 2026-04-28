@@ -1,6 +1,10 @@
+import { useEffect, useState } from 'react'
 import Button from '../../components/ui/Button'
 import Input from '../../components/ui/Input'
 import Table from '../../components/common/Table'
+import { createVendor, deleteVendor, getVendors, updateVendor } from '../../api/vendorApi'
+import { getRequestErrorMessage } from '../../api/axiosClient'
+import { isEmail, required } from '../../utils/validator'
 
 const columns = [
   { key: 'name', label: 'Vendor Name' },
@@ -11,38 +15,154 @@ const columns = [
   { key: 'actions', label: 'Actions' },
 ]
 
-const rows = [
-  {
-    id: 1,
-    name: 'Himal Auto Parts',
-    contactPerson: 'Ramesh Karki',
-    email: 'ramesh@himalparts.com',
-    phone: '+977 9800000101',
-    status: 'Active',
-    actions: (
-      <div className="table-actions">
-        <Button>Edit</Button>
-        <Button>Delete</Button>
-      </div>
-    ),
-  },
-  {
-    id: 2,
-    name: 'Bagmati Spares',
-    contactPerson: 'Sita Shrestha',
-    email: 'sita@bagmatispares.com',
-    phone: '+977 9800000102',
-    status: 'Active',
-    actions: (
-      <div className="table-actions">
-        <Button>Edit</Button>
-        <Button>Delete</Button>
-      </div>
-    ),
-  },
-]
+const initialValues = {
+  name: '',
+  contactPerson: '',
+  email: '',
+  phone: '',
+  address: '',
+  isActive: true,
+}
 
 function VendorManagement() {
+  const [vendors, setVendors] = useState([])
+  const [values, setValues] = useState(initialValues)
+  const [editingVendorId, setEditingVendorId] = useState(null)
+  const [errors, setErrors] = useState({})
+  const [errorMessage, setErrorMessage] = useState('')
+  const [successMessage, setSuccessMessage] = useState('')
+  const [isLoading, setIsLoading] = useState(true)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const isEditing = editingVendorId !== null
+
+  const rows = vendors.map((vendor) => ({
+    ...vendor,
+    status: vendor.isActive ? 'Active' : 'Inactive',
+    actions: (
+      <div className="table-actions">
+        <Button type="button" onClick={() => startEdit(vendor)}>
+          Edit
+        </Button>
+        <Button type="button" onClick={() => handleDelete(vendor.id)}>
+          Delete
+        </Button>
+      </div>
+    ),
+  }))
+
+  useEffect(() => {
+    loadVendors()
+  }, [])
+
+  async function loadVendors() {
+    try {
+      setIsLoading(true)
+      setErrorMessage('')
+      const response = await getVendors()
+      if (Array.isArray(response.data)) {
+        setVendors(response.data)
+      } else {
+        setVendors([])
+        setErrorMessage('Vendor API is reachable, but list data is not available yet.')
+      }
+    } catch (error) {
+      setVendors([])
+      setErrorMessage(getRequestErrorMessage(error, 'Unable to load vendors.'))
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  function handleChange(event) {
+    const { name, value, type, checked } = event.target
+    setValues((current) => ({
+      ...current,
+      [name]: type === 'checkbox' ? checked : value,
+    }))
+  }
+
+  function validate() {
+    const nextErrors = {}
+
+    if (!required(values.name)) nextErrors.name = 'Vendor name is required.'
+    if (!required(values.contactPerson)) {
+      nextErrors.contactPerson = 'Contact person is required.'
+    }
+    if (!required(values.email)) nextErrors.email = 'Email is required.'
+    else if (!isEmail(values.email)) nextErrors.email = 'Enter a valid email.'
+    if (!required(values.phone)) nextErrors.phone = 'Phone is required.'
+    if (!required(values.address)) nextErrors.address = 'Address is required.'
+
+    setErrors(nextErrors)
+    return Object.keys(nextErrors).length === 0
+  }
+
+  async function handleSubmit(event) {
+    event.preventDefault()
+    setErrorMessage('')
+    setSuccessMessage('')
+
+    if (!validate()) return
+
+    try {
+      setIsSubmitting(true)
+      if (isEditing) {
+        await updateVendor(editingVendorId, values)
+        setSuccessMessage('Vendor updated successfully.')
+      } else {
+        await createVendor(values)
+        setSuccessMessage('Vendor added successfully.')
+      }
+
+      resetForm()
+      await loadVendors()
+    } catch (error) {
+      setErrorMessage(getRequestErrorMessage(error, 'Unable to save vendor.'))
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  function startEdit(vendor) {
+    setEditingVendorId(vendor.id)
+    setValues({
+      name: vendor.name,
+      contactPerson: vendor.contactPerson,
+      email: vendor.email,
+      phone: vendor.phone,
+      address: vendor.address,
+      isActive: vendor.isActive,
+    })
+    setErrors({})
+    setErrorMessage('')
+    setSuccessMessage('')
+  }
+
+  async function handleDelete(id) {
+    const confirmed = window.confirm('Delete this vendor?')
+    if (!confirmed) return
+
+    try {
+      setErrorMessage('')
+      setSuccessMessage('')
+      await deleteVendor(id)
+      if (editingVendorId === id) {
+        resetForm()
+      }
+      await loadVendors()
+      setSuccessMessage('Vendor deleted successfully.')
+    } catch (error) {
+      setErrorMessage(getRequestErrorMessage(error, 'Unable to delete vendor.'))
+    }
+  }
+
+  function resetForm() {
+    setEditingVendorId(null)
+    setValues(initialValues)
+    setErrors({})
+  }
+
   return (
     <div className="stack">
       <section className="card">
@@ -51,45 +171,84 @@ function VendorManagement() {
             <h2>Vendor Management</h2>
             <p>Admin can manage supplier details from this area.</p>
           </div>
-          <Button>Add Vendor</Button>
         </div>
 
-        <Table columns={columns} rows={rows} />
+        {isLoading ? (
+          <p>Loading vendors...</p>
+        ) : rows.length > 0 ? (
+          <Table columns={columns} rows={rows} />
+        ) : (
+          <p>No vendors have been added yet.</p>
+        )}
       </section>
 
       <section className="card">
         <div className="page-header">
-          <h2>Add Vendor</h2>
-          <p>Basic vendor entry form structure.</p>
+          <h2>{isEditing ? 'Edit Vendor' : 'Add Vendor'}</h2>
+          <p>{isEditing ? 'Update supplier contact details.' : 'Create a supplier record for parts purchasing.'}</p>
         </div>
 
-        <form className="auth-form">
-          <Input id="vendor-name" label="Vendor Name" name="name" />
-          <Input id="vendor-contact-person" label="Contact Person" name="contactPerson" />
-          <Input id="vendor-email" label="Email" name="email" type="email" />
-          <Input id="vendor-phone" label="Phone" name="phone" />
-          <Input id="vendor-address" label="Address" name="address" />
-          <Button type="button">Save Vendor</Button>
-        </form>
-      </section>
-
-      <section className="card">
-        <div className="page-header">
-          <h2>Edit Vendor</h2>
-          <p>Vendor update form structure for the next implementation step.</p>
-        </div>
-
-        <form className="auth-form">
-          <Input id="edit-vendor-name" label="Vendor Name" name="editName" />
+        <form className="auth-form" onSubmit={handleSubmit} noValidate>
           <Input
-            id="edit-vendor-contact-person"
-            label="Contact Person"
-            name="editContactPerson"
+            id="vendor-name"
+            label="Vendor Name"
+            name="name"
+            value={values.name}
+            onChange={handleChange}
+            error={errors.name}
           />
-          <Input id="edit-vendor-email" label="Email" name="editEmail" type="email" />
-          <Input id="edit-vendor-phone" label="Phone" name="editPhone" />
-          <Input id="edit-vendor-address" label="Address" name="editAddress" />
-          <Button type="button">Update Vendor</Button>
+          <Input
+            id="vendor-contact-person"
+            label="Contact Person"
+            name="contactPerson"
+            value={values.contactPerson}
+            onChange={handleChange}
+            error={errors.contactPerson}
+          />
+          <Input
+            id="vendor-email"
+            label="Email"
+            name="email"
+            type="email"
+            value={values.email}
+            onChange={handleChange}
+            error={errors.email}
+          />
+          <Input
+            id="vendor-phone"
+            label="Phone"
+            name="phone"
+            value={values.phone}
+            onChange={handleChange}
+            error={errors.phone}
+          />
+          <Input
+            id="vendor-address"
+            label="Address"
+            name="address"
+            value={values.address}
+            onChange={handleChange}
+            error={errors.address}
+          />
+          <label className="form-group">
+            <span>Active</span>
+            <input
+              name="isActive"
+              type="checkbox"
+              checked={values.isActive}
+              onChange={handleChange}
+            />
+          </label>
+          {errorMessage && <div className="form-alert">{errorMessage}</div>}
+          {successMessage && <p>{successMessage}</p>}
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? 'Saving...' : isEditing ? 'Update Vendor' : 'Save Vendor'}
+          </Button>
+          {isEditing && (
+            <Button type="button" onClick={resetForm}>
+              Cancel Edit
+            </Button>
+          )}
         </form>
       </section>
     </div>
