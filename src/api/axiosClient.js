@@ -12,6 +12,15 @@ const axiosClient = axios.create({
   },
 })
 
+// Attach JWT token to every request if available
+axiosClient.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token')
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`
+  }
+  return config
+})
+
 export function getRequestErrorMessage(error, fallbackMessage) {
   if (error?.code === 'ERR_NETWORK') {
     return `Cannot reach the API at ${apiBaseUrl}. Start the backend or set VITE_API_BASE_URL in your .env file.`
@@ -29,6 +38,13 @@ export function getRequestErrorMessage(error, fallbackMessage) {
 
   if (responseData?.title) {
     return responseData.title
+  }
+
+  if (responseData?.errors && typeof responseData.errors === 'object') {
+    const messages = Object.values(responseData.errors).flat()
+    if (messages.length > 0) {
+      return messages.join(' ')
+    }
   }
 
   return fallbackMessage

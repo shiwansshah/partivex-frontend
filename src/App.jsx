@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import AdminLayout from './components/layout/AdminLayout'
+import CustomerLayout from './components/layout/CustomerLayout'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import Dashboard from './pages/admin/Dashboard'
@@ -8,6 +9,8 @@ import CustomerManagement from './pages/admin/CustomerManagement'
 import AddCustomer from './pages/customers/AddCustomer'
 import CustomerDetails from './pages/customers/CustomerDetails'
 import AddVehicle from './pages/customers/AddVehicle'
+import Profile from './pages/customer/Profile'
+import Vehicles from './pages/customer/Vehicles'
 
 function App() {
   return (
@@ -22,6 +25,11 @@ function App() {
         <Route path="customers/add" element={<AddCustomer />} />
         <Route path="customers/:id" element={<CustomerDetails />} />
         <Route path="customers/:id/add-vehicle" element={<AddVehicle />} />
+      </Route>
+      <Route path="/customer" element={<CustomerLayout />}>
+        <Route index element={<Navigate to="profile" replace />} />
+        <Route path="profile" element={<Profile />} />
+        <Route path="vehicles" element={<Vehicles />} />
       </Route>
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>

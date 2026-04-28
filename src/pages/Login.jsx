@@ -12,6 +12,29 @@ const initialValues = {
   password: '',
 }
 
+function parseJwtPayload(token) {
+  try {
+    const base64 = token.split('.')[1]
+    const json = atob(base64.replace(/-/g, '+').replace(/_/g, '/'))
+    return JSON.parse(json)
+  } catch {
+    return null
+  }
+}
+
+function getRoleFromToken(token) {
+  const payload = parseJwtPayload(token)
+  if (!payload) return null
+
+  // ASP.NET puts role in the "role" or ClaimTypes.Role claim
+  const role = payload['http://schemas.microsoft.com/ws/2008/06/identity/claims/role']
+    || payload['role']
+
+  // Could be an array if multiple roles
+  if (Array.isArray(role)) return role[0]
+  return role
+}
+
 function Login() {
   const navigate = useNavigate()
   const [values, setValues] = useState(initialValues)
@@ -44,8 +67,20 @@ function Login() {
 
     try {
       setIsSubmitting(true)
-      await login(values)
-      navigate('/admin')
+      const response = await login(values)
+      const token = response.data.token
+
+      // Store token for authenticated requests
+      localStorage.setItem('token', token)
+
+      // Redirect based on role
+      const role = getRoleFromToken(token)
+
+      if (role === 'Customer') {
+        navigate('/customer/profile')
+      } else {
+        navigate('/admin')
+      }
     } catch (error) {
       setStatus(getRequestErrorMessage(error, 'Invalid email or password.'))
     } finally {
@@ -56,7 +91,8 @@ function Login() {
   return (
     <AuthForm
       title="Login"
-      subtitle="Access the Partivex administration workspace."
+      sidePanelTitle="Welcome Back"
+      sidePanelSubtitle="Sign in to continue managing your services and vehicles."
       footer={
         <p>
           New customer? <Link to="/register">Create an account</Link>

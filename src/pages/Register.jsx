@@ -70,6 +70,8 @@ function Register() {
     <AuthForm
       title="Customer Registration"
       subtitle="Create a customer account for Partivex services."
+      sidePanelTitle="Welcome To Partivex"
+      sidePanelSubtitle="Join Partivex today and take control of your vehicle management."
       footer={
         <p>
           Already registered? <Link to="/login">Login</Link>
