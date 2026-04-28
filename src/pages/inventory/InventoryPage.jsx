@@ -1,12 +1,29 @@
 import { useEffect, useState } from 'react'
+import InventoryItemForm from '../../components/inventory/InventoryItemForm'
 import Button from '../../components/ui/Button'
 import { getInventoryMonitoring } from '../../api/inventoryApi'
 import { getRequestErrorMessage } from '../../api/axiosClient'
+
+const initialFormValues = {
+  partNumber: '',
+  name: '',
+  category: '',
+  vendorName: '',
+  storageLocation: '',
+  quantityInStock: '0',
+  reorderLevel: '10',
+  unitCost: '0',
+  changedBy: 'Partivex Admin',
+  referenceCode: '',
+  notes: '',
+  stockChangeType: '',
+}
 
 function InventoryPage() {
   const [monitoring, setMonitoring] = useState(null)
   const [status, setStatus] = useState({ type: '', message: '' })
   const [isLoading, setIsLoading] = useState(true)
+  const [formValues, setFormValues] = useState(initialFormValues)
 
   async function loadInventory({ showLoading = true } = {}) {
     try {
@@ -36,6 +53,23 @@ function InventoryPage() {
     loadInventory()
   }, [])
 
+  function handleFieldChange(event) {
+    const { name, value } = event.target
+    setFormValues((current) => ({ ...current, [name]: value }))
+  }
+
+  function handleSubmit(event) {
+    event.preventDefault()
+    setStatus({
+      type: 'success',
+      message: 'Inventory save actions will be connected in the next update.',
+    })
+  }
+
+  function resetEditor() {
+    setFormValues(initialFormValues)
+  }
+
   const summary = monitoring?.summary
   const items = monitoring?.items ?? []
   const recentChanges = monitoring?.recentChanges ?? []
@@ -59,7 +93,9 @@ function InventoryPage() {
       </section>
 
       {status.message && (
-        <div className="inventory-notice is-error">{status.message}</div>
+        <div className={`inventory-notice ${status.type === 'success' ? 'is-success' : 'is-error'}`}>
+          {status.message}
+        </div>
       )}
 
       <section className="card">
@@ -89,6 +125,40 @@ function InventoryPage() {
           </div>
         </div>
       </section>
+
+      <div className="inventory-management-grid">
+        <InventoryItemForm
+          values={formValues}
+          errors={{}}
+          onChange={handleFieldChange}
+          onSubmit={handleSubmit}
+          onCancel={resetEditor}
+          isSaving={false}
+          isEditing={false}
+        />
+
+        <section className="card inventory-workflow-card">
+          <div className="page-header">
+            <h2>Workflow Notes</h2>
+            <p>Outline the admin flow before wiring the save actions into the page.</p>
+          </div>
+
+          <div className="inventory-workflow-list">
+            <div>
+              <strong>1. Create part records</strong>
+              <p>Capture vendor, location, stock level, and reference information in one form.</p>
+            </div>
+            <div>
+              <strong>2. Review current stock</strong>
+              <p>Compare new inputs against existing inventory before making adjustments.</p>
+            </div>
+            <div>
+              <strong>3. Track changes</strong>
+              <p>Keep stock movement visible so the admin view stays aligned with operations.</p>
+            </div>
+          </div>
+        </section>
+      </div>
 
       <section className="card">
         <div className="page-header">
