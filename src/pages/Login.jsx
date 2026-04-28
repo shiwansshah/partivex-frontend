@@ -1,10 +1,11 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
+import { getApiErrorMessage } from '../api/axiosInstance'
 import AuthForm from '../components/forms/AuthForm'
 import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
-import { login } from '../api/authApi'
-import { getRequestErrorMessage } from '../api/axiosClient'
+import useAuth from '../hooks/useAuth'
+import { getHomePathForRole } from '../utils/roles'
 import { isEmail, required } from '../utils/validator'
 
 const initialValues = {
@@ -14,6 +15,7 @@ const initialValues = {
 
 function Login() {
   const navigate = useNavigate()
+  const { getCurrentUser, login } = useAuth()
   const [values, setValues] = useState(initialValues)
   const [errors, setErrors] = useState({})
   const [status, setStatus] = useState('')
@@ -44,10 +46,12 @@ function Login() {
 
     try {
       setIsSubmitting(true)
-      await login(values)
-      navigate('/admin')
+      await login(values.email, values.password)
+
+      const authenticatedUser = getCurrentUser()
+      navigate(getHomePathForRole(authenticatedUser?.role), { replace: true })
     } catch (error) {
-      setStatus(getRequestErrorMessage(error, 'Invalid email or password.'))
+      setStatus(getApiErrorMessage(error, 'Invalid email or password.'))
     } finally {
       setIsSubmitting(false)
     }
@@ -56,7 +60,8 @@ function Login() {
   return (
     <AuthForm
       title="Login"
-      subtitle="Access the Partivex administration workspace."
+      sidePanelTitle="Welcome Back"
+      sidePanelSubtitle="Sign in to continue managing your services and vehicles."
       footer={
         <p>
           New customer? <Link to="/register">Create an account</Link>

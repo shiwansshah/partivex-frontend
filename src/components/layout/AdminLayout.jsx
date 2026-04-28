@@ -1,6 +1,15 @@
-import { NavLink, Outlet } from 'react-router-dom'
+import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import useAuth from '../../hooks/useAuth'
 
 function AdminLayout() {
+  const navigate = useNavigate()
+  const { logout } = useAuth()
+
+  function handleLogout() {
+    logout()
+    navigate('/login')
+  }
+
   return (
     <div className="admin-shell">
       <aside className="admin-sidebar">
@@ -11,6 +20,7 @@ function AdminLayout() {
           </NavLink>
           <NavLink to="/admin/staff">Staff Management</NavLink>
           <NavLink to="/admin/customers">Customer Management</NavLink>
+          <NavLink to="/vehicles">Vehicles</NavLink>
         </nav>
       </aside>
 
@@ -20,6 +30,9 @@ function AdminLayout() {
             <span className="eyebrow">Admin Panel</span>
             <h1>Administration</h1>
           </div>
+          <button className="text-button" type="button" onClick={handleLogout}>
+            Logout
+          </button>
         </header>
 
         <main className="admin-content">
