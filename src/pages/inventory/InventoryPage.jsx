@@ -37,6 +37,8 @@ function InventoryPage() {
   }, [])
 
   const summary = monitoring?.summary
+  const items = monitoring?.items ?? []
+  const recentChanges = monitoring?.recentChanges ?? []
 
   return (
     <div className="stack">
@@ -87,6 +89,118 @@ function InventoryPage() {
           </div>
         </div>
       </section>
+
+      <section className="card">
+        <div className="page-header">
+          <h2>Current Stock</h2>
+          <p>Live inventory records from the backend, ordered for quick stock review.</p>
+        </div>
+
+        <div className="table-wrap">
+          <table className="table inventory-table">
+            <thead>
+              <tr>
+                <th>Part</th>
+                <th>Category</th>
+                <th>Vendor</th>
+                <th>Location</th>
+                <th>Stock</th>
+                <th>Unit Cost</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((item) => (
+                <tr key={item.id}>
+                  <td>
+                    <div className="inventory-part-cell">
+                      <strong>{item.name}</strong>
+                      <span>{item.partNumber}</span>
+                    </div>
+                  </td>
+                  <td>{item.category}</td>
+                  <td>{item.vendorName}</td>
+                  <td>{item.storageLocation}</td>
+                  <td>
+                    <div className="inventory-stock-cell">
+                      <strong>{item.quantityInStock}</strong>
+                      <span>Reorder at {item.reorderLevel}</span>
+                    </div>
+                  </td>
+                  <td>{formatCurrency(item.unitCost)}</td>
+                  <td>
+                    <span className={`status-pill ${item.isLowStock ? 'is-alert' : 'is-good'}`}>
+                      {item.isLowStock ? 'Low stock' : 'Healthy'}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+              {items.length === 0 && !isLoading && (
+                <tr>
+                  <td colSpan="7" className="table-empty">
+                    No inventory items are available yet.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section className="card">
+        <div className="page-header">
+          <h2>Stock Change Tracking</h2>
+          <p>Recent stock movements for quick auditing of purchase and sales activity.</p>
+        </div>
+
+        <div className="table-wrap">
+          <table className="table inventory-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Part</th>
+                <th>Change</th>
+                <th>After Change</th>
+                <th>Reference</th>
+                <th>Handled By</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              {recentChanges.map((change) => (
+                <tr key={change.id}>
+                  <td>{formatDate(change.changedAt)}</td>
+                  <td>
+                    <div className="inventory-part-cell">
+                      <strong>{change.partName}</strong>
+                      <span>{change.partNumber}</span>
+                    </div>
+                  </td>
+                  <td>
+                    <div className="inventory-change-cell">
+                      <span className="change-type">{change.changeType}</span>
+                      <strong className={change.quantityChanged < 0 ? 'change-loss' : 'change-gain'}>
+                        {formatQuantity(change.quantityChanged)}
+                      </strong>
+                    </div>
+                  </td>
+                  <td>{change.quantityAfterChange}</td>
+                  <td>{change.referenceCode}</td>
+                  <td>{change.changedBy}</td>
+                  <td>{change.notes}</td>
+                </tr>
+              ))}
+              {recentChanges.length === 0 && !isLoading && (
+                <tr>
+                  <td colSpan="7" className="table-empty">
+                    No stock movements recorded yet.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
     </div>
   )
 }
@@ -100,6 +214,18 @@ function formatDate(value) {
     dateStyle: 'medium',
     timeStyle: 'short',
   }).format(new Date(value))
+}
+
+function formatCurrency(value) {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 2,
+  }).format(value ?? 0)
+}
+
+function formatQuantity(value) {
+  return value > 0 ? `+${value}` : String(value)
 }
 
 export default InventoryPage
