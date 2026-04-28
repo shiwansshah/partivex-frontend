@@ -13,3 +13,6 @@ export const register = (data) => {
 
   return axiosClient.post('/auth/register', payload)
 }
+
+export const getProfile = () =>
+  axiosClient.get('/customer/profile')
