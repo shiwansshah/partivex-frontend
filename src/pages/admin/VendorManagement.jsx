@@ -28,6 +28,7 @@ function VendorManagement() {
   const [vendors, setVendors] = useState([])
   const [values, setValues] = useState(initialValues)
   const [editingVendorId, setEditingVendorId] = useState(null)
+  const [searchTerm, setSearchTerm] = useState('')
   const [errors, setErrors] = useState({})
   const [errorMessage, setErrorMessage] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
@@ -36,15 +37,23 @@ function VendorManagement() {
 
   const isEditing = editingVendorId !== null
 
-  const rows = vendors.map((vendor) => ({
+  const filteredVendors = vendors.filter((vendor) => {
+    const query = searchTerm.trim().toLowerCase()
+    if (!query) return true
+
+    return [vendor.name, vendor.contactPerson, vendor.email, vendor.phone]
+      .some((value) => String(value || '').toLowerCase().includes(query))
+  })
+
+  const rows = filteredVendors.map((vendor) => ({
     ...vendor,
-    status: vendor.isActive ? 'Active' : 'Inactive',
+    status: <span className="status-pill status-active">Active</span>,
     actions: (
       <div className="table-actions">
-        <Button type="button" onClick={() => startEdit(vendor)}>
+        <Button type="button" variant="secondary" onClick={() => startEdit(vendor)}>
           Edit
         </Button>
-        <Button type="button" onClick={() => handleDelete(vendor.id)}>
+        <Button type="button" variant="danger" onClick={() => handleDelete(vendor.id)}>
           Delete
         </Button>
       </div>
@@ -109,14 +118,15 @@ function VendorManagement() {
       setIsSubmitting(true)
       if (isEditing) {
         await updateVendor(editingVendorId, values)
+        await loadVendors()
         setSuccessMessage('Vendor updated successfully.')
       } else {
         await createVendor(values)
+        await loadVendors()
         setSuccessMessage('Vendor added successfully.')
       }
 
       resetForm()
-      await loadVendors()
     } catch (error) {
       setErrorMessage(getRequestErrorMessage(error, 'Unable to save vendor.'))
     } finally {
@@ -151,7 +161,7 @@ function VendorManagement() {
         resetForm()
       }
       await loadVendors()
-      setSuccessMessage('Vendor deleted successfully.')
+      setSuccessMessage('Vendor removed successfully.')
     } catch (error) {
       setErrorMessage(getRequestErrorMessage(error, 'Unable to delete vendor.'))
     }
@@ -173,10 +183,21 @@ function VendorManagement() {
           </div>
         </div>
 
+        <Input
+          id="vendor-search"
+          label="Search Vendors"
+          name="vendorSearch"
+          value={searchTerm}
+          onChange={(event) => setSearchTerm(event.target.value)}
+          placeholder="Search by name, contact, email, or phone"
+        />
+
         {isLoading ? (
           <p>Loading vendors...</p>
         ) : rows.length > 0 ? (
           <Table columns={columns} rows={rows} />
+        ) : searchTerm ? (
+          <p>No vendors match your search.</p>
         ) : (
           <p>No vendors have been added yet.</p>
         )}
@@ -240,12 +261,12 @@ function VendorManagement() {
             />
           </label>
           {errorMessage && <div className="form-alert">{errorMessage}</div>}
-          {successMessage && <p>{successMessage}</p>}
+          {successMessage && <div className="form-alert form-success">{successMessage}</div>}
           <Button type="submit" disabled={isSubmitting}>
             {isSubmitting ? 'Saving...' : isEditing ? 'Update Vendor' : 'Save Vendor'}
           </Button>
           {isEditing && (
-            <Button type="button" onClick={resetForm}>
+            <Button type="button" variant="secondary" onClick={resetForm}>
               Cancel Edit
             </Button>
           )}
