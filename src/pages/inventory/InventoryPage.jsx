@@ -1,7 +1,12 @@
 import { useEffect, useState } from 'react'
 import InventoryItemForm from '../../components/inventory/InventoryItemForm'
 import Button from '../../components/ui/Button'
-import { getInventoryMonitoring } from '../../api/inventoryApi'
+import {
+  createInventoryItem,
+  deleteInventoryItem,
+  getInventoryMonitoring,
+  updateInventoryItem,
+} from '../../api/inventoryApi'
 import { getRequestErrorMessage } from '../../api/axiosClient'
 
 const initialFormValues = {
@@ -23,9 +28,12 @@ function InventoryPage() {
   const [monitoring, setMonitoring] = useState(null)
   const [status, setStatus] = useState({ type: '', message: '' })
   const [isLoading, setIsLoading] = useState(true)
+  const [isSaving, setIsSaving] = useState(false)
+  const [activeItemId, setActiveItemId] = useState(null)
   const [formValues, setFormValues] = useState(initialFormValues)
+  const [formErrors, setFormErrors] = useState({})
 
-  async function loadInventory({ showLoading = true } = {}) {
+  async function loadInventory({ showLoading = true, nextStatus = null } = {}) {
     try {
       if (showLoading) {
         setIsLoading(true)
@@ -33,7 +41,10 @@ function InventoryPage() {
 
       const response = await getInventoryMonitoring()
       setMonitoring(response.data)
-      setStatus({ type: '', message: '' })
+
+      if (nextStatus) {
+        setStatus(nextStatus)
+      }
     } catch (error) {
       setStatus({
         type: 'error',
@@ -56,18 +67,113 @@ function InventoryPage() {
   function handleFieldChange(event) {
     const { name, value } = event.target
     setFormValues((current) => ({ ...current, [name]: value }))
+    setFormErrors((current) => ({ ...current, [name]: '' }))
   }
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault()
-    setStatus({
-      type: 'success',
-      message: 'Inventory save actions will be connected in the next update.',
+    setStatus({ type: '', message: '' })
+
+    try {
+      setIsSaving(true)
+      const payload = buildPayload(formValues)
+
+      if (activeItemId) {
+        await updateInventoryItem(activeItemId, payload)
+        await loadInventory({
+          showLoading: false,
+          nextStatus: {
+            type: 'success',
+            message: 'Inventory item updated successfully.',
+          },
+        })
+      } else {
+        await createInventoryItem(payload)
+        await loadInventory({
+          showLoading: false,
+          nextStatus: {
+            type: 'success',
+            message: 'Inventory item created successfully.',
+          },
+        })
+      }
+
+      resetEditor()
+    } catch (error) {
+      setFormErrors(extractValidationErrors(error))
+      setStatus({
+        type: 'error',
+        message: getRequestErrorMessage(
+          error,
+          'The inventory item could not be saved. Review the form and try again.',
+        ),
+      })
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  function handleEdit(item) {
+    setActiveItemId(item.id)
+    setFormErrors({})
+    setStatus({ type: '', message: '' })
+    setFormValues({
+      partNumber: item.partNumber,
+      name: item.name,
+      category: item.category,
+      vendorName: item.vendorName,
+      storageLocation: item.storageLocation,
+      quantityInStock: String(item.quantityInStock),
+      reorderLevel: String(item.reorderLevel),
+      unitCost: String(item.unitCost),
+      changedBy: 'Partivex Admin',
+      referenceCode: '',
+      notes: '',
+      stockChangeType: '',
     })
   }
 
+  async function handleDelete(item) {
+    const confirmed = window.confirm(
+      `Delete ${item.name}? This removes the inventory record and its stock history.`,
+    )
+
+    if (!confirmed) {
+      return
+    }
+
+    try {
+      setStatus({ type: '', message: '' })
+      setIsSaving(true)
+      await deleteInventoryItem(item.id)
+      await loadInventory({
+        showLoading: false,
+        nextStatus: {
+          type: 'success',
+          message: `${item.name} was deleted successfully.`,
+        },
+      })
+
+      if (activeItemId === item.id) {
+        resetEditor()
+      }
+    } catch (error) {
+      setStatus({
+        type: 'error',
+        message: getRequestErrorMessage(
+          error,
+          'The inventory item could not be deleted. Try again in a moment.',
+        ),
+      })
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
   function resetEditor() {
+    setActiveItemId(null)
     setFormValues(initialFormValues)
+    setFormErrors({})
   }
 
   const summary = monitoring?.summary
@@ -86,7 +192,7 @@ function InventoryPage() {
           </p>
         </div>
         <div className="inventory-hero-actions">
-          <Button onClick={() => loadInventory()} disabled={isLoading}>
+          <Button onClick={() => loadInventory()} disabled={isLoading || isSaving}>
             {isLoading ? 'Refreshing...' : 'Refresh data'}
           </Button>
         </div>
@@ -129,12 +235,12 @@ function InventoryPage() {
       <div className="inventory-management-grid">
         <InventoryItemForm
           values={formValues}
-          errors={{}}
+          errors={formErrors}
           onChange={handleFieldChange}
           onSubmit={handleSubmit}
           onCancel={resetEditor}
-          isSaving={false}
-          isEditing={false}
+          isSaving={isSaving}
+          isEditing={Boolean(activeItemId)}
         />
 
         <section className="card inventory-workflow-card">
@@ -161,9 +267,11 @@ function InventoryPage() {
       </div>
 
       <section className="card">
-        <div className="page-header">
-          <h2>Current Stock</h2>
-          <p>Live inventory records from the backend, ordered for quick stock review.</p>
+        <div className="section-heading">
+          <div>
+            <h2>Current Stock</h2>
+            <p>Live inventory records from the backend, ordered for quick stock review.</p>
+          </div>
         </div>
 
         <div className="table-wrap">
@@ -177,6 +285,7 @@ function InventoryPage() {
                 <th>Stock</th>
                 <th>Unit Cost</th>
                 <th>Status</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -203,11 +312,33 @@ function InventoryPage() {
                       {item.isLowStock ? 'Low stock' : 'Healthy'}
                     </span>
                   </td>
+                  <td>
+                    <div className="inventory-action-group">
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        className="inventory-action-button"
+                        onClick={() => handleEdit(item)}
+                        disabled={isSaving}
+                      >
+                        Edit
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="danger"
+                        className="inventory-action-button"
+                        onClick={() => handleDelete(item)}
+                        disabled={isSaving}
+                      >
+                        Delete
+                      </Button>
+                    </div>
+                  </td>
                 </tr>
               ))}
               {items.length === 0 && !isLoading && (
                 <tr>
-                  <td colSpan="7" className="table-empty">
+                  <td colSpan="8" className="table-empty">
                     No inventory items are available yet.
                   </td>
                 </tr>
@@ -273,6 +404,37 @@ function InventoryPage() {
       </section>
     </div>
   )
+}
+
+function buildPayload(values) {
+  return {
+    partNumber: values.partNumber.trim(),
+    name: values.name.trim(),
+    category: values.category.trim(),
+    vendorName: values.vendorName.trim(),
+    storageLocation: values.storageLocation.trim(),
+    quantityInStock: Number.parseInt(values.quantityInStock, 10),
+    reorderLevel: Number.parseInt(values.reorderLevel, 10),
+    unitCost: Number.parseFloat(values.unitCost),
+    changedBy: values.changedBy.trim(),
+    referenceCode: values.referenceCode.trim(),
+    notes: values.notes.trim(),
+    stockChangeType: values.stockChangeType.trim(),
+  }
+}
+
+function extractValidationErrors(error) {
+  const validationErrors = error.response?.data?.errors
+  if (!validationErrors) {
+    return {}
+  }
+
+  return Object.entries(validationErrors).reduce((accumulator, [field, messages]) => {
+    const message = Array.isArray(messages) ? messages[0] : messages
+    const normalizedField = field.charAt(0).toLowerCase() + field.slice(1)
+    accumulator[normalizedField] = message
+    return accumulator
+  }, {})
 }
 
 function formatDate(value) {
