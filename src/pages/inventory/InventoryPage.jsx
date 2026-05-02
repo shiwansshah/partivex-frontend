@@ -8,6 +8,7 @@ import {
   updateInventoryItem,
 } from '../../api/inventoryApi'
 import { getRequestErrorMessage } from '../../api/axiosClient'
+import { required } from '../../utils/validator'
 
 const initialFormValues = {
   partNumber: '',
@@ -73,6 +74,10 @@ function InventoryPage() {
   async function handleSubmit(event) {
     event.preventDefault()
     setStatus({ type: '', message: '' })
+
+    if (!validateForm()) {
+      return
+    }
 
     try {
       setIsSaving(true)
@@ -176,6 +181,32 @@ function InventoryPage() {
     setFormErrors({})
   }
 
+  function validateForm() {
+    const nextErrors = {}
+
+    if (!required(formValues.partNumber)) nextErrors.partNumber = 'Part number is required.'
+    if (!required(formValues.name)) nextErrors.name = 'Part name is required.'
+    if (!required(formValues.category)) nextErrors.category = 'Category is required.'
+    if (!required(formValues.vendorName)) nextErrors.vendorName = 'Vendor name is required.'
+    if (!required(formValues.storageLocation)) nextErrors.storageLocation = 'Storage location is required.'
+    if (!required(formValues.changedBy)) nextErrors.changedBy = 'Handled by is required.'
+
+    if (!isWholeNumber(formValues.quantityInStock)) {
+      nextErrors.quantityInStock = 'Enter a valid stock quantity.'
+    }
+
+    if (!isWholeNumber(formValues.reorderLevel)) {
+      nextErrors.reorderLevel = 'Enter a valid reorder level.'
+    }
+
+    if (!isDecimalNumber(formValues.unitCost)) {
+      nextErrors.unitCost = 'Enter a valid unit cost.'
+    }
+
+    setFormErrors(nextErrors)
+    return Object.keys(nextErrors).length === 0
+  }
+
   const summary = monitoring?.summary
   const items = monitoring?.items ?? []
   const recentChanges = monitoring?.recentChanges ?? []
@@ -246,21 +277,25 @@ function InventoryPage() {
         <section className="card inventory-workflow-card">
           <div className="page-header">
             <h2>Workflow Notes</h2>
-            <p>Outline the admin flow before wiring the save actions into the page.</p>
+            <p>Keep the CRUD process aligned with the coursework’s inventory monitoring flow.</p>
           </div>
 
           <div className="inventory-workflow-list">
             <div>
               <strong>1. Create part records</strong>
-              <p>Capture vendor, location, stock level, and reference information in one form.</p>
+              <p>Register vendor, storage, stock level, and opening metadata in one action.</p>
             </div>
             <div>
-              <strong>2. Review current stock</strong>
-              <p>Compare new inputs against existing inventory before making adjustments.</p>
+              <strong>2. Update stock carefully</strong>
+              <p>When quantity changes, the system records a movement entry for audit tracking.</p>
             </div>
             <div>
-              <strong>3. Track changes</strong>
-              <p>Keep stock movement visible so the admin view stays aligned with operations.</p>
+              <strong>3. Watch low stock</strong>
+              <p>Use the low-stock filter to identify items that are approaching reorder level.</p>
+            </div>
+            <div>
+              <strong>4. Delete with intent</strong>
+              <p>Removing an item clears its history, so only delete retired or duplicate parts.</p>
             </div>
           </div>
         </section>
@@ -435,6 +470,14 @@ function extractValidationErrors(error) {
     accumulator[normalizedField] = message
     return accumulator
   }, {})
+}
+
+function isWholeNumber(value) {
+  return /^-?\d+$/.test(String(value).trim())
+}
+
+function isDecimalNumber(value) {
+  return !Number.isNaN(Number.parseFloat(value)) && Number.isFinite(Number.parseFloat(value))
 }
 
 function formatDate(value) {
