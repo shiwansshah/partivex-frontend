@@ -16,3 +16,9 @@ export const register = (data) => {
 
 export const getProfile = () =>
   axiosClient.get('/customer/profile')
+
+export const updateProfile = (data) =>
+  axiosClient.put('/customer/profile', {
+    fullName: data.fullName,
+    phoneNumber: data.phoneNumber || null,
+  })
