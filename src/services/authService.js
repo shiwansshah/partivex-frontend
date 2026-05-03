@@ -3,7 +3,7 @@ import { AuthResponse, LoginRequest, RegisterRequest } from '../models/authModel
 import { removeToken, setToken } from '../utils/tokenStorage'
 
 export async function login(email, password) {
-  const response = await axiosInstance.post('/api/auth/login', LoginRequest(email, password))
+  const response = await axiosInstance.post('/auth/login', LoginRequest(email, password))
   const auth = AuthResponse(response.data)
 
   if (auth.token) {
@@ -15,7 +15,7 @@ export async function login(email, password) {
 
 export async function register(fullName, email, password) {
   const response = await axiosInstance.post(
-    '/api/auth/register',
+    '/auth/register',
     RegisterRequest(fullName, email, password),
   )
 
