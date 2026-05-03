@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { getMyVehicles, addVehicle, updateVehicle } from '../../api/vehicleApi'
 import { getRequestErrorMessage, apiBaseUrl } from '../../api/axiosClient'
 import VehicleForm from '../../components/VehicleForm'
@@ -22,7 +22,7 @@ function Vehicles() {
   const [formStatus, setFormStatus] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const fetchVehicles = useCallback(async () => {
+  async function fetchVehicles() {
     try {
       const response = await getMyVehicles()
       setVehicles(response.data)
@@ -31,11 +31,26 @@ function Vehicles() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }
 
   useEffect(() => {
-    fetchVehicles()
-  }, [fetchVehicles])
+    let ignore = false
+
+    getMyVehicles()
+      .then((response) => {
+        if (!ignore) setVehicles(response.data)
+      })
+      .catch((err) => {
+        if (!ignore) setError(getRequestErrorMessage(err, 'Failed to load vehicles.'))
+      })
+      .finally(() => {
+        if (!ignore) setLoading(false)
+      })
+
+    return () => {
+      ignore = true
+    }
+  }, [])
 
   function resolveImageUrl(url) {
     if (!url) return null

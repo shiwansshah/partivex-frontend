@@ -26,15 +26,22 @@ export function getRequestErrorMessage(error, fallbackMessage) {
     return `Cannot reach the API at ${apiBaseUrl}. Start the backend or set VITE_API_BASE_URL in your .env file.`
   }
 
-  // Handle global exception middleware response format
-  const data = error?.response?.data
-  if (data?.message) {
-    return data.message
+  const responseData = error?.response?.data
+
+  if (typeof responseData === 'string') {
+    return responseData
   }
 
-  // Handle ASP.NET validation problem details
-  if (data?.errors && typeof data.errors === 'object') {
-    const messages = Object.values(data.errors).flat()
+  if (responseData?.message) {
+    return responseData.message
+  }
+
+  if (responseData?.title) {
+    return responseData.title
+  }
+
+  if (responseData?.errors && typeof responseData.errors === 'object') {
+    const messages = Object.values(responseData.errors).flat()
     if (messages.length > 0) {
       return messages.join(' ')
     }
