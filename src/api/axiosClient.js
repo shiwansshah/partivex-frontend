@@ -4,7 +4,12 @@ import { getToken } from '../utils/tokenStorage'
 const DEFAULT_API_BASE_URL = 'http://localhost:5204/api'
 const envApiBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim()
 
-export const apiBaseUrl = (envApiBaseUrl || DEFAULT_API_BASE_URL).replace(/\/+$/, '')
+function normalizeApiBaseUrl(value) {
+  const normalized = (value || DEFAULT_API_BASE_URL).replace(/\/+$/, '')
+  return /\/api$/i.test(normalized) ? normalized : `${normalized}/api`
+}
+
+export const apiBaseUrl = normalizeApiBaseUrl(envApiBaseUrl)
 
 const axiosClient = axios.create({
   baseURL: apiBaseUrl,

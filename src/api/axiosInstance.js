@@ -1,10 +1,14 @@
 import axios from 'axios'
 import { getToken, removeToken } from '../utils/tokenStorage'
 
-export const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5204').replace(
-  /\/+$/,
-  '',
-)
+const DEFAULT_API_ROOT_URL = 'http://localhost:5204'
+const envApiBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim()
+
+function normalizeApiRootUrl(value) {
+  return (value || DEFAULT_API_ROOT_URL).replace(/\/+$/, '').replace(/\/api$/i, '')
+}
+
+export const API_BASE_URL = normalizeApiRootUrl(envApiBaseUrl)
 
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
