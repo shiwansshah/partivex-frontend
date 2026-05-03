@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { removeToken } from '../../utils/tokenStorage'
 import '../../styles/customer.css'
 
 function CustomerLayout() {
@@ -19,7 +20,7 @@ function CustomerLayout() {
   }, [])
 
   function handleLogout() {
-    localStorage.removeItem('token')
+    removeToken()
     navigate('/login')
   }
 

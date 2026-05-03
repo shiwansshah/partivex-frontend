@@ -1,4 +1,11 @@
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
+import Button from './ui/Button'
+import Input from './ui/Input'
+
+const initialValues = {
+  name: '',
+  number: '',
+}
 
 function VehicleForm({
   values,
@@ -7,6 +14,8 @@ function VehicleForm({
   isSubmitting,
   existingImageUrl,
   previewUrl,
+  initialVehicle,
+  isReadOnly,
   onChange,
   onImageChange,
   onSubmit,
@@ -14,9 +23,12 @@ function VehicleForm({
   submitLabel,
 }) {
   const fileInputRef = useRef(null)
-
-  const hasImage = previewUrl || existingImageUrl
-  const uploadLabel = hasImage ? 'Re-upload Image' : 'Upload Image'
+  const [localValues, setLocalValues] = useState(() => ({
+    name: initialVehicle?.name || initialVehicle?.model || initialValues.name,
+    number: initialVehicle?.number || initialVehicle?.vehicleNumber || initialValues.number,
+  }))
+  const [localErrors, setLocalErrors] = useState({})
+  const isControlledVehicleForm = Boolean(values && onChange)
 
   function handleFileClick() {
     fileInputRef.current?.click()
@@ -29,7 +41,64 @@ function VehicleForm({
     }
   }
 
+  function handleLocalChange(event) {
+    const { name, value } = event.target
+    setLocalValues((current) => ({ ...current, [name]: value }))
+  }
+
+  function validateLocal() {
+    const nextErrors = {}
+
+    if (!localValues.name.trim()) nextErrors.name = 'Vehicle name is required.'
+    if (!localValues.number.trim()) nextErrors.number = 'Vehicle number is required.'
+
+    setLocalErrors(nextErrors)
+    return Object.keys(nextErrors).length === 0
+  }
+
+  function handleLocalSubmit(event) {
+    event.preventDefault()
+    if (!validateLocal()) return
+    onSubmit(localValues)
+  }
+
+  if (!isControlledVehicleForm) {
+    return (
+      <form className="vehicle-form" onSubmit={handleLocalSubmit} noValidate>
+        <Input
+          id="vehicleName"
+          label="Vehicle Name / Model"
+          name="name"
+          value={localValues.name}
+          onChange={handleLocalChange}
+          error={localErrors.name}
+          disabled={isReadOnly || isSubmitting}
+        />
+        <Input
+          id="vehicleNumber"
+          label="Vehicle Number"
+          name="number"
+          value={localValues.number}
+          onChange={handleLocalChange}
+          error={localErrors.number}
+          disabled={isReadOnly || isSubmitting}
+        />
+        <div className="form-actions">
+          <Button type="submit" disabled={isReadOnly || isSubmitting}>
+            {isSubmitting ? 'Saving...' : initialVehicle ? 'Update Vehicle' : 'Add Vehicle'}
+          </Button>
+          {initialVehicle && (
+            <Button type="button" variant="secondary" onClick={onCancel} disabled={isSubmitting}>
+              Cancel
+            </Button>
+          )}
+        </div>
+      </form>
+    )
+  }
+
   const displayedPreview = previewUrl || existingImageUrl || null
+  const uploadLabel = displayedPreview ? 'Re-upload Image' : 'Upload Image'
 
   return (
     <form className="customer-form" onSubmit={onSubmit} noValidate>
@@ -74,12 +143,8 @@ function VehicleForm({
             onChange={handleFileChange}
             hidden
           />
-          <button
-            type="button"
-            className="image-upload-btn"
-            onClick={handleFileClick}
-          >
-            📷 {uploadLabel}
+          <button type="button" className="image-upload-btn" onClick={handleFileClick}>
+            {uploadLabel}
           </button>
         </div>
       </div>
@@ -87,19 +152,11 @@ function VehicleForm({
       {status && <div className="customer-form-alert">{status}</div>}
 
       <div className="form-actions">
-        <button
-          type="submit"
-          className="btn-primary"
-          disabled={isSubmitting}
-        >
+        <button type="submit" className="btn-primary" disabled={isSubmitting}>
           {isSubmitting ? 'Saving...' : submitLabel}
         </button>
         {onCancel && (
-          <button
-            type="button"
-            className="btn-outline"
-            onClick={onCancel}
-          >
+          <button type="button" className="btn-outline" onClick={onCancel}>
             Cancel
           </button>
         )}

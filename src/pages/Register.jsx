@@ -1,10 +1,10 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
+import { getApiErrorMessage } from '../api/axiosInstance'
 import AuthForm from '../components/forms/AuthForm'
 import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
-import { register } from '../api/authApi'
-import { getRequestErrorMessage } from '../api/axiosClient'
+import { register } from '../services/authService'
 import { isEmail, passwordsMatch, required } from '../utils/validator'
 
 const initialValues = {
@@ -50,17 +50,10 @@ function Register() {
 
     try {
       setIsSubmitting(true)
-      await register({
-        name: values.name,
-        email: values.email,
-        password: values.password,
-        role: 'Customer',
-      })
+      await register(values.name, values.email, values.password)
       navigate('/login')
     } catch (error) {
-      setStatus(
-        getRequestErrorMessage(error, 'Registration failed. Check the details and try again.')
-      )
+      setStatus(getApiErrorMessage(error, 'Registration failed. Check the details and try again.'))
     } finally {
       setIsSubmitting(false)
     }

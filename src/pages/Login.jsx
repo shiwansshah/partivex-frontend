@@ -1,10 +1,11 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
+import { getApiErrorMessage } from '../api/axiosInstance'
 import AuthForm from '../components/forms/AuthForm'
 import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
-import { login } from '../api/authApi'
-import { getRequestErrorMessage } from '../api/axiosClient'
+import useAuth from '../hooks/useAuth'
+import { getHomePathForRole } from '../utils/roles'
 import { isEmail, required } from '../utils/validator'
 
 const initialValues = {
@@ -12,31 +13,9 @@ const initialValues = {
   password: '',
 }
 
-function parseJwtPayload(token) {
-  try {
-    const base64 = token.split('.')[1]
-    const json = atob(base64.replace(/-/g, '+').replace(/_/g, '/'))
-    return JSON.parse(json)
-  } catch {
-    return null
-  }
-}
-
-function getRoleFromToken(token) {
-  const payload = parseJwtPayload(token)
-  if (!payload) return null
-
-  // ASP.NET puts role in the "role" or ClaimTypes.Role claim
-  const role = payload['http://schemas.microsoft.com/ws/2008/06/identity/claims/role']
-    || payload['role']
-
-  // Could be an array if multiple roles
-  if (Array.isArray(role)) return role[0]
-  return role
-}
-
 function Login() {
   const navigate = useNavigate()
+  const { getCurrentUser, login } = useAuth()
   const [values, setValues] = useState(initialValues)
   const [errors, setErrors] = useState({})
   const [status, setStatus] = useState('')
@@ -67,22 +46,12 @@ function Login() {
 
     try {
       setIsSubmitting(true)
-      const response = await login(values)
-      const token = response.data.token
+      await login(values.email, values.password)
 
-      // Store token for authenticated requests
-      localStorage.setItem('token', token)
-
-      // Redirect based on role
-      const role = getRoleFromToken(token)
-
-      if (role === 'Customer') {
-        navigate('/customer/profile')
-      } else {
-        navigate('/admin')
-      }
+      const authenticatedUser = getCurrentUser()
+      navigate(getHomePathForRole(authenticatedUser?.role), { replace: true })
     } catch (error) {
-      setStatus(getRequestErrorMessage(error, 'Invalid email or password.'))
+      setStatus(getApiErrorMessage(error, 'Invalid email or password.'))
     } finally {
       setIsSubmitting(false)
     }

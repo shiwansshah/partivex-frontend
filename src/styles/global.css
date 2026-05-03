@@ -1,5 +1,5 @@
 /* ================================================
-   Global Styles — Partivex Admin & Auth
+   Global Styles - Partivex Admin & Auth
    ================================================ */
 
 /* --- Auth Pages --- */
@@ -76,9 +76,11 @@
   .auth-container {
     flex-direction: column;
   }
+
   .auth-side-panel {
     display: none;
   }
+
   .auth-card {
     padding: var(--space-8) var(--space-6);
     max-width: 100%;
@@ -106,7 +108,11 @@
 .auth-header h1,
 .admin-topbar h1,
 .page-header h2,
-.section-heading h2 {
+.section-heading h2,
+.page-title h1,
+.hero-panel h1,
+.account-panel h2,
+.topbar h2 {
   margin: 0;
   color: var(--color-text);
 }
@@ -119,7 +125,9 @@
 .auth-header p,
 .auth-footer p,
 .page-header p,
-.section-heading p {
+.section-heading p,
+.page-title p,
+.hero-panel p {
   margin: var(--space-2) 0 0;
   color: var(--color-text-secondary);
   line-height: var(--leading-relaxed);
@@ -142,7 +150,8 @@
 /* --- Forms (shared) --- */
 
 .auth-form,
-.stack {
+.stack,
+.vehicle-form {
   display: grid;
   gap: var(--space-xl, 18px);
 }
@@ -225,6 +234,15 @@
   background: var(--color-primary-dark);
 }
 
+.button-secondary {
+  color: var(--color-text);
+  background: var(--color-surface);
+}
+
+.button-secondary:hover {
+  background: #dfe2e8;
+}
+
 .button-outline {
   min-height: 36px;
   padding: 7px var(--space-4);
@@ -248,6 +266,14 @@
 
 .button-danger:hover {
   background: #D63030;
+}
+
+.text-button {
+  border: 0;
+  color: var(--color-text);
+  background: transparent;
+  font-weight: var(--weight-bold);
+  cursor: pointer;
 }
 
 /* --- Admin Shell --- */
@@ -295,6 +321,10 @@
 }
 
 .admin-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
   padding: var(--space-5) var(--space-8);
   border-bottom: 1px solid var(--color-border);
   background: var(--color-body);
@@ -310,15 +340,53 @@
   letter-spacing: 0.5px;
 }
 
-.admin-content {
+.admin-content,
+.main-content {
   width: min(1100px, calc(100% - var(--space-8)));
   margin: 0 auto;
   padding: var(--space-8) 0;
 }
 
+/* --- Main Navbar --- */
+
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-8);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-body);
+}
+
+.navbar-brand {
+  color: var(--color-text);
+  font-size: var(--text-4xl);
+  font-weight: var(--weight-extrabold);
+}
+
+.navbar-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-3);
+}
+
+.navbar-links a {
+  color: var(--color-text-secondary);
+  font-weight: var(--weight-semibold);
+}
+
+.navbar-links a:hover,
+.navbar-links a.active {
+  color: var(--color-primary);
+}
+
 /* --- Cards --- */
 
-.card {
+.card,
+.panel {
   width: 100%;
   padding: var(--space-6);
   border: 1px solid var(--color-border);
@@ -334,20 +402,80 @@
   margin-bottom: var(--space-6);
 }
 
-.section-heading {
+.section-heading,
+.page-title {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: var(--space-4);
 }
 
-/* --- Stats Grid --- */
+/* --- Dashboard and Vehicle Management --- */
 
+.dashboard-grid,
+.vehicles-grid,
 .stats-grid,
 .details-grid {
   display: grid;
   gap: var(--space-4);
 }
+
+.dashboard-grid {
+  grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.6fr);
+}
+
+.hero-panel {
+  min-height: 320px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  background:
+    linear-gradient(90deg, rgba(16, 16, 20, 0.9), rgba(16, 16, 20, 0.54)),
+    url('https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?auto=format&fit=crop&w=1200&q=80');
+  background-position: center;
+  background-size: cover;
+}
+
+.hero-panel h1,
+.hero-panel p {
+  max-width: 560px;
+  color: #ffffff;
+}
+
+.hero-panel h1 {
+  font-size: var(--text-7xl);
+}
+
+.hero-panel .button {
+  margin-top: var(--space-6);
+}
+
+.account-panel {
+  align-self: start;
+}
+
+.vehicles-layout {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.vehicles-grid {
+  grid-template-columns: 360px minmax(0, 1fr);
+}
+
+.customer-selector {
+  margin-bottom: var(--space-5);
+}
+
+.form-actions,
+.table-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+/* --- Stats Grid --- */
 
 .stats-grid {
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -401,6 +529,7 @@
   border: 1px solid var(--color-border);
   text-align: left;
   font-size: var(--text-base);
+  vertical-align: middle;
 }
 
 .table th {
@@ -409,15 +538,18 @@
   font-weight: var(--weight-semibold);
 }
 
+.empty-state {
+  padding: var(--space-8);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-secondary);
+  text-align: center;
+}
+
 /* --- Utilities --- */
 
 .text-mono {
   font-family: var(--font-mono);
-}
-
-.form-actions {
-  display: flex;
-  gap: var(--space-3);
 }
 
 .form-divider {
@@ -435,6 +567,13 @@
 
 /* --- Responsive --- */
 
+@media (max-width: 900px) {
+  .dashboard-grid,
+  .vehicles-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 760px) {
   .admin-shell {
     grid-template-columns: 1fr;
@@ -445,12 +584,19 @@
   }
 
   .admin-nav,
-  .section-heading {
+  .section-heading,
+  .page-title,
+  .navbar,
+  .navbar-links {
     display: grid;
   }
 
   .stats-grid,
   .details-grid {
     grid-template-columns: 1fr;
+  }
+
+  .hero-panel {
+    min-height: 280px;
   }
 }
