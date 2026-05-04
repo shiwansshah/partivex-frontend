@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useDeferredValue, useEffect, useState } from 'react'
 import InventoryItemForm from '../../components/inventory/InventoryItemForm'
 import Button from '../../components/ui/Button'
+import Input from '../../components/ui/Input'
 import {
   createInventoryItem,
   deleteInventoryItem,
@@ -33,6 +34,10 @@ function InventoryPage() {
   const [activeItemId, setActiveItemId] = useState(null)
   const [formValues, setFormValues] = useState(initialFormValues)
   const [formErrors, setFormErrors] = useState({})
+  const [searchTerm, setSearchTerm] = useState('')
+  const [stockFilter, setStockFilter] = useState('all')
+
+  const deferredSearchTerm = useDeferredValue(searchTerm)
 
   async function loadInventory({ showLoading = true, nextStatus = null } = {}) {
     try {
@@ -181,6 +186,14 @@ function InventoryPage() {
     setFormErrors({})
   }
 
+  function handleSearchChange(event) {
+    setSearchTerm(event.target.value)
+  }
+
+  function handleStockFilterChange(event) {
+    setStockFilter(event.target.value)
+  }
+
   function validateForm() {
     const nextErrors = {}
 
@@ -210,6 +223,22 @@ function InventoryPage() {
   const summary = monitoring?.summary
   const items = monitoring?.items ?? []
   const recentChanges = monitoring?.recentChanges ?? []
+  const visibleItems = items.filter((item) => {
+    const searchValue = deferredSearchTerm.trim().toLowerCase()
+    const matchesSearch =
+      searchValue.length === 0 ||
+      [item.name, item.partNumber, item.category, item.vendorName, item.storageLocation]
+        .join(' ')
+        .toLowerCase()
+        .includes(searchValue)
+
+    const matchesStockFilter =
+      stockFilter === 'all' ||
+      (stockFilter === 'low' && item.isLowStock) ||
+      (stockFilter === 'healthy' && !item.isLowStock)
+
+    return matchesSearch && matchesStockFilter
+  })
 
   return (
     <div className="stack">
@@ -305,7 +334,35 @@ function InventoryPage() {
         <div className="section-heading">
           <div>
             <h2>Current Stock</h2>
-            <p>Live inventory records from the backend, ordered for quick stock review.</p>
+            <p>
+              Search, filter, edit, and remove inventory records while keeping the stock table
+              aligned with the admin workflow.
+            </p>
+          </div>
+          <div className="inventory-toolbar">
+            <div className="inventory-toolbar-field">
+              <Input
+                id="inventorySearch"
+                label="Search parts"
+                name="inventorySearch"
+                value={searchTerm}
+                onChange={handleSearchChange}
+                placeholder="Name, part number, category, vendor..."
+              />
+            </div>
+            <div className="form-group inventory-toolbar-select">
+              <label htmlFor="stockFilter">Stock Filter</label>
+              <select
+                id="stockFilter"
+                className="form-control"
+                value={stockFilter}
+                onChange={handleStockFilterChange}
+              >
+                <option value="all">All items</option>
+                <option value="low">Low stock only</option>
+                <option value="healthy">Healthy stock only</option>
+              </select>
+            </div>
           </div>
         </div>
 
@@ -324,7 +381,7 @@ function InventoryPage() {
               </tr>
             </thead>
             <tbody>
-              {items.map((item) => (
+              {visibleItems.map((item) => (
                 <tr key={item.id}>
                   <td>
                     <div className="inventory-part-cell">
@@ -371,10 +428,10 @@ function InventoryPage() {
                   </td>
                 </tr>
               ))}
-              {items.length === 0 && !isLoading && (
+              {visibleItems.length === 0 && !isLoading && (
                 <tr>
                   <td colSpan="8" className="table-empty">
-                    No inventory items are available yet.
+                    No inventory items match the current filters.
                   </td>
                 </tr>
               )}
