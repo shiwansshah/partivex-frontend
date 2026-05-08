@@ -31,13 +31,32 @@
 
 .auth-side-panel {
   flex: 1;
-  background: var(--color-primary);
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background:
+    linear-gradient(135deg, rgba(12, 15, 20, 0.9), rgba(12, 15, 20, 0.44)),
+    linear-gradient(180deg, rgba(239, 35, 60, 0.2), rgba(12, 15, 20, 0.35)),
+    url('../assets/auth-vehicle-bg.png') center / cover no-repeat;
   color: var(--color-body);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: var(--space-12);
   text-align: center;
+}
+
+.auth-side-panel::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: radial-gradient(circle at 50% 45%, rgba(255, 255, 255, 0.1), transparent 34%);
+}
+
+.side-panel-content {
+  max-width: 360px;
+  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.55);
 }
 
 .side-panel-content h2 {
