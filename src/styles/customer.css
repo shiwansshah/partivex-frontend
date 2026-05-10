@@ -22,7 +22,7 @@
   font-weight: var(--weight-bold);
   color: var(--color-text);
   text-decoration: none;
-  letter-spacing: -0.3px;
+  letter-spacing: 0;
 }
 
 .customer-navbar-brand span {
@@ -196,7 +196,7 @@
   font-size: var(--text-xs);
   font-weight: var(--weight-semibold);
   text-transform: uppercase;
-  letter-spacing: 0.8px;
+  letter-spacing: 0;
   color: var(--color-text-secondary);
 }
 

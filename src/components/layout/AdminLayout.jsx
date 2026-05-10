@@ -3,7 +3,7 @@ import useAuth from '../../hooks/useAuth'
 
 function AdminLayout() {
   const navigate = useNavigate()
-  const { logout } = useAuth()
+  const { logout, user } = useAuth()
 
   function handleLogout() {
     logout()
@@ -20,6 +20,8 @@ function AdminLayout() {
           </NavLink>
           <NavLink to="/admin/staff">Staff Management</NavLink>
           <NavLink to="/admin/customers">Customer Management</NavLink>
+          <NavLink to="/admin/inventory">Inventory Monitoring</NavLink>
+          <NavLink to="/admin/purchases">Purchase Invoices</NavLink>
           <NavLink to="/vehicles">Vehicles</NavLink>
         </nav>
       </aside>
@@ -30,9 +32,12 @@ function AdminLayout() {
             <span className="eyebrow">Admin Panel</span>
             <h1>Administration</h1>
           </div>
-          <button className="text-button" type="button" onClick={handleLogout}>
-            Logout
-          </button>
+          <div className="topbar-actions">
+            <span className="metric-pill">{user?.email || user?.role || 'Admin'}</span>
+            <button className="text-button" type="button" onClick={handleLogout}>
+              Logout
+            </button>
+          </div>
         </header>
 
         <main className="admin-content">

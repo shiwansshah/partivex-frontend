@@ -20,16 +20,14 @@ function Navbar() {
       </NavLink>
 
       <div className="navbar-links">
-        <NavLink to="/dashboard">Dashboard</NavLink>
         <NavLink to="/vehicles">Vehicles</NavLink>
         {canUseStaffWorkspace && <NavLink to="/customers">Customers</NavLink>}
-        {canUseStaffWorkspace && <NavLink to="/customers/add">Add Customer</NavLink>}
         {canUseStaffWorkspace && <NavLink to="/customers/reports">Customer Reports</NavLink>}
-        {canUseStaffWorkspace && <NavLink to="/inventory">Inventory</NavLink>}
         {canUseStaffWorkspace && <NavLink to="/sales">Sales</NavLink>}
         {canUseStaffWorkspace && <NavLink to="/staff">Staff</NavLink>}
         {canUseStaffWorkspace && <NavLink to="/notifications">Notifications</NavLink>}
         {isAdmin && <NavLink to="/admin">Admin Panel</NavLink>}
+        <span className="metric-pill">{user?.role || 'User'}</span>
         <button className="text-button" type="button" onClick={handleLogout}>
           Logout
         </button>

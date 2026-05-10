@@ -34,8 +34,25 @@ function Vehicles() {
   }, [])
 
   useEffect(() => {
-    fetchVehicles()
-  }, [fetchVehicles])
+    let isCurrent = true
+
+    async function loadVehicles() {
+      try {
+        const response = await getMyVehicles()
+        if (isCurrent) setVehicles(response.data)
+      } catch (err) {
+        if (isCurrent) setError(getRequestErrorMessage(err, 'Failed to load vehicles.'))
+      } finally {
+        if (isCurrent) setLoading(false)
+      }
+    }
+
+    loadVehicles()
+
+    return () => {
+      isCurrent = false
+    }
+  }, [])
 
   function resolveImageUrl(url) {
     if (!url) return null
