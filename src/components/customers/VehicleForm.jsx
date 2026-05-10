@@ -3,6 +3,9 @@ import Button from '../ui/Button'
 import Input from '../ui/Input'
 import { required } from '../../utils/validator'
 
+const MAX_IMAGE_SIZE_MB = 2
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp']
+
 const emptyVehicle = {
   vehicleNumber: '',
   brand: '',
@@ -21,6 +24,10 @@ function VehicleForm({
 }) {
   const [formData, setFormData] = useState({ ...emptyVehicle, ...initialValues })
   const [errors, setErrors] = useState({})
+  const [vehicleImage, setVehicleImage] = useState({
+    imageDataUrl: '',
+    imageName: '',
+  })
 
   function handleChange(event) {
     const { name, value } = event.target
@@ -29,6 +36,59 @@ function VehicleForm({
       ...currentData,
       [name]: value,
     }))
+  }
+
+  function handleImageChange(event) {
+    const file = event.target.files?.[0]
+
+    setErrors((currentErrors) => ({
+      ...currentErrors,
+      vehicleImage: '',
+    }))
+
+    if (!file) {
+      setVehicleImage({ imageDataUrl: '', imageName: '' })
+      return
+    }
+
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+      setVehicleImage({ imageDataUrl: '', imageName: '' })
+      setErrors((currentErrors) => ({
+        ...currentErrors,
+        vehicleImage: 'Please choose a JPG, PNG, or WebP image.',
+      }))
+      event.target.value = ''
+      return
+    }
+
+    if (file.size > MAX_IMAGE_SIZE_MB * 1024 * 1024) {
+      setVehicleImage({ imageDataUrl: '', imageName: '' })
+      setErrors((currentErrors) => ({
+        ...currentErrors,
+        vehicleImage: `Image must be ${MAX_IMAGE_SIZE_MB}MB or smaller.`,
+      }))
+      event.target.value = ''
+      return
+    }
+
+    const reader = new FileReader()
+
+    reader.onload = () => {
+      setVehicleImage({
+        imageDataUrl: reader.result,
+        imageName: file.name,
+      })
+    }
+
+    reader.onerror = () => {
+      setVehicleImage({ imageDataUrl: '', imageName: '' })
+      setErrors((currentErrors) => ({
+        ...currentErrors,
+        vehicleImage: 'Unable to read this image. Please choose another file.',
+      }))
+    }
+
+    reader.readAsDataURL(file)
   }
 
   function validateForm() {
@@ -60,6 +120,8 @@ function VehicleForm({
       year: formData.year ? Number(formData.year) : null,
       vehicleType: formData.vehicleType.trim(),
       notes: formData.notes.trim(),
+      imageDataUrl: vehicleImage.imageDataUrl,
+      imageName: vehicleImage.imageName,
     })
   }
 
@@ -128,6 +190,27 @@ function VehicleForm({
           value={formData.notes}
           onChange={handleChange}
         />
+      </div>
+
+      <div className="form-group vehicle-image-field">
+        <label htmlFor="vehicleImage">Vehicle Image</label>
+        <input
+          id="vehicleImage"
+          name="vehicleImage"
+          className="form-control"
+          type="file"
+          accept="image/png,image/jpeg,image/webp"
+          onChange={handleImageChange}
+        />
+        <p className="field-hint">Optional. Use a JPG, PNG, or WebP image up to 2MB.</p>
+        {errors.vehicleImage && <p className="field-error">{errors.vehicleImage}</p>}
+
+        {vehicleImage.imageDataUrl && (
+          <div className="vehicle-image-preview">
+            <img src={vehicleImage.imageDataUrl} alt="Selected vehicle preview" />
+            <span>{vehicleImage.imageName}</span>
+          </div>
+        )}
       </div>
 
       <div className="form-actions">
