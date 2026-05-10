@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 import Table from '../../components/common/Table'
 import { getCustomerById, getCustomerVehicles } from '../../api/customerApi'
 import { getRequestErrorMessage } from '../../api/axiosClient'
+import { getVehicleImage } from '../../utils/vehicleImageStorage'
 
 function normalizeList(data) {
   if (Array.isArray(data)) {
@@ -42,17 +43,31 @@ function CustomerDetails() {
     loadCustomerDetails()
   }, [id])
 
-  const vehicleRows = vehicles.map((vehicle) => ({
-    id: vehicle.id,
-    vehicleNumber: vehicle.vehicleNumber || '-',
-    brand: vehicle.brand || '-',
-    model: vehicle.model || '-',
-    year: vehicle.year || '-',
-    vehicleType: vehicle.vehicleType || '-',
-    notes: vehicle.notes || '-',
-  }))
+  const vehicleRows = vehicles.map((vehicle) => {
+    const storedImage = getVehicleImage(vehicle, id)
+
+    return {
+      id: vehicle.id,
+      image: storedImage?.imageDataUrl ? (
+        <img
+          className="vehicle-table-image"
+          src={storedImage.imageDataUrl}
+          alt={`${vehicle.vehicleNumber || 'Vehicle'} preview`}
+        />
+      ) : (
+        <span className="vehicle-table-image-placeholder">No image</span>
+      ),
+      vehicleNumber: vehicle.vehicleNumber || '-',
+      brand: vehicle.brand || '-',
+      model: vehicle.model || '-',
+      year: vehicle.year || '-',
+      vehicleType: vehicle.vehicleType || '-',
+      notes: vehicle.notes || '-',
+    }
+  })
 
   const vehicleColumns = [
+    { key: 'image', label: 'Image' },
     { key: 'vehicleNumber', label: 'Vehicle Number' },
     { key: 'brand', label: 'Brand' },
     { key: 'model', label: 'Model' },
