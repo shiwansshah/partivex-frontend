@@ -3,6 +3,7 @@ import { useState } from 'react'
 import VehicleForm from '../../components/customers/VehicleForm'
 import { addCustomerVehicle } from '../../api/customerApi'
 import { getRequestErrorMessage } from '../../api/axiosClient'
+import { saveVehicleImage } from '../../utils/vehicleImageStorage'
 
 function AddVehicle() {
   const { id } = useParams()
@@ -15,7 +16,17 @@ function AddVehicle() {
       setIsSubmitting(true)
       setError('')
 
-      await addCustomerVehicle(id, vehicleData)
+      const { imageDataUrl, imageName, ...vehiclePayload } = vehicleData
+      const response = await addCustomerVehicle(id, vehiclePayload)
+
+      saveVehicleImage({
+        vehicleId: response.data?.id,
+        customerId: id,
+        vehicleNumber: response.data?.vehicleNumber || vehiclePayload.vehicleNumber,
+        imageDataUrl,
+        imageName,
+      })
+
       navigate(`/admin/customers/${id}`)
     } catch (requestError) {
       setError(getRequestErrorMessage(requestError, 'Unable to add vehicle.'))
