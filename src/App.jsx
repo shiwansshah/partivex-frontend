@@ -6,6 +6,7 @@ import Dashboard from './pages/admin/Dashboard'
 import StaffManagement from './pages/admin/StaffManagement'
 import CustomerManagement from './pages/admin/CustomerManagement'
 import InventoryPage from './pages/inventory/InventoryPage'
+import PurchasesPage from './pages/purchases/PurchasesPage'
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
         <Route path="staff" element={<StaffManagement />} />
         <Route path="customers" element={<CustomerManagement />} />
         <Route path="inventory" element={<InventoryPage />} />
+        <Route path="purchases" element={<PurchasesPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>

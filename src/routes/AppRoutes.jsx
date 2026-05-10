@@ -8,6 +8,7 @@ import EditCustomer from '../pages/customers/EditCustomer'
 import AddVehicle from '../pages/customers/AddVehicle'
 import CustomerReports from '../pages/customers/CustomerReports'
 import InventoryPage from '../pages/inventory/InventoryPage'
+import PurchasesPage from '../pages/purchases/PurchasesPage'
 import SalesPage from '../pages/sales/SalesPage'
 import StaffPage from '../pages/staff/StaffPage'
 import NotificationsPage from '../pages/notifications/NotificationsPage'
@@ -24,6 +25,7 @@ function AppRoutes() {
         <Route path="customers/:id/edit" element={<EditCustomer />} />
         <Route path="customers/:id/add-vehicle" element={<AddVehicle />} />
         <Route path="inventory" element={<InventoryPage />} />
+        <Route path="purchases" element={<PurchasesPage />} />
         <Route path="sales" element={<SalesPage />} />
         <Route path="staff" element={<StaffPage />} />
         <Route path="notifications" element={<NotificationsPage />} />

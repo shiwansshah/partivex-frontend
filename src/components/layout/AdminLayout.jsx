@@ -12,6 +12,7 @@ function AdminLayout() {
           <NavLink to="/admin/staff">Staff Management</NavLink>
           <NavLink to="/admin/customers">Customer Management</NavLink>
           <NavLink to="/admin/inventory">Inventory Monitoring</NavLink>
+          <NavLink to="/admin/purchases">Purchase Invoices</NavLink>
         </nav>
       </aside>
 

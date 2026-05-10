@@ -11,6 +11,7 @@ function Navbar() {
         <Link to="/customers/add">Add Customer</Link>
         <Link to="/customers/reports">Customer Reports</Link>
         <Link to="/inventory">Inventory</Link>
+        <Link to="/purchases">Purchases</Link>
         <Link to="/sales">Sales</Link>
         <Link to="/staff">Staff</Link>
         <Link to="/notifications">Notifications</Link>

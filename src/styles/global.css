@@ -551,3 +551,179 @@ textarea {
     min-width: 0;
   }
 }
+
+/* ── Purchase Invoices ─────────────────────────────────────── */
+
+.purchase-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  border-color: #c8d7e5;
+  background: linear-gradient(135deg, #eef4ff 0%, #f8fafc 100%);
+}
+
+.purchase-hero-copy {
+  display: grid;
+  gap: 10px;
+}
+
+.purchase-hero-copy h2 {
+  margin: 0;
+  color: #102a43;
+  font-size: 28px;
+}
+
+.purchase-hero-copy p {
+  max-width: 700px;
+  margin: 0;
+  color: #52606d;
+  line-height: 1.7;
+}
+
+.purchase-hero-actions {
+  flex-shrink: 0;
+}
+
+.purchase-form {
+  display: grid;
+  gap: 20px;
+}
+
+.purchase-form-header-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.purchase-form-span-2 {
+  grid-column: 1 / -1;
+}
+
+.purchase-lines-section {
+  display: grid;
+  gap: 12px;
+}
+
+.purchase-lines-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.purchase-lines-heading h3 {
+  margin: 0;
+  font-size: 16px;
+  color: #102a43;
+}
+
+.purchase-lines-table-wrap {
+  overflow-x: auto;
+}
+
+.purchase-lines-table {
+  min-width: 600px;
+}
+
+.purchase-number-input {
+  width: 90px;
+}
+
+.purchase-subtotal {
+  font-weight: 600;
+  color: #102a43;
+  white-space: nowrap;
+}
+
+.purchase-total-label {
+  text-align: right;
+  font-weight: 600;
+  color: #486581;
+  padding-right: 16px;
+}
+
+.purchase-total-amount {
+  font-weight: 700;
+  font-size: 15px;
+  color: #102a43;
+  white-space: nowrap;
+}
+
+.purchase-invoice-link {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: #2563eb;
+  cursor: pointer;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.purchase-invoice-link:hover {
+  color: #1d4ed8;
+}
+
+.purchase-row-active {
+  background: #f0f6ff;
+}
+
+.purchase-detail-row > td {
+  padding: 0;
+  background: #f8fafc;
+  border-top: none;
+}
+
+.purchase-detail-panel {
+  padding: 16px 20px;
+  border-top: 2px solid #bee3f8;
+}
+
+.purchase-detail-header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.purchase-detail-header strong {
+  font-size: 14px;
+  color: #102a43;
+}
+
+.purchase-detail-notes {
+  margin: 0;
+  font-size: 13px;
+  color: #627d98;
+}
+
+.purchase-legend {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.purchase-loading {
+  color: #627d98;
+  font-size: 14px;
+  padding: 8px 0;
+}
+
+.status-pill.is-draft {
+  color: #92400e;
+  background: #fef3c7;
+  border: 1px solid #fde68a;
+}
+
+@media (max-width: 640px) {
+  .purchase-form-header-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .purchase-hero {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
