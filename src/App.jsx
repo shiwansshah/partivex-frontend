@@ -6,6 +6,7 @@ import Dashboard from './pages/admin/Dashboard'
 import StaffManagement from './pages/admin/StaffManagement'
 import CustomerManagement from './pages/admin/CustomerManagement'
 import VendorManagement from './pages/admin/VendorManagement'
+import PartManagement from './pages/admin/PartManagement'
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
         <Route path="staff" element={<StaffManagement />} />
         <Route path="customers" element={<CustomerManagement />} />
         <Route path="vendors" element={<VendorManagement />} />
+        <Route path="parts" element={<PartManagement />} />
       </Route>
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
