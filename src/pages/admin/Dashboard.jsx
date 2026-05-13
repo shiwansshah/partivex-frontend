@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { getAdminDashboardSummary } from '../../api/adminDashboardApi'
 import { getApiErrorMessage } from '../../api/axiosInstance'
 import PageHeader from '../../components/common/PageHeader'
 import StatusMessage from '../../components/ui/StatusMessage'
@@ -10,6 +11,9 @@ const initialStats = {
   staff: 0,
   customers: 0,
   vehicles: 0,
+  totalSales: 0,
+  totalInventoryQuantity: 0,
+  lowStockPartsCount: 0,
 }
 
 function Dashboard() {
@@ -23,7 +27,11 @@ function Dashboard() {
 
     async function loadDashboard() {
       try {
-        const [customers, staff] = await Promise.all([getCustomers(), getStaff()])
+        const [customers, staff, dashboardSummaryResponse] = await Promise.all([
+          getCustomers(),
+          getStaff(),
+          getAdminDashboardSummary(),
+        ])
         const customerDetails = await Promise.all(
           customers.slice(0, 20).map((customer) => getCustomerById(customer.id)),
         )
@@ -37,6 +45,9 @@ function Dashboard() {
             staff: staff.length,
             customers: customers.length,
             vehicles: vehicleCount,
+            totalSales: dashboardSummaryResponse.data.totalSales,
+            totalInventoryQuantity: dashboardSummaryResponse.data.totalInventoryQuantity,
+            lowStockPartsCount: dashboardSummaryResponse.data.lowStockPartsCount,
           })
           setRecentCustomers(customers.slice(0, 5))
         }
@@ -79,6 +90,18 @@ function Dashboard() {
               <span>Vehicles</span>
               <strong>{stats.vehicles}</strong>
             </Link>
+            <div className="stat-card">
+              <span>Total Sales</span>
+              <strong>{formatCurrency(stats.totalSales)}</strong>
+            </div>
+            <Link className="stat-card stat-link" to="/admin/inventory">
+              <span>Stock Quantity</span>
+              <strong>{stats.totalInventoryQuantity}</strong>
+            </Link>
+            <Link className="stat-card stat-link" to="/admin/inventory">
+              <span>Low Stock Parts</span>
+              <strong>{stats.lowStockPartsCount}</strong>
+            </Link>
           </div>
         )}
       </div>
@@ -120,6 +143,14 @@ function Dashboard() {
       )}
     </section>
   )
+}
+
+function formatCurrency(value) {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 2,
+  }).format(value ?? 0)
 }
 
 export default Dashboard

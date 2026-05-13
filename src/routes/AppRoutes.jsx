@@ -19,6 +19,8 @@ import SalesPage from '../pages/sales/SalesPage'
 import StaffPage from '../pages/staff/StaffPage'
 import NotificationsPage from '../pages/notifications/NotificationsPage'
 import AdminDashboard from '../pages/admin/Dashboard'
+import ActivityLogs from '../pages/admin/ActivityLogs'
+import Permissions from '../pages/admin/Permissions'
 import StaffManagement from '../pages/admin/StaffManagement'
 import CustomerManagement from '../pages/admin/CustomerManagement'
 import Profile from '../pages/customer/Profile'
@@ -127,6 +129,8 @@ function AppRoutes() {
         }
       >
         <Route index element={<AdminDashboard />} />
+        <Route path="activity-logs" element={<ActivityLogs />} />
+        <Route path="permissions" element={<Permissions />} />
         <Route path="staff" element={<StaffManagement />} />
         <Route path="customers" element={<CustomerManagement />} />
         <Route path="inventory" element={<InventoryPage />} />

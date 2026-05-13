@@ -18,6 +18,8 @@ function AdminLayout() {
           <NavLink to="/admin" end>
             Dashboard
           </NavLink>
+          <NavLink to="/admin/activity-logs">Activity Logs</NavLink>
+          <NavLink to="/admin/permissions">Permissions</NavLink>
           <NavLink to="/admin/staff">Staff Management</NavLink>
           <NavLink to="/admin/customers">Customer Management</NavLink>
           <NavLink to="/admin/inventory">Inventory Monitoring</NavLink>
