@@ -13,6 +13,7 @@ const portalLinks = [
 
 function CustomerLayout() {
   const [dropdownOpen, setDropdownOpen] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
   const dropdownRef = useRef(null)
   const navigate = useNavigate()
 
@@ -32,6 +33,11 @@ function CustomerLayout() {
     navigate('/login')
   }
 
+  function handleNavClick() {
+    setMenuOpen(false)
+    setDropdownOpen(false)
+  }
+
   return (
     <>
       <nav className="customer-navbar">
@@ -39,9 +45,31 @@ function CustomerLayout() {
           Parti<span>vex</span>
         </NavLink>
 
-        <div className="customer-nav-links" aria-label="Customer navigation">
+        <button
+          className="hamburger-btn"
+          type="button"
+          onClick={() => setMenuOpen(!menuOpen)}
+          aria-label="Toggle navigation"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            {menuOpen ? (
+              <>
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </>
+            ) : (
+              <>
+                <line x1="3" y1="6" x2="21" y2="6" />
+                <line x1="3" y1="12" x2="21" y2="12" />
+                <line x1="3" y1="18" x2="21" y2="18" />
+              </>
+            )}
+          </svg>
+        </button>
+
+        <div className={`customer-nav-links ${menuOpen ? 'is-open' : ''}`} aria-label="Customer navigation">
           {portalLinks.map((link) => (
-            <NavLink key={link.to} to={link.to} className="customer-nav-link">
+            <NavLink key={link.to} to={link.to} className="customer-nav-link" onClick={handleNavClick}>
               {link.label}
             </NavLink>
           ))}
@@ -68,7 +96,7 @@ function CustomerLayout() {
                   key={link.to}
                   to={link.to}
                   className="dropdown-item"
-                  onClick={() => setDropdownOpen(false)}
+                  onClick={handleNavClick}
                 >
                   {link.label}
                 </NavLink>

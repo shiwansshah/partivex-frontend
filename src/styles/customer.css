@@ -9,12 +9,17 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--space-4);
-  padding: 0 var(--space-6);
+  padding: var(--space-3) var(--space-6);
   min-height: 64px;
-  background: var(--color-body);
-  border-bottom: 1px solid var(--color-border);
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: var(--shadow-sm);
+  border-radius: var(--radius-full);
+  margin: var(--space-4) var(--space-4) var(--space-6);
   position: sticky;
-  top: 0;
+  top: var(--space-4);
   z-index: 100;
 }
 
@@ -257,10 +262,16 @@
 
 .customer-card {
   background: var(--color-body);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-xl);
-  padding: var(--space-7);
-  box-shadow: var(--shadow-xs);
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  border-radius: var(--radius-2xl);
+  padding: var(--space-10);
+  box-shadow: var(--shadow-md);
+  transition: all var(--transition-smooth);
+}
+
+.customer-card:hover {
+  box-shadow: var(--shadow-hover);
+  transform: translateY(-2px);
 }
 
 .section-header {
@@ -782,7 +793,7 @@
   overflow: hidden;
 }
 
-.portal-detail-list > div {
+.portal-detail-list>div {
   display: grid;
   grid-template-columns: 150px minmax(0, 1fr);
   gap: var(--space-4);
@@ -790,7 +801,7 @@
   border-top: 1px solid var(--color-border);
 }
 
-.portal-detail-list > div:first-child {
+.portal-detail-list>div:first-child {
   border-top: 0;
 }
 
@@ -824,7 +835,7 @@
 
 @media (max-width: 768px) {
   .customer-navbar {
-    align-items: flex-start;
+    flex-wrap: wrap;
     padding: var(--space-3) var(--space-4);
   }
 
@@ -833,10 +844,19 @@
     width: 100%;
     justify-content: flex-start;
     padding-top: var(--space-2);
+    display: none;
+  }
+
+  .customer-nav-links.is-open {
+    display: flex;
   }
 
   .customer-nav-right {
     margin-left: auto;
+  }
+
+  .hamburger-btn {
+    display: inline-flex;
   }
 
   .profile-list-item {
@@ -879,7 +899,7 @@
     width: 100%;
   }
 
-  .portal-detail-list > div {
+  .portal-detail-list>div {
     grid-template-columns: 1fr;
     gap: var(--space-1);
   }

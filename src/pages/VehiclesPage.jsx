@@ -130,47 +130,73 @@ function VehiclesPage() {
   }
 
   return (
-    <section className="vehicles-layout">
-      <div className="page-title">
+    <section className="vehicles-layout" style={{ padding: '0 var(--space-4)' }}>
+      {/* Premium Header matching dashboard hero style */}
+      <div className="panel" style={{
+        marginBottom: 'var(--space-6)',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        gap: 'var(--space-6)',
+        background: 'linear-gradient(135deg, rgba(239, 35, 60, 0.05), transparent)',
+      }}>
         <div>
-          <span className="eyebrow">Vehicles</span>
-          <h1>Customer Vehicles</h1>
-          <p>
+          <span style={{
+            display: 'inline-block',
+            padding: '4px 12px',
+            background: 'var(--color-primary-lighter)',
+            color: 'var(--color-primary-dark)',
+            borderRadius: '999px',
+            fontSize: 'var(--text-sm)',
+            fontWeight: 'var(--weight-bold)',
+            marginBottom: 'var(--space-2)'
+          }}>
+            Vehicles
+          </span>
+          <h1 style={{ fontSize: 'var(--text-5xl)', fontWeight: 'var(--weight-extrabold)', letterSpacing: '-1px', marginBottom: 'var(--space-2)' }}>
+            Customer Vehicles
+          </h1>
+          <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--text-lg)', margin: 0 }}>
             Create, update, and remove vehicle records for the selected customer.
           </p>
         </div>
+
+        {canSelectCustomer && (
+          <div style={{ minWidth: '280px', background: 'white', padding: 'var(--space-4)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-sm)' }}>
+            <label htmlFor="customerId" style={{ display: 'block', fontSize: 'var(--text-sm)', fontWeight: 'var(--weight-bold)', marginBottom: 'var(--space-2)', color: 'var(--color-text-secondary)' }}>
+              Active Customer
+            </label>
+            <select
+              id="customerId"
+              className="form-control"
+              style={{ background: 'var(--color-bg)', border: 'none' }}
+              value={selectedCustomerId}
+              onChange={(event) => {
+                setSelectedCustomerId(event.target.value)
+                setEditingVehicle(null)
+                setFormVersion((current) => current + 1)
+              }}
+            >
+              <option value="">Select customer</option>
+              {customers.map((customer) => (
+                <option key={customer.id} value={customer.id}>
+                  {customer.fullName || customer.email}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
 
-      {status && <div className="form-alert">{status}</div>}
+      {status && <div className="form-alert" style={{ marginBottom: 'var(--space-6)' }}>{status}</div>}
 
-      <div className="vehicles-grid">
-        <aside className="panel">
-          <div className="section-heading">
-            <h2>{editingVehicle ? 'Update Vehicle' : 'Add Vehicle'}</h2>
+      <div className="vehicles-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: 'var(--space-6)' }}>
+        <aside className="panel" style={{ alignSelf: 'start', position: 'sticky', top: '100px' }}>
+          <div className="section-heading" style={{ marginBottom: 'var(--space-6)', paddingBottom: 'var(--space-4)', borderBottom: '1px solid var(--color-border)' }}>
+            <h2 style={{ fontSize: 'var(--text-2xl)', fontWeight: 'var(--weight-bold)' }}>{editingVehicle ? 'Update Vehicle' : 'Add New Vehicle'}</h2>
+            <p style={{ color: 'var(--color-text-secondary)', marginTop: '4px' }}>Fill in the details below to save a vehicle record.</p>
           </div>
-
-          {canSelectCustomer && (
-            <div className="form-group customer-selector">
-              <label htmlFor="customerId">Customer</label>
-              <select
-                id="customerId"
-                className="form-control"
-                value={selectedCustomerId}
-                onChange={(event) => {
-                  setSelectedCustomerId(event.target.value)
-                  setEditingVehicle(null)
-                  setFormVersion((current) => current + 1)
-                }}
-              >
-                <option value="">Select customer</option>
-                {customers.map((customer) => (
-                  <option key={customer.id} value={customer.id}>
-                    {customer.fullName || customer.email}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
 
           <VehicleForm
             key={`${editingVehicle?.id || 'new-vehicle'}-${formVersion}`}
@@ -186,10 +212,12 @@ function VehiclesPage() {
         </aside>
 
         <div className="panel">
-          <div className="section-heading">
+          <div className="section-heading" style={{ marginBottom: 'var(--space-6)' }}>
             <div>
-              <h2>Vehicle List</h2>
-              <p>{isLoading ? 'Loading vehicles...' : `${vehicles.length} vehicle records`}</p>
+              <h2 style={{ fontSize: 'var(--text-2xl)', fontWeight: 'var(--weight-bold)' }}>Vehicle List</h2>
+              <p style={{ color: 'var(--color-text-secondary)', marginTop: '4px' }}>
+                {isLoading ? 'Loading vehicles...' : `${vehicles.length} vehicle records`}
+              </p>
             </div>
           </div>
 

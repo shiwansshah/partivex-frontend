@@ -7,10 +7,18 @@ function StatusMessage({ type = 'loading', message, className = '' }) {
     )
   }
 
-  // loading or empty
-  const stateClass = type === 'loading' ? 'customer-loading' : 'customer-empty'
+  if (type === 'loading') {
+    return (
+      <div className={`loading-state ${className}`.trim()}>
+        <div className="loading-spinner" />
+        {message}
+      </div>
+    )
+  }
+
+  // empty
   return (
-    <div className={`${stateClass} ${className}`.trim()}>
+    <div className={`customer-empty ${className}`.trim()}>
       {message}
     </div>
   )
