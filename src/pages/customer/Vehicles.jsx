@@ -3,6 +3,7 @@ import { getMyVehicles, addVehicle, updateVehicle } from '../../api/vehicleApi'
 import { getRequestErrorMessage, apiBaseUrl } from '../../api/axiosClient'
 import VehicleForm from '../../components/VehicleForm'
 import StatusMessage from '../../components/ui/StatusMessage'
+import { customerPortalImages } from '../../utils/customerPortalImages'
 
 const emptyForm = { name: '', number: '' }
 
@@ -136,7 +137,11 @@ function Vehicles() {
   }
 
   if (loading) {
-    return <StatusMessage type="loading" message="Loading vehicles..." />
+    return (
+      <div className="customer-container portal-container">
+        <StatusMessage type="loading" message="Loading your registered vehicles..." />
+      </div>
+    )
   }
 
   if (error) {
@@ -148,23 +153,38 @@ function Vehicles() {
   }
 
   return (
-    <div className="customer-stack">
-      <div className="customer-card">
+    <div className="customer-page portal-container">
+      <section className="portal-page-hero">
+        <div>
+          <span className="customer-eyebrow">Garage profile</span>
+          <h1>Vehicles</h1>
+          <p>Keep each vehicle profile ready so service bookings and part requests start with accurate details.</p>
+        </div>
+        <img src={customerPortalImages.vehicle} alt="Detailed view of a customer vehicle" />
+      </section>
+
+      <div className="customer-workflow-grid vehicles-workflow-grid">
+        <section className="customer-card">
         <div className="section-header">
           <div className="section-header-text">
-            <h2>My Vehicles</h2>
-            <p>Manage your registered vehicles.</p>
+            <span className="customer-eyebrow">Saved records</span>
+            <h2>My vehicles</h2>
+            <p>Use the registered vehicle list when booking visits or requesting matching parts.</p>
           </div>
           {!showForm && (
             <button className="btn-primary" onClick={handleAdd}>
-              + Add Vehicle
+              Add vehicle
             </button>
           )}
         </div>
 
         {showForm && (
           <div className="form-divider">
-            <h3>{editingId ? 'Edit Vehicle' : 'Add New Vehicle'}</h3>
+            <div className="guided-form-heading">
+              <span>{editingId ? 'Update details' : 'Step 1 of 1'}</span>
+              <h3>{editingId ? 'Edit vehicle' : 'Add a vehicle'}</h3>
+              <p>Use the model name and plate number customers or technicians will recognize.</p>
+            </div>
             <VehicleForm
               values={values}
               errors={formErrors}
@@ -182,7 +202,14 @@ function Vehicles() {
         )}
 
         {vehicles.length === 0 && !showForm ? (
-          <StatusMessage type="empty" message='No vehicles registered yet. Click "Add Vehicle" to get started.' />
+          <div className="customer-empty-panel">
+            <img src={customerPortalImages.garage} alt="Vehicle service bay ready for a customer vehicle" />
+            <div>
+              <h3>No vehicles registered yet</h3>
+              <p>Add your first vehicle to make appointment booking and part requests faster.</p>
+              <button className="btn-primary" type="button" onClick={handleAdd}>Add vehicle</button>
+            </div>
+          </div>
         ) : (
           <div className="vehicle-list">
             {vehicles.map((vehicle) => (
@@ -213,6 +240,16 @@ function Vehicles() {
             ))}
           </div>
         )}
+        </section>
+
+        <aside className="customer-side-panel">
+          <img src={customerPortalImages.garage} alt="Mechanic working inside a garage service bay" />
+          <div>
+            <span className="customer-eyebrow">Why it matters</span>
+            <h2>Better vehicle records reduce service back-and-forth.</h2>
+            <p>When your model and plate are already saved, the service team can connect appointments, part requests, and reviews to the correct vehicle.</p>
+          </div>
+        </aside>
       </div>
     </div>
   )

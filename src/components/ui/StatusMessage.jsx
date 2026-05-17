@@ -1,24 +1,16 @@
 function StatusMessage({ type = 'loading', message, className = '' }) {
   if (type === 'error') {
     return (
-      <div className={`customer-form-alert ${className}`.trim()}>
+      <div className={`customer-form-alert ${className}`.trim()} role="alert">
         {message}
       </div>
     )
   }
 
-  if (type === 'loading') {
-    return (
-      <div className={`loading-state ${className}`.trim()}>
-        <div className="loading-spinner" />
-        {message}
-      </div>
-    )
-  }
-
-  // empty
+  // loading or empty
+  const stateClass = type === 'loading' ? 'customer-loading' : 'customer-empty'
   return (
-    <div className={`customer-empty ${className}`.trim()}>
+    <div className={`${stateClass} ${className}`.trim()} aria-live={type === 'loading' ? 'polite' : undefined}>
       {message}
     </div>
   )

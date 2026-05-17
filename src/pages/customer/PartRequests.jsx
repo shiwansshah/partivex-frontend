@@ -11,6 +11,7 @@ import PortalModal from '../../components/customer/PortalModal'
 import StatusBadge from '../../components/customer/StatusBadge'
 import StatusMessage from '../../components/ui/StatusMessage'
 import { formatDateTime } from '../../utils/customerPortalFormatters'
+import { customerPortalImages } from '../../utils/customerPortalImages'
 
 const emptyForm = {
   partName: '',
@@ -164,7 +165,11 @@ function PartRequests() {
   }
 
   if (loading) {
-    return <StatusMessage type="loading" message="Loading part requests..." />
+    return (
+      <div className="customer-container portal-container">
+        <StatusMessage type="loading" message="Loading your part requests..." />
+      </div>
+    )
   }
 
   if (error) {
@@ -176,19 +181,31 @@ function PartRequests() {
   }
 
   return (
-    <div className="customer-container portal-container">
-      <div className="customer-header">
-        <h2>Part requests</h2>
-        <p>Request unavailable parts and follow their review status.</p>
-      </div>
+    <div className="customer-page portal-container">
+      <section className="portal-page-hero">
+        <div>
+          <span className="customer-eyebrow">Parts desk</span>
+          <h1>Part requests</h1>
+          <p>Send part details, fitment notes, and quantities so the team can review availability.</p>
+        </div>
+        <img src={customerPortalImages.parts} alt="Vehicle spare parts arranged in a workshop" />
+      </section>
 
       <div className="portal-grid">
         <section className="customer-card portal-form-card">
           <div className="section-header">
             <div className="section-header-text">
+              <span className="customer-eyebrow">Guided request</span>
               <h2>Request a part</h2>
-              <p>Share the part details so the team can source it.</p>
+              <p>Give enough detail to reduce matching errors before review.</p>
             </div>
+          </div>
+
+          <div className="workflow-steps" aria-label="Part request steps">
+            <span>Part</span>
+            <span>Vehicle</span>
+            <span>Specs</span>
+            <span>Reason</span>
           </div>
 
           {formStatus && (
@@ -209,6 +226,7 @@ function PartRequests() {
                 disabled={isSubmitting}
               />
               {formErrors.partName && <span className="customer-field-error">{formErrors.partName}</span>}
+              <span className="customer-field-help">Use the common part name, for example brake pad, headlamp, filter, or belt.</span>
             </div>
 
             <div className="customer-form-group">
@@ -270,6 +288,7 @@ function PartRequests() {
                 placeholder="Mention fitment notes, urgency, or symptoms if helpful."
                 disabled={isSubmitting}
               />
+              <span className="customer-field-help">Fitment details, urgency, symptoms, or preferred brand can help the team review faster.</span>
             </div>
 
             <button className="btn-primary" type="submit" disabled={isSubmitting}>
@@ -281,13 +300,20 @@ function PartRequests() {
         <section className="customer-card portal-list-card">
           <div className="section-header">
             <div className="section-header-text">
+              <span className="customer-eyebrow">Request history</span>
               <h2>My part requests</h2>
               <p>Track requests from review through availability.</p>
             </div>
           </div>
 
           {requests.length === 0 ? (
-            <StatusMessage type="empty" message="No part requests submitted yet." />
+            <div className="customer-empty-panel compact">
+              <img src={customerPortalImages.parts} alt="Organized vehicle parts storage" />
+              <div>
+                <h3>No part requests submitted yet</h3>
+                <p>Requests you submit will appear here with their current review status.</p>
+              </div>
+            </div>
           ) : (
             <div className="portal-item-list">
               {requests.map((request) => (
@@ -319,6 +345,21 @@ function PartRequests() {
           )}
         </section>
       </div>
+
+      <section className="customer-trust-strip">
+        <div>
+          <strong>Optional vehicle link</strong>
+          <span>Attach a vehicle when fitment matters.</span>
+        </div>
+        <div>
+          <strong>Clear quantity</strong>
+          <span>Review starts with the amount you need.</span>
+        </div>
+        <div>
+          <strong>Cancelable while pending</strong>
+          <span>Pending requests can still be withdrawn.</span>
+        </div>
+      </section>
 
       {(detailLoading || detail || detailError) && (
         <PortalModal title="Part request details" onClose={() => {

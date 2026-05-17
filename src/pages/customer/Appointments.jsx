@@ -12,6 +12,7 @@ import PortalModal from '../../components/customer/PortalModal'
 import StatusBadge from '../../components/customer/StatusBadge'
 import StatusMessage from '../../components/ui/StatusMessage'
 import { formatDate, formatDateTime, formatTime } from '../../utils/customerPortalFormatters'
+import { customerPortalImages } from '../../utils/customerPortalImages'
 
 const emptyForm = {
   vehicleId: '',
@@ -186,7 +187,11 @@ function Appointments() {
   }
 
   if (loading) {
-    return <StatusMessage type="loading" message="Loading appointments..." />
+    return (
+      <div className="customer-container portal-container">
+        <StatusMessage type="loading" message="Checking vehicles, services, and appointments..." />
+      </div>
+    )
   }
 
   if (error) {
@@ -198,19 +203,31 @@ function Appointments() {
   }
 
   return (
-    <div className="customer-container portal-container">
-      <div className="customer-header">
-        <h2>Appointments</h2>
-        <p>Book service visits and track your appointment status.</p>
-      </div>
+    <div className="customer-page portal-container">
+      <section className="portal-page-hero">
+        <div>
+          <span className="customer-eyebrow">Service booking</span>
+          <h1>Appointments</h1>
+          <p>Choose a registered vehicle, describe the service need, and keep every booking status visible.</p>
+        </div>
+        <img src={customerPortalImages.appointment} alt="Service advisor preparing an appointment for a vehicle" />
+      </section>
 
       <div className="portal-grid">
         <section className="customer-card portal-form-card">
           <div className="section-header">
             <div className="section-header-text">
+              <span className="customer-eyebrow">Guided request</span>
               <h2>Book an appointment</h2>
-              <p>Select a registered vehicle and preferred service time.</p>
+              <p>Start with the vehicle, then choose the service and preferred time.</p>
             </div>
+          </div>
+
+          <div className="workflow-steps" aria-label="Appointment booking steps">
+            <span>Vehicle</span>
+            <span>Service</span>
+            <span>Time</span>
+            <span>Notes</span>
           </div>
 
           {formStatus && (
@@ -238,6 +255,9 @@ function Appointments() {
                 ))}
               </select>
               {formErrors.vehicleId && <span className="customer-field-error">{formErrors.vehicleId}</span>}
+              {vehicles.length === 0 && (
+                <span className="customer-field-help">Add a vehicle first so the appointment can be matched correctly.</span>
+              )}
             </div>
 
             <div className="customer-form-group">
@@ -301,6 +321,7 @@ function Appointments() {
                 placeholder="Describe the problem or anything the service team should know."
                 disabled={isSubmitting}
               />
+              <span className="customer-field-help">Include symptoms, preferred contact notes, or anything the service team should know before arrival.</span>
             </div>
 
             <button className="btn-primary" type="submit" disabled={isSubmitting || vehicles.length === 0}>
@@ -312,13 +333,20 @@ function Appointments() {
         <section className="customer-card portal-list-card">
           <div className="section-header">
             <div className="section-header-text">
+              <span className="customer-eyebrow">Service timeline</span>
               <h2>My appointments</h2>
-              <p>Review upcoming and past service bookings.</p>
+              <p>Review upcoming and past service bookings with their current status.</p>
             </div>
           </div>
 
           {appointments.length === 0 ? (
-            <StatusMessage type="empty" message="No appointments booked yet." />
+            <div className="customer-empty-panel compact">
+              <img src={customerPortalImages.garage} alt="Open service bay awaiting a booked appointment" />
+              <div>
+                <h3>No appointments booked yet</h3>
+                <p>Once you book a visit, it will appear here with its latest status.</p>
+              </div>
+            </div>
           ) : (
             <div className="portal-item-list">
               {appointments.map((appointment) => (
@@ -350,6 +378,21 @@ function Appointments() {
           )}
         </section>
       </div>
+
+      <section className="customer-trust-strip">
+        <div>
+          <strong>Before the visit</strong>
+          <span>Share notes so technicians can prepare.</span>
+        </div>
+        <div>
+          <strong>Status clarity</strong>
+          <span>Pending and confirmed bookings are easy to spot.</span>
+        </div>
+        <div>
+          <strong>Flexible control</strong>
+          <span>Cancel eligible appointments when plans change.</span>
+        </div>
+      </section>
 
       {(detailLoading || detail || detailError) && (
         <PortalModal title="Appointment details" onClose={() => {

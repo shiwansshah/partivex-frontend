@@ -6,7 +6,9 @@ function RatingInput({ value, onChange, disabled = false }) {
           key={rating}
           type="button"
           className={`rating-button ${Number(value) === rating ? 'is-active' : ''}`}
-          aria-pressed={Number(value) === rating}
+          role="radio"
+          aria-checked={Number(value) === rating}
+          aria-label={`${rating} out of 5`}
           disabled={disabled}
           onClick={() => onChange(rating)}
         >

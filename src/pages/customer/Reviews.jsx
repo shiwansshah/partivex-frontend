@@ -13,6 +13,7 @@ import RatingInput from '../../components/customer/RatingInput'
 import StatusBadge from '../../components/customer/StatusBadge'
 import StatusMessage from '../../components/ui/StatusMessage'
 import { formatDate, formatDateTime } from '../../utils/customerPortalFormatters'
+import { customerPortalImages } from '../../utils/customerPortalImages'
 
 const emptyForm = {
   scope: 'general',
@@ -209,7 +210,11 @@ function Reviews() {
   }
 
   if (loading) {
-    return <StatusMessage type="loading" message="Loading reviews..." />
+    return (
+      <div className="customer-container portal-container">
+        <StatusMessage type="loading" message="Loading your feedback history..." />
+      </div>
+    )
   }
 
   if (error) {
@@ -221,19 +226,30 @@ function Reviews() {
   }
 
   return (
-    <div className="customer-container portal-container">
-      <div className="customer-header">
-        <h2>Reviews</h2>
-        <p>Share service feedback and manage your submitted reviews.</p>
-      </div>
+    <div className="customer-page portal-container">
+      <section className="portal-page-hero">
+        <div>
+          <span className="customer-eyebrow">Feedback</span>
+          <h1>Reviews</h1>
+          <p>Rate completed appointments or share general service feedback with the Partivex team.</p>
+        </div>
+        <img src={customerPortalImages.review} alt="Customer discussing service feedback at a vehicle service center" />
+      </section>
 
       <div className="portal-grid">
         <section className="customer-card portal-form-card">
           <div className="section-header">
             <div className="section-header-text">
+              <span className="customer-eyebrow">Guided feedback</span>
               <h2>{editingReview ? 'Edit review' : 'Submit feedback'}</h2>
-              <p>{editingReview ? 'Update your rating and comment.' : 'Rate your experience with Partivex.'}</p>
+              <p>{editingReview ? 'Update the rating and comment you already submitted.' : 'Choose the experience type, rating, and comment.'}</p>
             </div>
+          </div>
+
+          <div className="workflow-steps" aria-label="Review steps">
+            <span>Type</span>
+            <span>Rating</span>
+            <span>Comment</span>
           </div>
 
           {formStatus && (
@@ -277,6 +293,9 @@ function Reviews() {
                   ))}
                 </select>
                 {formErrors.appointmentId && <span className="customer-field-error">{formErrors.appointmentId}</span>}
+                {eligibleAppointments.length === 0 && !editingReview && (
+                  <span className="customer-field-help">Completed appointments that have not been reviewed will appear here.</span>
+                )}
               </div>
             )}
 
@@ -297,6 +316,7 @@ function Reviews() {
                 disabled={isSubmitting}
               />
               {formErrors.comment && <span className="customer-field-error">{formErrors.comment}</span>}
+              <span className="customer-field-help">Mention what went well or what could be improved for future visits.</span>
             </div>
 
             <div className="form-actions">
@@ -315,13 +335,20 @@ function Reviews() {
         <section className="customer-card portal-list-card">
           <div className="section-header">
             <div className="section-header-text">
+              <span className="customer-eyebrow">Feedback history</span>
               <h2>My reviews</h2>
               <p>Review history and linked service context.</p>
             </div>
           </div>
 
           {reviews.length === 0 ? (
-            <StatusMessage type="empty" message="No reviews submitted yet." />
+            <div className="customer-empty-panel compact">
+              <img src={customerPortalImages.review} alt="Customer lounge area at a service center" />
+              <div>
+                <h3>No reviews submitted yet</h3>
+                <p>After a service visit, your feedback can help the team improve future experiences.</p>
+              </div>
+            </div>
           ) : (
             <div className="portal-item-list">
               {reviews.map((review) => (
@@ -359,6 +386,21 @@ function Reviews() {
           )}
         </section>
       </div>
+
+      <section className="customer-trust-strip">
+        <div>
+          <strong>Appointment-specific</strong>
+          <span>Link feedback to completed service visits.</span>
+        </div>
+        <div>
+          <strong>Editable feedback</strong>
+          <span>Update a review when your experience changes.</span>
+        </div>
+        <div>
+          <strong>History retained</strong>
+          <span>Keep service context visible over time.</span>
+        </div>
+      </section>
 
       {(detailLoading || detail || detailError) && (
         <PortalModal title="Review details" onClose={() => {
