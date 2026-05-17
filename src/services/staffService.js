@@ -14,6 +14,11 @@ export async function getStaff() {
   return response.data.map(StaffDto)
 }
 
+export async function getUsersWithRoles() {
+  const response = await axiosInstance.get('/api/admin/users-with-roles')
+  return response.data.map(StaffDto)
+}
+
 export async function createStaff({ fullName, email, password }) {
   const response = await axiosInstance.post('/api/staff', {
     fullName,
@@ -30,4 +35,9 @@ export async function updateStaff(id, { fullName }) {
 
 export async function deleteStaff(id) {
   await axiosInstance.delete(`/api/staff/${id}`)
+}
+
+export async function updateUserRole(id, role) {
+  const response = await axiosInstance.put(`/api/admin/users/${id}/role`, { role })
+  return StaffDto(response.data)
 }

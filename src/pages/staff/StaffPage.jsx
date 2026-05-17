@@ -5,7 +5,14 @@ import Button from '../../components/ui/Button'
 import Input from '../../components/ui/Input'
 import StatusMessage from '../../components/ui/StatusMessage'
 import useAuth from '../../hooks/useAuth'
-import { createStaff, deleteStaff, getStaff, updateStaff } from '../../services/staffService'
+import {
+  createStaff,
+  deleteStaff,
+  getStaff,
+  getUsersWithRoles,
+  updateStaff,
+  updateUserRole,
+} from '../../services/staffService'
 import { hasRole, ROLES } from '../../utils/roles'
 import { isEmail, required } from '../../utils/validator'
 
@@ -25,6 +32,7 @@ function StaffPage() {
   const [status, setStatus] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [roleUpdatingId, setRoleUpdatingId] = useState(null)
 
   const formTitle = useMemo(
     () => (editingStaff ? 'Update staff member' : 'Add staff member'),
@@ -34,7 +42,7 @@ function StaffPage() {
   async function loadStaff() {
     try {
       setStatus('')
-      const data = await getStaff()
+      const data = isAdmin ? await getUsersWithRoles() : await getStaff()
       setStaff(data)
     } catch (error) {
       setStatus(getApiErrorMessage(error, 'Unable to load staff.'))
@@ -49,7 +57,7 @@ function StaffPage() {
     async function loadInitialStaff() {
       try {
         setStatus('')
-        const data = await getStaff()
+        const data = isAdmin ? await getUsersWithRoles() : await getStaff()
         if (isCurrent) setStaff(data)
       } catch (error) {
         if (isCurrent) setStatus(getApiErrorMessage(error, 'Unable to load staff.'))
@@ -63,7 +71,7 @@ function StaffPage() {
     return () => {
       isCurrent = false
     }
-  }, [])
+  }, [isAdmin])
 
   function handleChange(event) {
     const { name, value } = event.target
@@ -137,6 +145,27 @@ function StaffPage() {
       await loadStaff()
     } catch (error) {
       setStatus(getApiErrorMessage(error, 'Unable to delete staff member.'))
+    }
+  }
+
+  async function handleRoleChange(member, nextRole) {
+    if (member.role === nextRole) return
+
+    const confirmed = window.confirm(
+      `Change ${member.fullName || member.email} from ${member.role} to ${nextRole}?`,
+    )
+
+    if (!confirmed) return
+
+    try {
+      setStatus('')
+      setRoleUpdatingId(member.id)
+      await updateUserRole(member.id, nextRole)
+      await loadStaff()
+    } catch (error) {
+      setStatus(getApiErrorMessage(error, 'Unable to change user role.'))
+    } finally {
+      setRoleUpdatingId(null)
     }
   }
 
@@ -226,7 +255,20 @@ function StaffPage() {
                     </td>
                     <td>{member.email}</td>
                     <td>
-                      <span className="metric-pill">{member.role}</span>
+                      {isAdmin ? (
+                        <select
+                          className="form-control"
+                          value={member.role}
+                          onChange={(event) => handleRoleChange(member, event.target.value)}
+                          disabled={roleUpdatingId === member.id}
+                          aria-label={`Role for ${member.fullName || member.email}`}
+                        >
+                          <option value={ROLES.ADMIN}>{ROLES.ADMIN}</option>
+                          <option value={ROLES.STAFF}>{ROLES.STAFF}</option>
+                        </select>
+                      ) : (
+                        <span className="metric-pill">{member.role}</span>
+                      )}
                     </td>
                     {isAdmin && (
                       <td>
