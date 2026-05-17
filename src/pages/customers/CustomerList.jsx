@@ -1,11 +1,15 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { getApiErrorMessage } from '../../api/axiosInstance'
 import PageHeader from '../../components/common/PageHeader'
 import StatusMessage from '../../components/ui/StatusMessage'
 import { getCustomers } from '../../services/customerService'
+import { buildPanelPath } from '../../utils/panelRoutes'
 
 function CustomerList() {
+  const location = useLocation()
+  const customersPath = buildPanelPath(location.pathname, '/customers')
+  const vehiclesPath = buildPanelPath(location.pathname, '/vehicles')
   const [customers, setCustomers] = useState([])
   const [searchTerm, setSearchTerm] = useState('')
   const [isLoading, setIsLoading] = useState(true)
@@ -52,7 +56,7 @@ function CustomerList() {
             title="Customers"
             subtitle="View registered customer accounts and open their vehicle records."
           />
-          <Link className="button" to="/customers/add">
+          <Link className="button" to={`${customersPath}/add`}>
             Add Customer
           </Link>
         </div>
@@ -96,10 +100,10 @@ function CustomerList() {
                     <td>{customer.phoneNumber || <span className="text-muted">Not set</span>}</td>
                     <td>
                       <div className="table-actions">
-                        <Link className="button button-outline" to={`/customers/${customer.id}`}>
+                        <Link className="button button-outline" to={`${customersPath}/${customer.id}`}>
                           Details
                         </Link>
-                        <Link className="button button-outline" to="/vehicles">
+                        <Link className="button button-outline" to={`${vehiclesPath}?customerId=${customer.id}`}>
                           Vehicles
                         </Link>
                       </div>

@@ -115,7 +115,6 @@ function AppRoutes() {
         <Route path="/customers/:id/edit" element={<EditCustomer />} />
         <Route path="/customers/:id/add-vehicle" element={<AddVehicle />} />
         <Route path="/sales" element={<SalesPage />} />
-        <Route path="/staff" element={<StaffPage />} />
         <Route path="/notifications" element={<NotificationsPage />} />
       </Route>
       <Route
@@ -129,8 +128,33 @@ function AppRoutes() {
         <Route index element={<AdminDashboard />} />
         <Route path="staff" element={<StaffManagement />} />
         <Route path="customers" element={<CustomerManagement />} />
+        <Route path="customers/add" element={<AddCustomer />} />
+        <Route path="customers/reports" element={<CustomerReports />} />
+        <Route path="customers/:id" element={<CustomerDetails />} />
+        <Route path="customers/:id/edit" element={<EditCustomer />} />
+        <Route path="customers/:id/add-vehicle" element={<AddVehicle />} />
+        <Route path="vehicles" element={<VehiclesPage />} />
         <Route path="inventory" element={<InventoryPage />} />
         <Route path="purchases" element={<PurchasesPage />} />
+      </Route>
+      <Route
+        path="/staff"
+        element={
+          <RequireRole allowedRoles={[ROLES.STAFF]}>
+            <AdminLayout />
+          </RequireRole>
+        }
+      >
+        <Route index element={<Navigate to="customers" replace />} />
+        <Route path="customers" element={<CustomerManagement />} />
+        <Route path="customers/add" element={<AddCustomer />} />
+        <Route path="customers/reports" element={<CustomerReports />} />
+        <Route path="customers/:id" element={<CustomerDetails />} />
+        <Route path="customers/:id/edit" element={<EditCustomer />} />
+        <Route path="customers/:id/add-vehicle" element={<AddVehicle />} />
+        <Route path="vehicles" element={<VehiclesPage />} />
+        <Route path="sales" element={<SalesPage />} />
+        <Route path="notifications" element={<NotificationsPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

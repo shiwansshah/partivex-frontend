@@ -1,12 +1,16 @@
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useLocation, useParams } from 'react-router-dom'
 import { getApiErrorMessage } from '../../api/axiosInstance'
 import PageHeader from '../../components/common/PageHeader'
 import StatusMessage from '../../components/ui/StatusMessage'
 import { getCustomerById, getCustomerHistory } from '../../services/customerService'
+import { buildPanelPath } from '../../utils/panelRoutes'
 
 function CustomerDetails() {
+  const location = useLocation()
   const { id } = useParams()
+  const customersPath = buildPanelPath(location.pathname, '/customers')
+  const vehiclesPath = buildPanelPath(location.pathname, '/vehicles')
   const [customer, setCustomer] = useState(null)
   const [history, setHistory] = useState([])
   const [isLoading, setIsLoading] = useState(true)
@@ -57,7 +61,7 @@ function CustomerDetails() {
       <div className="surface-panel">
         <div className="section-heading">
           <PageHeader title={customer.fullName || 'Customer Details'} subtitle={customer.email} />
-          <Link className="button button-outline" to="/customers">
+          <Link className="button button-outline" to={customersPath}>
             Back
           </Link>
         </div>
@@ -77,7 +81,7 @@ function CustomerDetails() {
       <div className="surface-panel">
         <div className="section-heading">
           <PageHeader title="Vehicles" subtitle="Vehicles registered under this customer." />
-          <Link className="button button-outline" to="/vehicles">
+          <Link className="button button-outline" to={`${vehiclesPath}?customerId=${id}`}>
             Manage Vehicles
           </Link>
         </div>

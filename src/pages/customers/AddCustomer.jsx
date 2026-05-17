@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { getApiErrorMessage } from '../../api/axiosInstance'
 import PageHeader from '../../components/common/PageHeader'
 import Button from '../../components/ui/Button'
 import Input from '../../components/ui/Input'
 import { createCustomer } from '../../services/customerService'
+import { buildPanelPath } from '../../utils/panelRoutes'
 import { isEmail, required } from '../../utils/validator'
 
 const initialValues = {
@@ -14,7 +15,9 @@ const initialValues = {
 }
 
 function AddCustomer() {
+  const location = useLocation()
   const navigate = useNavigate()
+  const customersPath = buildPanelPath(location.pathname, '/customers')
   const [values, setValues] = useState(initialValues)
   const [errors, setErrors] = useState({})
   const [status, setStatus] = useState('')
@@ -51,7 +54,7 @@ function AddCustomer() {
         email: values.email.trim(),
         password: values.password,
       })
-      navigate('/customers')
+      navigate(customersPath)
     } catch (error) {
       setStatus(getApiErrorMessage(error, 'Unable to create customer.'))
     } finally {
@@ -64,7 +67,7 @@ function AddCustomer() {
       <div className="surface-panel">
         <div className="section-heading">
           <PageHeader title="Add Customer" subtitle="Create a customer account with portal access." />
-          <Link className="button button-outline" to="/customers">
+          <Link className="button button-outline" to={customersPath}>
             Cancel
           </Link>
         </div>

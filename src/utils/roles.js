@@ -29,7 +29,7 @@ export function getHomePathForRole(role) {
     case ROLES.ADMIN:
       return '/admin'
     case ROLES.STAFF:
-      return '/customers'
+      return '/staff'
     case ROLES.CUSTOMER:
       return '/customer/profile'
     default:

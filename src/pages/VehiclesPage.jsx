@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { getApiErrorMessage } from '../api/axiosInstance'
 import VehicleForm from '../components/VehicleForm'
 import VehicleList from '../components/VehicleList'
@@ -13,13 +14,14 @@ import {
 
 function VehiclesPage() {
   const { user } = useAuth()
+  const [searchParams] = useSearchParams()
+  const customerIdFromQuery = searchParams.get('customerId') || ''
   const role = user?.role || 'Customer'
-  const isStaff = role === 'Staff'
   const isAdmin = role === 'Admin'
-  const canSelectCustomer = isAdmin || isStaff
+  const canSelectCustomer = isAdmin || role === 'Staff'
 
   const [customers, setCustomers] = useState([])
-  const [selectedCustomerId, setSelectedCustomerId] = useState(user?.customerId || '')
+  const [selectedCustomerId, setSelectedCustomerId] = useState(customerIdFromQuery || user?.customerId || '')
   const [vehicles, setVehicles] = useState([])
   const [editingVehicle, setEditingVehicle] = useState(null)
   const [formVersion, setFormVersion] = useState(0)
@@ -27,7 +29,10 @@ function VehiclesPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
 
-  const canManageVehicles = useMemo(() => role === 'Admin' || role === 'Customer', [role])
+  const canManageVehicles = useMemo(
+    () => role === 'Admin' || role === 'Staff' || role === 'Customer',
+    [role],
+  )
 
   const loadVehicles = useCallback(async (customerId) => {
     if (!customerId) return
@@ -131,9 +136,7 @@ function VehiclesPage() {
           <span className="eyebrow">Vehicles</span>
           <h1>Customer Vehicles</h1>
           <p>
-            {isStaff
-              ? 'Staff can inspect vehicle records without changing them.'
-              : 'Create, update, and remove vehicle records for the selected customer.'}
+            Create, update, and remove vehicle records for the selected customer.
           </p>
         </div>
       </div>
