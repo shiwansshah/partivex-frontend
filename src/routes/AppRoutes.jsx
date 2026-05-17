@@ -16,13 +16,15 @@ import CustomerReports from '../pages/customers/CustomerReports'
 import InventoryPage from '../pages/inventory/InventoryPage'
 import PurchasesPage from '../pages/purchases/PurchasesPage'
 import SalesPage from '../pages/sales/SalesPage'
-import StaffPage from '../pages/staff/StaffPage'
 import NotificationsPage from '../pages/notifications/NotificationsPage'
 import AdminDashboard from '../pages/admin/Dashboard'
 import StaffManagement from '../pages/admin/StaffManagement'
 import CustomerManagement from '../pages/admin/CustomerManagement'
 import Profile from '../pages/customer/Profile'
 import CustomerVehicles from '../pages/customer/Vehicles'
+import Appointments from '../pages/customer/Appointments'
+import PartRequests from '../pages/customer/PartRequests'
+import Reviews from '../pages/customer/Reviews'
 import { getHomePathForRole, hasRole, ROLES } from '../utils/roles'
 
 function RequireAuth({ children }) {
@@ -99,6 +101,9 @@ function AppRoutes() {
         <Route index element={<Navigate to="profile" replace />} />
         <Route path="profile" element={<Profile />} />
         <Route path="vehicles" element={<CustomerVehicles />} />
+        <Route path="appointments" element={<Appointments />} />
+        <Route path="part-requests" element={<PartRequests />} />
+        <Route path="reviews" element={<Reviews />} />
       </Route>
       <Route
         element={

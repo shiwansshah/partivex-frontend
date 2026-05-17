@@ -3,6 +3,14 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { removeToken } from '../../utils/tokenStorage'
 import '../../styles/customer.css'
 
+const portalLinks = [
+  { to: '/customer/profile', label: 'Profile' },
+  { to: '/customer/vehicles', label: 'Vehicles' },
+  { to: '/customer/appointments', label: 'Appointments' },
+  { to: '/customer/part-requests', label: 'Part requests' },
+  { to: '/customer/reviews', label: 'Reviews' },
+]
+
 function CustomerLayout() {
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const dropdownRef = useRef(null)
@@ -31,6 +39,14 @@ function CustomerLayout() {
           Parti<span>vex</span>
         </NavLink>
 
+        <div className="customer-nav-links" aria-label="Customer navigation">
+          {portalLinks.map((link) => (
+            <NavLink key={link.to} to={link.to} className="customer-nav-link">
+              {link.label}
+            </NavLink>
+          ))}
+        </div>
+
         <div className="customer-nav-right" ref={dropdownRef}>
           <button 
             className="profile-avatar-btn" 
@@ -47,20 +63,16 @@ function CustomerLayout() {
 
           {dropdownOpen && (
             <div className="profile-dropdown">
-              <NavLink
-                to="/customer/profile"
-                className="dropdown-item"
-                onClick={() => setDropdownOpen(false)}
-              >
-                Profile
-              </NavLink>
-              <NavLink
-                to="/customer/vehicles"
-                className="dropdown-item"
-                onClick={() => setDropdownOpen(false)}
-              >
-                Vehicles
-              </NavLink>
+              {portalLinks.map((link) => (
+                <NavLink
+                  key={link.to}
+                  to={link.to}
+                  className="dropdown-item"
+                  onClick={() => setDropdownOpen(false)}
+                >
+                  {link.label}
+                </NavLink>
+              ))}
               <div className="dropdown-divider"></div>
               <button className="dropdown-item text-danger" onClick={handleLogout}>
                 Logout
