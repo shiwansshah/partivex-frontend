@@ -17,7 +17,11 @@ function CustomerForm({
   isSubmitting = false,
   serverError = '',
 }) {
-  const [formData, setFormData] = useState({ ...emptyCustomer, ...initialValues })
+  const [formData, setFormData] = useState(() => ({
+    ...emptyCustomer,
+    ...initialValues,
+    phone: initialValues.phone ?? initialValues.phoneNumber ?? '',
+  }))
   const [errors, setErrors] = useState({})
 
   function handleChange(event) {
@@ -58,6 +62,7 @@ function CustomerForm({
     onSubmit({
       fullName: formData.fullName.trim(),
       phone: formData.phone.trim(),
+      phoneNumber: formData.phone.trim(),
       email: formData.email.trim(),
       address: formData.address.trim(),
     })
