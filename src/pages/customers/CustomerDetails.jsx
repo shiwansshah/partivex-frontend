@@ -57,12 +57,18 @@ function CustomerDetails() {
     return <StatusMessage type="empty" message="Customer was not found." />
   }
 
+  const vehicleCount = customer.vehicles.length
+  const historyCount = history.length
+
   return (
     <section className="page-stack">
       <div className="surface-panel">
         <div className="section-heading">
           <PageHeader title={customer.fullName || 'Customer Details'} subtitle={customer.email} />
           <div className="topbar-actions">
+            <Link className="button button-outline" to={`${customersPath}/reports`}>
+              Reports
+            </Link>
             <Link className="button button-outline" to={`${customersPath}/${id}/edit`}>
               Edit Customer
             </Link>
@@ -91,6 +97,14 @@ function CustomerDetails() {
           <div>
             <span>Address</span>
             <strong>{customer.address || 'Not set'}</strong>
+          </div>
+          <div>
+            <span>Vehicles Registered</span>
+            <strong>{vehicleCount}</strong>
+          </div>
+          <div>
+            <span>History Records</span>
+            <strong>{historyCount}</strong>
           </div>
         </div>
       </div>
