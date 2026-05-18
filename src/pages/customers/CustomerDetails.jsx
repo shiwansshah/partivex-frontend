@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useLocation, useParams } from 'react-router-dom'
 import { getApiErrorMessage } from '../../api/axiosInstance'
 import PageHeader from '../../components/common/PageHeader'
+import CustomerHistoryTable from '../../components/customers/CustomerHistoryTable'
 import StatusMessage from '../../components/ui/StatusMessage'
 import { getCustomerById, getCustomerHistory } from '../../services/customerService'
 import { buildPanelPath } from '../../utils/panelRoutes'
@@ -61,9 +62,17 @@ function CustomerDetails() {
       <div className="surface-panel">
         <div className="section-heading">
           <PageHeader title={customer.fullName || 'Customer Details'} subtitle={customer.email} />
-          <Link className="button button-outline" to={customersPath}>
-            Back
-          </Link>
+          <div className="topbar-actions">
+            <Link className="button button-outline" to={`${customersPath}/${id}/edit`}>
+              Edit Customer
+            </Link>
+            <Link className="button button-outline" to={`${customersPath}/${id}/add-history`}>
+              Add History
+            </Link>
+            <Link className="button button-outline" to={customersPath}>
+              Back
+            </Link>
+          </div>
         </div>
 
         <div className="details-grid">
@@ -72,8 +81,16 @@ function CustomerDetails() {
             <strong className="text-mono">{customer.id}</strong>
           </div>
           <div>
+            <span>Email</span>
+            <strong>{customer.email || 'Not set'}</strong>
+          </div>
+          <div>
             <span>Phone</span>
             <strong>{customer.phoneNumber || 'Not set'}</strong>
+          </div>
+          <div>
+            <span>Address</span>
+            <strong>{customer.address || 'Not set'}</strong>
           </div>
         </div>
       </div>
@@ -112,17 +129,7 @@ function CustomerDetails() {
 
       <div className="surface-panel">
         <PageHeader title="History" subtitle="Service or customer history entries stored by the backend." />
-        {history.length === 0 ? (
-          <StatusMessage type="empty" message="No history records have been added yet." />
-        ) : (
-          <div className="history-list">
-            {history.map((item, index) => (
-              <div className="history-item" key={`${item}-${index}`}>
-                {item}
-              </div>
-            ))}
-          </div>
-        )}
+        <CustomerHistoryTable records={history} />
       </div>
     </section>
   )
