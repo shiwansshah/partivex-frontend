@@ -766,33 +766,33 @@
 .btn-outline {
   position: relative;
   width: fit-content;
-  min-height: 34px;
+  min-height: 40px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
-  padding: 5px 0 8px;
-  border: 0;
-  border-radius: 0;
+  padding: 8px var(--space-5) 11px;
+  border: 1px solid currentColor;
+  border-radius: var(--radius-sm);
   font: inherit;
   font-size: var(--text-sm);
   font-weight: var(--weight-bold);
   cursor: pointer;
   text-decoration: none;
-  transition: color var(--transition-fast);
+  transition: color var(--transition-fast), background var(--transition-fast), border-color var(--transition-fast);
 }
 
 .btn-primary::after,
 .btn-outline::after {
   content: "";
   position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  left: var(--space-5);
+  right: var(--space-5);
+  bottom: 6px;
   height: 3px;
   border-radius: var(--radius-full);
   background: currentColor;
-  transform: scaleX(0.42);
+  transform: scaleX(0);
   transform-origin: left;
   transition: transform var(--transition-smooth);
 }
@@ -803,38 +803,48 @@
 }
 
 .btn-primary {
-  color: var(--color-primary);
-  background: transparent;
+  color: var(--color-body);
+  background: var(--color-primary);
 }
 
 .btn-primary:hover {
-  color: var(--color-primary-dark);
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+  background: var(--color-body);
 }
 
 .btn-outline {
-  color: var(--color-text);
-  background: transparent;
+  color: var(--color-primary);
+  background: var(--color-body);
 }
 
 .btn-outline:hover {
-  color: var(--color-primary);
+  color: var(--color-body);
+  border-color: var(--color-primary);
+  background: var(--color-primary);
 }
 
 .btn-outline.text-danger {
   color: var(--color-danger);
+  background: var(--color-body);
 }
 
 .btn-outline.text-danger:hover {
-  color: var(--color-danger);
+  color: var(--color-body);
+  border-color: var(--color-danger);
+  background: var(--color-danger);
 }
 
 .btn-outline-on-dark {
   color: var(--color-body);
-  background: transparent;
+  border-color: #3A404C;
+  background: #20242D;
 }
 
 .btn-outline-on-dark:hover {
-  color: var(--color-body);
+  color: #20242D;
+  border-color: var(--color-body);
+  background: var(--color-body);
 }
 
 .btn-primary:disabled,
@@ -845,7 +855,7 @@
 
 .btn-block {
   width: fit-content;
-  min-height: 38px;
+  min-height: 42px;
   font-size: var(--text-base);
 }
 
