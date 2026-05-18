@@ -361,10 +361,11 @@
 }
 
 .portal-hero {
+  position: relative;
   overflow: hidden;
-  min-height: 292px;
-  display: grid;
-  grid-template-columns: minmax(0, 0.9fr) minmax(360px, 1.1fr);
+  min-height: 320px;
+  display: flex;
+  align-items: stretch;
   border: 1px solid #242A33;
   border-radius: var(--radius-sm);
   color: var(--color-body);
@@ -372,14 +373,25 @@
   box-shadow: var(--customer-card-shadow);
 }
 
+.portal-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background:
+    linear-gradient(90deg, rgba(12, 15, 20, 0.98) 0%, rgba(12, 15, 20, 0.9) 34%, rgba(12, 15, 20, 0.58) 62%, rgba(12, 15, 20, 0.26) 100%);
+  pointer-events: none;
+}
+
 .portal-hero-copy {
   position: relative;
-  z-index: 1;
+  z-index: 2;
+  width: min(720px, 100%);
   display: flex;
   flex-direction: column;
   justify-content: center;
   padding: var(--space-8) var(--space-10);
-  background: linear-gradient(90deg, #0F1217, #151922 68%, rgba(15, 18, 23, 0.58));
+  background: transparent;
 }
 
 .portal-hero .customer-eyebrow {
@@ -432,16 +444,18 @@
 }
 
 .portal-hero-media {
-  position: relative;
+  position: absolute;
+  inset: 0;
+  z-index: 0;
   overflow: hidden;
-  min-height: 292px;
+  min-height: 100%;
 }
 
 .portal-hero-media::after {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(90deg, rgba(15, 18, 23, 0.42), rgba(0, 0, 0, 0.22));
+  background: rgba(0, 0, 0, 0.18);
   pointer-events: none;
 }
 
@@ -456,7 +470,7 @@
 }
 
 .portal-hero-media img {
-  filter: brightness(0.62) contrast(1.08) saturate(0.95);
+  filter: brightness(0.48) contrast(1.12) saturate(0.92);
 }
 
 .customer-metric-grid {
@@ -1703,17 +1717,16 @@
 
 @media (max-width: 840px) {
   .portal-hero {
-    grid-template-columns: 1fr;
+    min-height: 300px;
   }
 
   .portal-hero-copy {
     padding: var(--space-7);
-    background: #111419;
+    width: 100%;
   }
 
   .portal-hero-media {
-    min-height: 220px;
-    order: -1;
+    min-height: 100%;
   }
 
   .portal-form-row {
@@ -1745,7 +1758,7 @@
   }
 
   .portal-hero {
-    min-height: 0;
+    min-height: 320px;
   }
 
   .portal-hero h1 {
@@ -1761,7 +1774,7 @@
   }
 
   .portal-hero-media {
-    min-height: 190px;
+    min-height: 100%;
   }
 
   .customer-review-showcase {
