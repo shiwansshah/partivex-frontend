@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import Button from '../../components/ui/Button'
 import Input from '../../components/ui/Input'
 import Table from '../../components/common/Table'
+import ConfirmDialog from '../../components/common/ConfirmDialog'
 import { createPart, deletePart, getParts, updatePart } from '../../api/partApi'
 import { getRequestErrorMessage } from '../../api/axiosClient'
 import { required } from '../../utils/validator'
@@ -33,6 +34,7 @@ function PartManagement() {
   const [successMessage, setSuccessMessage] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [deletingPart, setDeletingPart] = useState(null)
 
   const isEditing = editingPartId !== null
 
@@ -53,7 +55,7 @@ function PartManagement() {
         <Button type="button" variant="secondary" onClick={() => startEdit(part)}>
           Edit
         </Button>
-        <Button type="button" variant="danger" onClick={() => handleDelete(part.id)}>
+        <Button type="button" variant="danger" onClick={() => setDeletingPart(part)}>
           Delete
         </Button>
       </div>
@@ -172,19 +174,18 @@ function PartManagement() {
     setSuccessMessage('')
   }
 
-  async function handleDelete(id) {
-    const confirmed = window.confirm('Delete this part?')
-    if (!confirmed) return
-
+  async function confirmDeletePart() {
+    if (!deletingPart) return
     try {
       setErrorMessage('')
       setSuccessMessage('')
-      await deletePart(id)
-      if (editingPartId === id) {
+      await deletePart(deletingPart.id)
+      if (editingPartId === deletingPart.id) {
         resetForm()
       }
       await loadParts()
       setSuccessMessage('Part removed successfully.')
+      setDeletingPart(null)
     } catch (error) {
       setErrorMessage(getRequestErrorMessage(error, 'Unable to delete part.'))
     }
@@ -292,6 +293,15 @@ function PartManagement() {
           )}
         </form>
       </section>
+
+      <ConfirmDialog
+        isOpen={Boolean(deletingPart)}
+        title="Delete Part"
+        message={`Are you sure you want to delete ${deletingPart?.name || 'this part'}? This action cannot be undone.`}
+        confirmLabel="Delete Part"
+        onConfirm={confirmDeletePart}
+        onCancel={() => setDeletingPart(null)}
+      />
     </div>
   )
 }

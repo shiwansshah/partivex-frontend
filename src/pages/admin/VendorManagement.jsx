@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import Button from '../../components/ui/Button'
 import Input from '../../components/ui/Input'
 import Table from '../../components/common/Table'
+import ConfirmDialog from '../../components/common/ConfirmDialog'
 import { createVendor, deleteVendor, getVendors, updateVendor } from '../../api/vendorApi'
 import { getRequestErrorMessage } from '../../api/axiosClient'
 import { isEmail, required } from '../../utils/validator'
@@ -34,6 +35,7 @@ function VendorManagement() {
   const [successMessage, setSuccessMessage] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [deletingVendor, setDeletingVendor] = useState(null)
 
   const isEditing = editingVendorId !== null
 
@@ -53,7 +55,7 @@ function VendorManagement() {
         <Button type="button" variant="secondary" onClick={() => startEdit(vendor)}>
           Edit
         </Button>
-        <Button type="button" variant="danger" onClick={() => handleDelete(vendor.id)}>
+        <Button type="button" variant="danger" onClick={() => setDeletingVendor(vendor)}>
           Delete
         </Button>
       </div>
@@ -149,19 +151,18 @@ function VendorManagement() {
     setSuccessMessage('')
   }
 
-  async function handleDelete(id) {
-    const confirmed = window.confirm('Delete this vendor?')
-    if (!confirmed) return
-
+  async function confirmDeleteVendor() {
+    if (!deletingVendor) return
     try {
       setErrorMessage('')
       setSuccessMessage('')
-      await deleteVendor(id)
-      if (editingVendorId === id) {
+      await deleteVendor(deletingVendor.id)
+      if (editingVendorId === deletingVendor.id) {
         resetForm()
       }
       await loadVendors()
       setSuccessMessage('Vendor removed successfully.')
+      setDeletingVendor(null)
     } catch (error) {
       setErrorMessage(getRequestErrorMessage(error, 'Unable to delete vendor.'))
     }
@@ -272,6 +273,15 @@ function VendorManagement() {
           )}
         </form>
       </section>
+
+      <ConfirmDialog
+        isOpen={Boolean(deletingVendor)}
+        title="Delete Vendor"
+        message={`Are you sure you want to delete ${deletingVendor?.name || 'this vendor'}? This action cannot be undone.`}
+        confirmLabel="Delete Vendor"
+        onConfirm={confirmDeleteVendor}
+        onCancel={() => setDeletingVendor(null)}
+      />
     </div>
   )
 }
