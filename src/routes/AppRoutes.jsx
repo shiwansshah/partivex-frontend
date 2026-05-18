@@ -12,6 +12,7 @@ import AddCustomer from '../pages/customers/AddCustomer'
 import CustomerDetails from '../pages/customers/CustomerDetails'
 import EditCustomer from '../pages/customers/EditCustomer'
 import AddVehicle from '../pages/customers/AddVehicle'
+import AddCustomerHistory from '../pages/customers/AddCustomerHistory'
 import CustomerReports from '../pages/customers/CustomerReports'
 import InventoryPage from '../pages/inventory/InventoryPage'
 import PurchasesPage from '../pages/purchases/PurchasesPage'
@@ -118,6 +119,7 @@ function AppRoutes() {
         <Route path="/customers/reports" element={<CustomerReports />} />
         <Route path="/customers/:id" element={<CustomerDetails />} />
         <Route path="/customers/:id/edit" element={<EditCustomer />} />
+        <Route path="/customers/:id/add-history" element={<AddCustomerHistory />} />
         <Route path="/customers/:id/add-vehicle" element={<AddVehicle />} />
         <Route path="/sales" element={<SalesPage />} />
         <Route path="/notifications" element={<NotificationsPage />} />
@@ -137,6 +139,7 @@ function AppRoutes() {
         <Route path="customers/reports" element={<CustomerReports />} />
         <Route path="customers/:id" element={<CustomerDetails />} />
         <Route path="customers/:id/edit" element={<EditCustomer />} />
+        <Route path="customers/:id/add-history" element={<AddCustomerHistory />} />
         <Route path="customers/:id/add-vehicle" element={<AddVehicle />} />
         <Route path="vehicles" element={<VehiclesPage />} />
         <Route path="inventory" element={<InventoryPage />} />
@@ -156,6 +159,7 @@ function AppRoutes() {
         <Route path="customers/reports" element={<CustomerReports />} />
         <Route path="customers/:id" element={<CustomerDetails />} />
         <Route path="customers/:id/edit" element={<EditCustomer />} />
+        <Route path="customers/:id/add-history" element={<AddCustomerHistory />} />
         <Route path="customers/:id/add-vehicle" element={<AddVehicle />} />
         <Route path="vehicles" element={<VehiclesPage />} />
         <Route path="sales" element={<SalesPage />} />
