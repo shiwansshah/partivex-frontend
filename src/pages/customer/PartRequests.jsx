@@ -206,10 +206,10 @@ function PartRequests() {
           <PortalWorkflowSteps
             ariaLabel="Part request steps"
             steps={[
-              { label: 'Part', completed: Boolean(values.partName), current: !values.partName },
-              { label: 'Quantity', completed: Number(values.quantity) > 0, current: Boolean(values.partName) },
-              { label: 'Vehicle', completed: Boolean(values.vehicleId), current: false },
-              { label: 'Fitment', completed: Boolean(values.brandModelSpecification || values.reason), current: false },
+              { label: 'Part', completed: Boolean(values.partName.trim()), current: !values.partName.trim() },
+              { label: 'Quantity', completed: Number(values.quantity) > 0, current: Boolean(values.partName.trim()) && !(Number(values.quantity) > 0) },
+              { label: 'Vehicle', completed: Boolean(values.vehicleId), current: Boolean(values.partName.trim() && Number(values.quantity) > 0) && !values.vehicleId },
+              { label: 'Fitment', completed: Boolean(values.brandModelSpecification.trim() || values.reason.trim()), current: Boolean(values.partName.trim() && Number(values.quantity) > 0 && values.vehicleId) && !(values.brandModelSpecification.trim() || values.reason.trim()) },
             ]}
           />
 

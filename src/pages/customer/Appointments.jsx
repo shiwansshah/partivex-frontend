@@ -234,8 +234,8 @@ function Appointments() {
             steps={[
               { label: 'Vehicle', completed: Boolean(values.vehicleId), current: !values.vehicleId },
               { label: 'Service', completed: Boolean(values.serviceType), current: Boolean(values.vehicleId) && !values.serviceType },
-              { label: 'Schedule', completed: Boolean(values.preferredDate && values.preferredTime), current: Boolean(values.vehicleId && values.serviceType) },
-              { label: 'Notes', completed: Boolean(values.notes), current: false },
+              { label: 'Schedule', completed: Boolean(values.preferredDate && values.preferredTime), current: Boolean(values.vehicleId && values.serviceType) && !(values.preferredDate && values.preferredTime) },
+              { label: 'Notes', completed: Boolean(values.notes.trim()), current: Boolean(values.vehicleId && values.serviceType && values.preferredDate && values.preferredTime) && !values.notes.trim() },
             ]}
           />
 

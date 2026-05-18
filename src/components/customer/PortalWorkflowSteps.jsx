@@ -1,8 +1,13 @@
 function PortalWorkflowSteps({ steps, ariaLabel }) {
-  const currentIndex = steps.findIndex((step) => step.current)
   const completedCount = steps.filter((step) => step.completed).length
-  const activeIndex = currentIndex >= 0 ? currentIndex : Math.min(completedCount, steps.length - 1)
-  const progressPercent = Math.round(((activeIndex + 1) / steps.length) * 100)
+  const explicitCurrentIndex = steps.findIndex((step) => step.current)
+  const firstIncompleteIndex = steps.findIndex((step) => !step.completed)
+  const activeIndex = explicitCurrentIndex >= 0
+    ? explicitCurrentIndex
+    : firstIncompleteIndex >= 0
+      ? firstIncompleteIndex
+      : steps.length - 1
+  const progressPercent = steps.length > 0 ? Math.round((completedCount / steps.length) * 100) : 0
   const activeStep = steps[activeIndex] || steps[0]
 
   return (
@@ -15,7 +20,8 @@ function PortalWorkflowSteps({ steps, ariaLabel }) {
         {steps.map((step, index) => (
           <li
             key={step.label}
-            className={`${index <= activeIndex ? 'is-complete' : ''} ${index === activeIndex ? 'is-current' : ''}`.trim()}
+            className={`${step.completed ? 'is-complete' : ''} ${index === activeIndex ? 'is-current' : ''}`.trim()}
+            aria-current={index === activeIndex ? 'step' : undefined}
           >
             <span className="workflow-step-index">{index + 1}</span>
             <span className="workflow-step-label">{step.label}</span>

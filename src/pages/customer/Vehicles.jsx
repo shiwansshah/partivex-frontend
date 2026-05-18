@@ -232,9 +232,9 @@ function Vehicles() {
             <PortalWorkflowSteps
               ariaLabel="Vehicle registration steps"
               steps={[
-                { label: 'Model', completed: Boolean(values.name), current: !values.name },
-                { label: 'Plate', completed: Boolean(values.number), current: Boolean(values.name) && !values.number },
-                { label: 'Image', completed: Boolean(imageFile || existingImageUrl), current: Boolean(values.name && values.number) },
+                { label: 'Model', completed: Boolean(values.name.trim()), current: !values.name.trim() },
+                { label: 'Plate', completed: Boolean(values.number.trim()), current: Boolean(values.name.trim()) && !values.number.trim() },
+                { label: 'Image', completed: Boolean(imageFile || existingImageUrl), current: Boolean(values.name.trim() && values.number.trim()) && !imageFile && !existingImageUrl },
               ]}
             />
 
