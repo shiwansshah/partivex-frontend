@@ -4,13 +4,22 @@ export function CustomerDto(data = {}) {
     fullName: data.fullName ?? data.name ?? '',
     email: data.email ?? '',
     phoneNumber: data.phoneNumber ?? data.phone ?? '',
+    address: data.address ?? '',
     vehicles: Array.isArray(data.vehicles) ? data.vehicles : [],
   }
 }
 
 export function CustomerHistoryDto(data = {}) {
+  const records = Array.isArray(data)
+    ? data
+    : Array.isArray(data.records)
+      ? data.records
+      : Array.isArray(data.history)
+        ? data.history
+        : []
+
   return {
     customerId: data.customerId ?? '',
-    records: Array.isArray(data.records) ? data.records : [],
+    records,
   }
 }
