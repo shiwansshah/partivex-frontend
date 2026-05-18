@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect, useMemo } from 'react'
-import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom'
+import { useState, useRef, useEffect } from 'react'
+import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { getProfile } from '../../api/authApi'
 import { removeToken } from '../../utils/tokenStorage'
 import useAuth from '../../hooks/useAuth'
@@ -105,18 +105,7 @@ function CustomerLayout() {
   const [profileName, setProfileName] = useState('')
   const dropdownRef = useRef(null)
   const navigate = useNavigate()
-  const location = useLocation()
   const { user } = useAuth()
-
-  const pageTitle = useMemo(() => {
-    if (location.pathname.startsWith('/customer/profile')) return 'Profile'
-
-    const activeLink = portalLinks.find((link) => {
-      if (link.to === '/customer') return location.pathname === '/customer'
-      return location.pathname.startsWith(link.to)
-    })
-    return activeLink ? activeLink.label : 'Customer Portal'
-  }, [location.pathname])
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -264,11 +253,6 @@ function CustomerLayout() {
       {mobileNavOpen && <button className="customer-nav-backdrop" type="button" aria-label="Close navigation" onClick={() => setMobileNavOpen(false)} />}
 
       <div className="customer-app">
-        <div className="customer-pagebar">
-          <span>Customer portal</span>
-          <h1>{pageTitle}</h1>
-        </div>
-
         <main id="customer-main" className="customer-content" tabIndex="-1">
           <Outlet />
         </main>
