@@ -21,6 +21,7 @@ import NotificationsPage from '../pages/notifications/NotificationsPage'
 import AdminDashboard from '../pages/admin/Dashboard'
 import StaffManagement from '../pages/admin/StaffManagement'
 import CustomerManagement from '../pages/admin/CustomerManagement'
+import CustomerDashboard from '../pages/customer/Dashboard'
 import Profile from '../pages/customer/Profile'
 import CustomerVehicles from '../pages/customer/Vehicles'
 import Appointments from '../pages/customer/Appointments'
@@ -99,7 +100,7 @@ function AppRoutes() {
           </RequireRole>
         }
       >
-        <Route index element={<Navigate to="profile" replace />} />
+        <Route index element={<CustomerDashboard />} />
         <Route path="profile" element={<Profile />} />
         <Route path="vehicles" element={<CustomerVehicles />} />
         <Route path="appointments" element={<Appointments />} />

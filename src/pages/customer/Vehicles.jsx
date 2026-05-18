@@ -2,7 +2,11 @@ import { useState, useEffect, useCallback } from 'react'
 import { getMyVehicles, addVehicle, updateVehicle } from '../../api/vehicleApi'
 import { getRequestErrorMessage, apiBaseUrl } from '../../api/axiosClient'
 import VehicleForm from '../../components/VehicleForm'
+import PortalEmptyState from '../../components/customer/PortalEmptyState'
+import PortalHero from '../../components/customer/PortalHero'
+import PortalWorkflowSteps from '../../components/customer/PortalWorkflowSteps'
 import StatusMessage from '../../components/ui/StatusMessage'
+import { customerPortalImages } from '../../utils/customerPortalImages'
 
 const emptyForm = { name: '', number: '' }
 
@@ -11,7 +15,6 @@ function Vehicles() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
-  // Form state
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState(null)
   const [values, setValues] = useState(emptyForm)
@@ -136,7 +139,11 @@ function Vehicles() {
   }
 
   if (loading) {
-    return <StatusMessage type="loading" message="Loading vehicles..." />
+    return (
+      <div className="customer-container portal-container">
+        <StatusMessage type="loading" message="Loading your registered vehicles..." />
+      </div>
+    )
   }
 
   if (error) {
@@ -148,23 +155,96 @@ function Vehicles() {
   }
 
   return (
-    <div className="customer-stack">
-      <div className="customer-card">
-        <div className="section-header">
-          <div className="section-header-text">
-            <h2>My Vehicles</h2>
-            <p>Manage your registered vehicles.</p>
-          </div>
-          {!showForm && (
-            <button className="btn-primary" onClick={handleAdd}>
-              + Add Vehicle
-            </button>
-          )}
-        </div>
+    <div className="customer-page">
+      <PortalHero
+        eyebrow="Garage inventory"
+        title="Your vehicles"
+        description="Keep vehicle records ready for service and parts."
+        imageSrc={customerPortalImages.vehicle}
+        imageAlt="Customer vehicle prepared for service"
+        actions={!showForm && <button className="btn-primary" type="button" onClick={handleAdd}>Add vehicle</button>}
+      />
 
-        {showForm && (
-          <div className="form-divider">
-            <h3>{editingId ? 'Edit Vehicle' : 'Add New Vehicle'}</h3>
+      <div className="customer-workflow-grid vehicles-workflow-grid">
+        <section className="customer-card portal-list-card">
+          <div className="section-header">
+            <div className="section-header-text">
+              <span className="customer-eyebrow">Registered fleet</span>
+              <h2>{vehicles.length === 1 ? '1 vehicle on file' : `${vehicles.length} vehicles on file`}</h2>
+            </div>
+            {!showForm && (
+              <button className="btn-outline" type="button" onClick={handleAdd}>
+                Register another
+              </button>
+            )}
+          </div>
+
+          {vehicles.length === 0 ? (
+            <PortalEmptyState
+              imageSrc={customerPortalImages.garage}
+              imageAlt="Empty service bay ready for a customer vehicle"
+              title="No vehicles registered"
+              message="Add a vehicle to book service faster."
+              action={<button className="btn-primary" type="button" onClick={handleAdd}>Register first vehicle</button>}
+            />
+          ) : (
+            <div className="vehicle-list">
+              {vehicles.map((vehicle) => {
+                const imageUrl = resolveImageUrl(vehicle.imageUrl)
+
+                return (
+                  <article key={vehicle.id} className="vehicle-item">
+                    <div className="vehicle-image-wrap">
+                      {imageUrl ? (
+                        <img src={imageUrl} alt={vehicle.name} />
+                      ) : (
+                        <img src={customerPortalImages.inspection} alt="" />
+                      )}
+                    </div>
+                    <div className="vehicle-info">
+                      <span className="customer-eyebrow">Vehicle record</span>
+                      <h3>{vehicle.name}</h3>
+                      <p>{vehicle.number}</p>
+                    </div>
+                    <div className="vehicle-actions">
+                      <button
+                        className="vehicle-edit-button"
+                        type="button"
+                        onClick={() => handleEdit(vehicle)}
+                        aria-label={`Edit ${vehicle.name}`}
+                        title="Edit vehicle"
+                      >
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                          <circle cx="12" cy="12" r="3" />
+                          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.65 1.65 0 0 0 15 19.4a1.65 1.65 0 0 0-1 .6 1.65 1.65 0 0 0-.33 1.1V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 8.6 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-.6-1 1.65 1.65 0 0 0-1.1-.33H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 8.6a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-.6 1.65 1.65 0 0 0 .33-1.1V3a2 2 0 1 1 4 0v.09A1.65 1.65 0 0 0 15.4 4.6a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 .6 1 1.65 1.65 0 0 0 1.1.33H21a2 2 0 1 1 0 4h-.09A1.65 1.65 0 0 0 19.4 15Z" />
+                        </svg>
+                      </button>
+                    </div>
+                  </article>
+                )
+              })}
+            </div>
+          )}
+        </section>
+
+        {showForm ? (
+          <section className="customer-card portal-form-card">
+            <div className="section-header">
+              <div className="section-header-text">
+                <span className="customer-eyebrow">{editingId ? 'Update record' : 'Guided setup'}</span>
+                <h2>{editingId ? 'Edit vehicle' : 'Register vehicle'}</h2>
+              </div>
+            </div>
+
+            <PortalWorkflowSteps
+              ariaLabel="Vehicle registration steps"
+              steps={[
+                { label: 'Model', completed: Boolean(values.name.trim()), current: !values.name.trim() },
+                { label: 'Plate', completed: Boolean(values.number.trim()), current: Boolean(values.name.trim()) && !values.number.trim() },
+                { label: 'Image', completed: Boolean(imageFile || existingImageUrl), current: Boolean(values.name.trim() && values.number.trim()) && !imageFile && !existingImageUrl },
+              ]}
+            />
+
             <VehicleForm
               values={values}
               errors={formErrors}
@@ -176,42 +256,18 @@ function Vehicles() {
               onImageChange={handleImageChange}
               onSubmit={handleSubmit}
               onCancel={resetForm}
-              submitLabel={editingId ? 'Update Vehicle' : 'Add Vehicle'}
+              submitLabel={editingId ? 'Update vehicle' : 'Register vehicle'}
             />
-          </div>
-        )}
-
-        {vehicles.length === 0 && !showForm ? (
-          <StatusMessage type="empty" message='No vehicles registered yet. Click "Add Vehicle" to get started.' />
+          </section>
         ) : (
-          <div className="vehicle-list">
-            {vehicles.map((vehicle) => (
-              <div key={vehicle.id} className="vehicle-item">
-                <div className="vehicle-image-wrap">
-                  {vehicle.imageUrl ? (
-                    <img
-                      src={resolveImageUrl(vehicle.imageUrl)}
-                      alt={vehicle.name}
-                    />
-                  ) : (
-                    <span className="vehicle-image-placeholder">No image</span>
-                  )}
-                </div>
-                <div className="vehicle-info">
-                  <h3>{vehicle.name}</h3>
-                  <p>{vehicle.number}</p>
-                </div>
-                <div className="vehicle-actions">
-                  <button
-                    className="btn-outline"
-                    onClick={() => handleEdit(vehicle)}
-                  >
-                    Edit
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
+          <aside className="customer-side-panel">
+            <img src={customerPortalImages.garage} alt="Vehicle service bay with technicians" />
+            <div>
+              <span className="customer-eyebrow">Why it matters</span>
+              <h2>Vehicle details reduce follow-up.</h2>
+              <p>Names and plate numbers keep service requests clear.</p>
+            </div>
+          </aside>
         )}
       </div>
     </div>

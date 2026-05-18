@@ -2,25 +2,64 @@ function AuthForm({ title, subtitle, children, footer, sidePanelTitle, sidePanel
   return (
     <main className="auth-page">
       <div className="auth-container">
-        <section className="auth-card">
-          <div className="auth-header">
-            <div className="auth-brand">
-              Parti<span>vex</span>
-            </div>
-            <h1>{title}</h1>
-            <p>{subtitle}</p>
+
+        {/* Left Side: Massive Premium Image with Floating Overlay */}
+        <section className="auth-side-panel" style={{
+          position: 'relative',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'flex-end',
+          padding: 'var(--space-12)'
+        }}>
+          {/* Subtle gradient overlay to ensure text readability */}
+          <div style={{
+            position: 'absolute',
+            inset: 0,
+            background: 'linear-gradient(180deg, rgba(0,0,0,0) 40%, rgba(0,0,0,0.8) 100%)',
+            zIndex: 1
+          }} />
+
+          <div className="side-panel-content" style={{
+            position: 'relative',
+            zIndex: 2,
+            background: 'rgba(255, 255, 255, 0.1)',
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            borderRadius: 'var(--radius-xl)',
+            padding: 'var(--space-8)',
+            maxWidth: '480px',
+            color: 'white',
+            boxShadow: '0 24px 48px rgba(0,0,0,0.2)'
+          }}>
+            <h2 style={{ fontSize: 'var(--text-4xl)', fontWeight: 'var(--weight-extrabold)', marginBottom: 'var(--space-3)', letterSpacing: '-0.5px' }}>
+              {sidePanelTitle || 'Welcome to Partivex'}
+            </h2>
+            <p style={{ fontSize: 'var(--text-lg)', color: 'rgba(255,255,255,0.8)', margin: 0, lineHeight: 1.5 }}>
+              {sidePanelSubtitle || 'Manage your vehicles and services efficiently.'}
+            </p>
           </div>
-
-          {children}
-
-          {footer && <div className="auth-footer">{footer}</div>}
         </section>
 
-        <section className="auth-side-panel">
-          <div className="side-panel-content">
-            <h2>{sidePanelTitle || 'Welcome to Partivex'}</h2>
-            <p>{sidePanelSubtitle || 'Manage your vehicles and services efficiently.'}</p>
+        {/* Right Side: Clean White Form Area */}
+        <section className="auth-card">
+          <div className="auth-header" style={{ marginBottom: 'var(--space-10)' }}>
+            <div className="auth-brand" style={{ marginBottom: 'var(--space-8)', display: 'inline-block' }}>
+              Parti<span style={{ color: 'var(--color-primary)' }}>vex</span>
+            </div>
+            <h1 style={{ fontSize: 'var(--text-5xl)', letterSpacing: '-1px', marginBottom: 'var(--space-2)' }}>{title}</h1>
+            {subtitle && <p style={{ fontSize: 'var(--text-lg)', color: 'var(--color-text-secondary)' }}>{subtitle}</p>}
           </div>
+
+          <div style={{ background: 'white' }}>
+            {children}
+          </div>
+
+          {footer && (
+            <div className="auth-footer" style={{ marginTop: 'var(--space-10)', fontSize: 'var(--text-base)', color: 'var(--color-text-secondary)' }}>
+              {footer}
+            </div>
+          )}
         </section>
       </div>
     </main>
