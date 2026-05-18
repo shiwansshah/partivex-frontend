@@ -2,13 +2,17 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   createReview,
   deleteReview,
+  getCommunityReviews,
   getReview,
   getReviews,
   getAppointments,
   updateReview,
 } from '../../api/customerPortalApi'
 import { getRequestErrorMessage } from '../../api/axiosClient'
+import PortalEmptyState from '../../components/customer/PortalEmptyState'
+import PortalHero from '../../components/customer/PortalHero'
 import PortalModal from '../../components/customer/PortalModal'
+import PortalWorkflowSteps from '../../components/customer/PortalWorkflowSteps'
 import RatingInput from '../../components/customer/RatingInput'
 import StatusBadge from '../../components/customer/StatusBadge'
 import StatusMessage from '../../components/ui/StatusMessage'
@@ -22,8 +26,32 @@ const emptyForm = {
   comment: '',
 }
 
+function StarRating({ rating, compact = false }) {
+  const normalizedRating = Math.max(0, Math.min(5, Number(rating) || 0))
+
+  return (
+    <span className={`review-stars ${compact ? 'is-compact' : ''}`} aria-label={`${normalizedRating} out of 5 stars`}>
+      {[1, 2, 3, 4, 5].map((star) => (
+        <span key={star} aria-hidden="true" className={star <= normalizedRating ? 'is-filled' : ''}>
+          {star <= normalizedRating ? '★' : '☆'}
+        </span>
+      ))}
+    </span>
+  )
+}
+
+function getCustomerInitials(name) {
+  const parts = String(name || 'Partivex customer')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+
+  return (parts.length > 1 ? `${parts[0][0]}${parts[parts.length - 1][0]}` : parts[0]?.slice(0, 2) || 'PC').toUpperCase()
+}
+
 function Reviews() {
   const [reviews, setReviews] = useState([])
+  const [communityReviews, setCommunityReviews] = useState([])
   const [appointments, setAppointments] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -39,12 +67,14 @@ function Reviews() {
   const [isDeleting, setIsDeleting] = useState(false)
 
   const loadData = useCallback(async () => {
-    const [reviewResponse, appointmentResponse] = await Promise.all([
+    const [reviewResponse, communityReviewResponse, appointmentResponse] = await Promise.all([
       getReviews(),
+      getCommunityReviews(),
       getAppointments(),
     ])
 
     setReviews(reviewResponse.data)
+    setCommunityReviews(communityReviewResponse.data)
     setAppointments(appointmentResponse.data)
   }, [])
 
@@ -53,14 +83,16 @@ function Reviews() {
 
     async function fetchData() {
       try {
-        const [reviewResponse, appointmentResponse] = await Promise.all([
+        const [reviewResponse, communityReviewResponse, appointmentResponse] = await Promise.all([
           getReviews(),
+          getCommunityReviews(),
           getAppointments(),
         ])
 
         if (!isCurrent) return
 
         setReviews(reviewResponse.data)
+        setCommunityReviews(communityReviewResponse.data)
         setAppointments(appointmentResponse.data)
       } catch (err) {
         if (isCurrent) {
@@ -226,15 +258,14 @@ function Reviews() {
   }
 
   return (
-    <div className="customer-page portal-container">
-      <section className="portal-page-hero">
-        <div>
-          <span className="customer-eyebrow">Feedback</span>
-          <h1>Reviews</h1>
-          <p>Rate completed appointments or share general service feedback with the Partivex team.</p>
-        </div>
-        <img src={customerPortalImages.review} alt="Customer discussing service feedback at a vehicle service center" />
-      </section>
+    <div className="customer-page">
+      <PortalHero
+        eyebrow="Feedback"
+        title="Review services and keep your feedback history visible"
+        description="Rate completed appointments or share general service feedback. Existing review APIs remain the source of truth."
+        imageSrc={customerPortalImages.review}
+        imageAlt="Customer and service advisor discussing vehicle work"
+      />
 
       <div className="portal-grid">
         <section className="customer-card portal-form-card">
@@ -246,14 +277,17 @@ function Reviews() {
             </div>
           </div>
 
-          <div className="workflow-steps" aria-label="Review steps">
-            <span>Type</span>
-            <span>Rating</span>
-            <span>Comment</span>
-          </div>
+          <PortalWorkflowSteps
+            ariaLabel="Review steps"
+            steps={[
+              { label: 'Type', completed: Boolean(values.scope), current: false },
+              { label: 'Rating', completed: Number(values.rating) >= 1, current: false },
+              { label: 'Comment', completed: Boolean(values.comment.trim()), current: !values.comment.trim() },
+            ]}
+          />
 
           {formStatus && (
-            <div className={`customer-form-alert ${formStatus.type === 'success' ? 'is-success' : ''}`}>
+            <div className={`customer-form-alert ${formStatus.type === 'success' ? 'is-success' : ''}`} role={formStatus.type === 'error' ? 'alert' : 'status'}>
               {formStatus.message}
             </div>
           )}
@@ -276,7 +310,7 @@ function Reviews() {
 
             {values.scope === 'appointment' && (
               <div className="customer-form-group">
-                <label htmlFor="appointmentId">Appointment</label>
+                <label htmlFor="appointmentId">Completed appointment</label>
                 <select
                   id="appointmentId"
                   name="appointmentId"
@@ -284,6 +318,7 @@ function Reviews() {
                   value={values.appointmentId}
                   onChange={handleChange}
                   disabled={isSubmitting || Boolean(editingReview)}
+                  aria-invalid={Boolean(formErrors.appointmentId)}
                 >
                   <option value="">Select appointment</option>
                   {eligibleAppointments.map((appointment) => (
@@ -314,9 +349,11 @@ function Reviews() {
                 value={values.comment}
                 onChange={handleChange}
                 disabled={isSubmitting}
+                placeholder="Mention what went well or what could be improved."
+                aria-invalid={Boolean(formErrors.comment)}
               />
               {formErrors.comment && <span className="customer-field-error">{formErrors.comment}</span>}
-              <span className="customer-field-help">Mention what went well or what could be improved for future visits.</span>
+              <span className="customer-field-help">Specific feedback helps improve future service visits.</span>
             </div>
 
             <div className="form-actions">
@@ -335,28 +372,28 @@ function Reviews() {
         <section className="customer-card portal-list-card">
           <div className="section-header">
             <div className="section-header-text">
-              <span className="customer-eyebrow">Feedback history</span>
-              <h2>My reviews</h2>
-              <p>Review history and linked service context.</p>
+              <span className="customer-eyebrow">Manage feedback</span>
+              <h2>Your reviews</h2>
+              <p>Edit, inspect, or remove feedback linked to your account.</p>
             </div>
           </div>
 
           {reviews.length === 0 ? (
-            <div className="customer-empty-panel compact">
-              <img src={customerPortalImages.review} alt="Customer lounge area at a service center" />
-              <div>
-                <h3>No reviews submitted yet</h3>
-                <p>After a service visit, your feedback can help the team improve future experiences.</p>
-              </div>
-            </div>
+            <PortalEmptyState
+              compact
+              imageSrc={customerPortalImages.review}
+              imageAlt="Service advisor gathering customer feedback"
+              title="No reviews submitted"
+              message="After a service visit, your feedback can help the team improve future experiences."
+            />
           ) : (
             <div className="portal-item-list">
               {reviews.map((review) => (
-                <article key={review.id} className="portal-list-item">
+                <article key={review.id} className="portal-list-item stacked">
                   <div className="portal-list-main">
                     <div className="portal-list-title-row">
                       <h3>{review.serviceType || 'General experience'}</h3>
-                      <span className="rating-readout">{review.rating}/5</span>
+                      <StarRating rating={review.rating} compact />
                     </div>
                     <p>{review.comment}</p>
                     <div className="portal-meta-grid">
@@ -387,6 +424,62 @@ function Reviews() {
         </section>
       </div>
 
+      <section className="customer-review-showcase" aria-labelledby="recent-reviews-title">
+        <div className="review-showcase-header">
+          <div>
+            <span className="customer-eyebrow">Community feedback</span>
+            <h2 id="recent-reviews-title">Recent reviews</h2>
+          </div>
+          <span>{communityReviews.length} shared</span>
+        </div>
+
+        {communityReviews.length === 0 ? (
+          <PortalEmptyState
+            compact
+            imageSrc={customerPortalImages.review}
+            imageAlt="Service advisor gathering customer feedback"
+            title="No shared reviews yet"
+            message="Customer reviews will appear here as soon as feedback is submitted."
+          />
+        ) : (
+          <div className="review-card-grid">
+            {communityReviews.map((review) => (
+              <article key={review.id} className="review-card">
+                <div className="review-card-topline">
+                  <span className="review-avatar" aria-hidden="true">{getCustomerInitials(review.customerName)}</span>
+                  <StarRating rating={review.rating} />
+                </div>
+
+                <div className="review-card-copy">
+                  <h3>
+                    <strong>{review.customerName}</strong>
+                    <span> reviewed </span>
+                    <strong>{review.serviceType || 'General experience'}</strong>
+                  </h3>
+                  <p>&ldquo;{review.comment}&rdquo;</p>
+                </div>
+
+                <div className="review-card-footer">
+                  <span>{review.appointmentDate ? formatDate(review.appointmentDate) : formatDateTime(review.createdAt)}</span>
+                  {review.isOwnReview && <span className="review-owner-badge">Your review</span>}
+                </div>
+
+                {review.isOwnReview && (
+                  <div className="review-card-actions">
+                    <button className="btn-outline btn-outline-on-dark" type="button" onClick={() => handleViewDetails(review.id)}>
+                      Details
+                    </button>
+                    <button className="btn-outline btn-outline-on-dark" type="button" onClick={() => handleEdit(review)}>
+                      Edit
+                    </button>
+                  </div>
+                )}
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
+
       <section className="customer-trust-strip">
         <div>
           <strong>Appointment-specific</strong>
@@ -408,12 +501,12 @@ function Reviews() {
           setDetailError('')
           setDetailLoading(false)
         }}>
-          {detailLoading && <StatusMessage type="loading" message="Loading details..." />}
+          {detailLoading && <StatusMessage type="loading" message="Loading review details..." />}
           {detailError && <StatusMessage type="error" message={detailError} />}
           {detail && (
             <div className="portal-detail-list">
               <div><span>Type</span><strong>{detail.category}</strong></div>
-              <div><span>Rating</span><strong>{detail.rating}/5</strong></div>
+              <div><span>Rating</span><strong><StarRating rating={detail.rating} compact /></strong></div>
               <div><span>Linked service</span><strong>{detail.serviceType || 'General experience'}</strong></div>
               <div><span>Appointment date</span><strong>{detail.appointmentDate ? formatDate(detail.appointmentDate) : 'Not linked'}</strong></div>
               <div><span>Appointment status</span>{detail.appointmentStatus ? <StatusBadge status={detail.appointmentStatus} /> : <strong>Not linked</strong>}</div>

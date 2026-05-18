@@ -30,6 +30,9 @@ export const cancelPartRequest = (id) =>
 export const getReviews = () =>
   axiosClient.get('/customer/reviews')
 
+export const getCommunityReviews = () =>
+  axiosClient.get('/customer/reviews/community')
+
 export const getReview = (id) =>
   axiosClient.get(`/customer/reviews/${id}`)
 
