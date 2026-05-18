@@ -79,9 +79,14 @@ function CustomerList() {
             title="Customers"
             subtitle="View registered customer accounts and open their vehicle records."
           />
-          <Link className="button" to={`${customersPath}/add`}>
-            Add Customer
-          </Link>
+          <div className="topbar-actions">
+            <Link className="button button-outline" to={`${customersPath}/reports`}>
+              Reports
+            </Link>
+            <Link className="button" to={`${customersPath}/add`}>
+              Add Customer
+            </Link>
+          </div>
         </div>
 
         <CustomerSearchBar
@@ -127,6 +132,9 @@ function CustomerList() {
                       <div className="table-actions">
                         <Link className="button button-outline" to={`${customersPath}/${customer.id}`}>
                           Details
+                        </Link>
+                        <Link className="button button-outline" to={`${customersPath}/${customer.id}/edit`}>
+                          Edit
                         </Link>
                         <Link className="button button-outline" to={`${vehiclesPath}?customerId=${customer.id}`}>
                           Vehicles
