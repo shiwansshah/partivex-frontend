@@ -187,8 +187,8 @@ function PartRequests() {
     <div className="customer-page">
       <PortalHero
         eyebrow="Spare parts"
-        title="Request vehicle parts with the right fitment context"
-        description="Submit part names, quantities, specifications, and optional vehicle details so the service team can review your inquiry with less guesswork."
+        title="Part requests"
+        description="Ask for parts and track review status."
         imageSrc={customerPortalImages.parts}
         imageAlt="Vehicle parts organized for workshop service"
       />
@@ -199,7 +199,6 @@ function PartRequests() {
             <div className="section-header-text">
               <span className="customer-eyebrow">Guided inquiry</span>
               <h2>New part request</h2>
-              <p>Keep the request specific. Vehicle and fitment notes are optional, but they improve review quality.</p>
             </div>
           </div>
 
@@ -252,7 +251,6 @@ function PartRequests() {
                   </option>
                 ))}
               </select>
-              <span className="customer-field-help">Linking a vehicle helps with compatibility checks when the part is model specific.</span>
             </div>
 
             <div className="portal-form-row">
@@ -310,7 +308,7 @@ function PartRequests() {
             <div className="section-header-text">
               <span className="customer-eyebrow">Request history</span>
               <h2>Part inquiries</h2>
-              <p>Track quantity, vehicle context, and the latest status for every inquiry.</p>
+              <p>Recent requests and status updates.</p>
             </div>
           </div>
 
@@ -319,7 +317,7 @@ function PartRequests() {
               imageSrc={customerPortalImages.partsDetail}
               imageAlt="Vehicle parts ready for inspection"
               title="No part inquiries yet"
-              message="Submit your first part request and the status trail will appear here."
+              message="Submit a part request to see it here."
             />
           ) : (
             <div className="portal-item-list">
@@ -356,15 +354,15 @@ function PartRequests() {
       <section className="customer-trust-strip">
         <div>
           <strong>Optional vehicle link</strong>
-          <span>Submit general or vehicle-specific part inquiries.</span>
+          <span>General or vehicle-specific.</span>
         </div>
         <div>
           <strong>Quantity validation</strong>
-          <span>Requests must include a positive whole-number quantity.</span>
+          <span>Positive quantities only.</span>
         </div>
         <div>
           <strong>Pending withdrawals</strong>
-          <span>Only pending part inquiries can be withdrawn.</span>
+          <span>Withdraw pending requests.</span>
         </div>
       </section>
 

@@ -142,8 +142,8 @@ function Profile() {
     <div className="customer-page">
       <PortalHero
         eyebrow="Account"
-        title="Keep contact details ready for service coordination"
-        description="Your profile information helps connect bookings, part requests, and customer support conversations to the right account."
+        title="Profile details"
+        description="Keep your contact information current."
         imageSrc={customerPortalImages.support}
         imageAlt="Service team reviewing vehicle service information"
       />
@@ -154,7 +154,6 @@ function Profile() {
             <div>
               <span className="customer-eyebrow">Identity</span>
               <h3>Basic information</h3>
-              <p>Name and phone number are editable. Email remains tied to sign-in.</p>
             </div>
             {!isEditing && (
               <button className="btn-outline" type="button" onClick={() => setIsEditing(true)}>
@@ -238,7 +237,6 @@ function Profile() {
           <div className="profile-list-header">
             <span className="customer-eyebrow">Reachability</span>
             <h3>Contact information</h3>
-            <p>These details support appointment and part request follow-up.</p>
           </div>
 
           <div className="profile-list-item">
@@ -258,8 +256,8 @@ function Profile() {
           <img src={customerPortalImages.garage} alt="Service team preparing a garage bay" />
           <div>
             <span className="customer-eyebrow">Why update this?</span>
-            <h2>Service teams use contact details when they need to confirm a booking or clarify a part request.</h2>
-            <p>Your account identity stays protected while editable contact details remain practical for coordination.</p>
+            <h2>Contact details help coordination.</h2>
+            <p>Keep them accurate for service follow-up.</p>
           </div>
         </aside>
       </div>
@@ -267,15 +265,15 @@ function Profile() {
       <section className="customer-trust-strip">
         <div>
           <strong>Protected route</strong>
-          <span>Your profile details are available only after customer sign-in.</span>
+          <span>Visible after sign-in.</span>
         </div>
         <div>
           <strong>Clean phone input</strong>
-          <span>Spacing is normalized before the update request is sent.</span>
+          <span>Spacing is normalized.</span>
         </div>
         <div>
           <strong>Email stability</strong>
-          <span>Sign-in email remains visible without adding unsupported edits.</span>
+          <span>Email stays tied to sign-in.</span>
         </div>
       </section>
     </div>

@@ -390,7 +390,7 @@
   max-width: 740px;
   margin: 0 0 var(--space-4);
   color: var(--color-body);
-  font-size: var(--text-6xl);
+  font-size: var(--text-5xl);
   line-height: var(--leading-tight);
 }
 
@@ -497,6 +497,15 @@
   justify-content: space-between;
   gap: var(--space-4);
   margin-bottom: var(--space-5);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.section-header-text,
+.profile-list-header > div,
+.dashboard-support-card > div,
+.customer-side-panel > div {
+  min-width: 0;
 }
 
 .section-header-text h2,
@@ -505,7 +514,8 @@
 .dashboard-support-card h2 {
   margin: 0;
   color: var(--color-text);
-  font-size: var(--text-3xl);
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-extrabold);
   line-height: var(--leading-tight);
 }
 
@@ -518,6 +528,7 @@
 .profile-list-header p {
   margin: var(--space-2) 0 0;
   color: var(--color-text-secondary);
+  font-size: var(--text-sm);
   line-height: var(--leading-relaxed);
 }
 
@@ -1369,6 +1380,7 @@
 
 .profile-list-header {
   padding: var(--space-6);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .profile-list-header-actions {
@@ -1380,7 +1392,10 @@
 
 .profile-list-header h3 {
   margin-bottom: var(--space-1);
-  font-size: var(--text-3xl);
+  color: var(--color-text);
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-extrabold);
+  line-height: var(--leading-tight);
 }
 
 .profile-list-item {

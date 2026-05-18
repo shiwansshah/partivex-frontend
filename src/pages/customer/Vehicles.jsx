@@ -158,8 +158,8 @@ function Vehicles() {
     <div className="customer-page">
       <PortalHero
         eyebrow="Garage inventory"
-        title="Manage the vehicles attached to your account"
-        description="Accurate vehicle records make bookings faster, service history clearer, and part inquiries easier to match."
+        title="Your vehicles"
+        description="Keep vehicle records ready for service and parts."
         imageSrc={customerPortalImages.vehicle}
         imageAlt="Customer vehicle prepared for service"
         actions={!showForm && <button className="btn-primary" type="button" onClick={handleAdd}>Add vehicle</button>}
@@ -171,7 +171,6 @@ function Vehicles() {
             <div className="section-header-text">
               <span className="customer-eyebrow">Registered fleet</span>
               <h2>{vehicles.length === 1 ? '1 vehicle on file' : `${vehicles.length} vehicles on file`}</h2>
-              <p>These vehicles are available when you book service or submit a part inquiry.</p>
             </div>
             {!showForm && (
               <button className="btn-outline" type="button" onClick={handleAdd}>
@@ -185,7 +184,7 @@ function Vehicles() {
               imageSrc={customerPortalImages.garage}
               imageAlt="Empty service bay ready for a customer vehicle"
               title="No vehicles registered"
-              message="Add your first vehicle so appointments and part requests can carry the right context."
+              message="Add a vehicle to book service faster."
               action={<button className="btn-primary" type="button" onClick={handleAdd}>Register first vehicle</button>}
             />
           ) : (
@@ -225,7 +224,6 @@ function Vehicles() {
               <div className="section-header-text">
                 <span className="customer-eyebrow">{editingId ? 'Update record' : 'Guided setup'}</span>
                 <h2>{editingId ? 'Edit vehicle' : 'Register vehicle'}</h2>
-                <p>Use the name and plate number exactly as you want them to appear in service workflows.</p>
               </div>
             </div>
 
@@ -257,8 +255,8 @@ function Vehicles() {
             <img src={customerPortalImages.garage} alt="Vehicle service bay with technicians" />
             <div>
               <span className="customer-eyebrow">Why it matters</span>
-              <h2>Vehicle context reduces ambiguity before a booking reaches the service team.</h2>
-              <p>Plate numbers and vehicle names help appointments and part inquiries reach the service team with the right details.</p>
+              <h2>Vehicle details reduce follow-up.</h2>
+              <p>Names and plate numbers keep service requests clear.</p>
             </div>
           </aside>
         )}

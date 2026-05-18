@@ -212,8 +212,8 @@ function Appointments() {
     <div className="customer-page">
       <PortalHero
         eyebrow="Service desk"
-        title="Book and track vehicle service appointments"
-        description="Choose a registered vehicle, select the work needed, and keep every request visible as it moves through the service timeline."
+        title="Service appointments"
+        description="Book visits and follow their status."
         imageSrc={customerPortalImages.appointment}
         imageAlt="Mechanic inspecting a vehicle in a service bay"
         actions={vehicles.length === 0 && <Link className="btn-outline btn-outline-on-dark" to="/customer/vehicles">Register a vehicle first</Link>}
@@ -225,7 +225,6 @@ function Appointments() {
             <div className="section-header-text">
               <span className="customer-eyebrow">Guided booking</span>
               <h2>Request a service visit</h2>
-              <p>Complete the essentials first. Notes are optional, but they help the service team prepare.</p>
             </div>
           </div>
 
@@ -337,7 +336,6 @@ function Appointments() {
                 placeholder="Describe any sounds, warning lights, symptoms, or service preferences."
                 disabled={isSubmitting}
               />
-              <span className="customer-field-help">Helpful notes can reduce back-and-forth before your visit.</span>
             </div>
 
             <button className="btn-primary btn-block" type="submit" disabled={isSubmitting || vehicles.length === 0}>
@@ -351,7 +349,7 @@ function Appointments() {
             <div className="section-header-text">
               <span className="customer-eyebrow">Service timeline</span>
               <h2>Your appointments</h2>
-              <p>Review upcoming, completed, and cancelled appointment records.</p>
+              <p>Upcoming and past service visits.</p>
             </div>
           </div>
 
@@ -360,7 +358,7 @@ function Appointments() {
               imageSrc={customerPortalImages.serviceHistory}
               imageAlt="Technician reviewing a service checklist"
               title="No appointment history"
-              message="Your service requests and visit history will appear here once you book an appointment."
+              message="Book a service visit to see it here."
             />
           ) : (
             <div className="portal-item-list timeline-list">
@@ -397,15 +395,15 @@ function Appointments() {
       <section className="customer-trust-strip">
         <div>
           <strong>Vehicle-first booking</strong>
-          <span>Every appointment starts with a registered vehicle.</span>
+          <span>Start with a registered vehicle.</span>
         </div>
         <div>
           <strong>Service options</strong>
-          <span>Choose from the service types currently available at the workshop.</span>
+          <span>Pick the work you need.</span>
         </div>
         <div>
           <strong>Cancellation guardrails</strong>
-          <span>Only pending or confirmed requests can be cancelled.</span>
+          <span>Cancel eligible requests only.</span>
         </div>
       </section>
 

@@ -100,8 +100,8 @@ function Dashboard() {
     <div className="customer-page">
       <PortalHero
         eyebrow={`Welcome back, ${firstName}`}
-        title="A clear home for your vehicles, visits, and parts"
-        description="Review your registered vehicles, upcoming service requests, part inquiries, and feedback history from one organized customer workspace."
+        title="Your service dashboard"
+        description="Track vehicles, appointments, parts, and reviews in one place."
         imageSrc={customerPortalImages.dashboardHero}
         imageAlt="Technician working in a professional vehicle service bay"
         actions={(
@@ -148,7 +148,7 @@ function Dashboard() {
             <div className="section-header-text">
               <span className="customer-eyebrow">Next service movement</span>
               <h2>{nextAppointment ? 'Upcoming appointment' : 'Start with a service booking'}</h2>
-              <p>Keep the next visit visible so planning does not get buried in history.</p>
+              <p>Your next service item at a glance.</p>
             </div>
             <Link to="/customer/appointments" className="btn-outline">View all</Link>
           </div>
@@ -171,7 +171,7 @@ function Dashboard() {
               imageSrc={customerPortalImages.appointment}
               imageAlt="Service advisor planning a vehicle appointment"
               title="No scheduled visits yet"
-              message="Book a regular inspection or a specific repair request and it will appear here as the next item to track."
+              message="Book a service visit to start tracking."
               action={<Link className="btn-primary" to="/customer/appointments">Schedule service</Link>}
             />
           )}
@@ -181,8 +181,8 @@ function Dashboard() {
           <img src={customerPortalImages.support} alt="Technician preparing a vehicle service bay" />
           <div>
             <span className="customer-eyebrow">Service reassurance</span>
-            <h2>Every request stays connected to the right vehicle and account.</h2>
-            <p>Appointments, part inquiries, and reviews remain easy to trace whenever you need to plan your next visit.</p>
+            <h2>Service records stay connected.</h2>
+            <p>Each request stays tied to your account and vehicle.</p>
           </div>
         </aside>
       </div>
@@ -193,7 +193,7 @@ function Dashboard() {
             <div className="section-header-text">
               <span className="customer-eyebrow">Recent parts activity</span>
               <h2>Part inquiry queue</h2>
-              <p>See your latest part requests and their current review status.</p>
+              <p>Latest part requests and statuses.</p>
             </div>
             <Link to="/customer/part-requests" className="btn-outline">Open parts</Link>
           </div>
@@ -204,7 +204,7 @@ function Dashboard() {
               imageSrc={customerPortalImages.parts}
               imageAlt="Organized vehicle parts and tools"
               title="No part inquiries yet"
-              message="Submit an inquiry when you need a spare part checked for availability or fitment."
+              message="Request a part when you need availability checked."
             />
           ) : (
             <div className="portal-item-list">
@@ -231,8 +231,8 @@ function Dashboard() {
           <img src={customerPortalImages.partsDetail} alt="Vehicle parts ready for inspection" />
           <div>
             <span className="customer-eyebrow">Parts confidence</span>
-            <h2>Fitment details make requests easier to review.</h2>
-            <p>Adding vehicle context and notes gives the service team the information they need before they respond.</p>
+            <h2>Better details help review.</h2>
+            <p>Vehicle context keeps part requests clear.</p>
           </div>
         </aside>
       </div>
@@ -240,19 +240,19 @@ function Dashboard() {
       <section className="customer-trust-strip" aria-label="Portal assurances">
         <div>
           <strong>Account-linked</strong>
-          <span>Your vehicles, appointments, part inquiries, and reviews stay tied to your customer account.</span>
+          <span>Records stay tied to your account.</span>
         </div>
         <div>
           <strong>Vehicle-aware</strong>
-          <span>Bookings and part requests can stay connected to registered vehicles.</span>
+          <span>Requests can link to vehicles.</span>
         </div>
         <div>
           <strong>Status-led</strong>
-          <span>Open, completed, cancelled, and reviewed records are easy to scan.</span>
+          <span>Statuses are easy to scan.</span>
         </div>
         <div>
           <strong>Mobile-ready</strong>
-          <span>The portal keeps forms and history usable on smaller screens.</span>
+          <span>Forms stay usable on mobile.</span>
         </div>
       </section>
     </div>

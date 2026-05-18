@@ -261,8 +261,8 @@ function Reviews() {
     <div className="customer-page">
       <PortalHero
         eyebrow="Feedback"
-        title="Review services and keep your feedback history visible"
-        description="Rate completed appointments or share general service feedback so the service team can keep improving each visit."
+        title="Service reviews"
+        description="Share feedback and manage your review history."
         imageSrc={customerPortalImages.review}
         imageAlt="Customer and service advisor discussing vehicle work"
       />
@@ -273,7 +273,6 @@ function Reviews() {
             <div className="section-header-text">
               <span className="customer-eyebrow">Guided feedback</span>
               <h2>{editingReview ? 'Edit review' : 'Submit feedback'}</h2>
-              <p>{editingReview ? 'Update the rating and comment you already submitted.' : 'Choose the experience type, rating, and comment.'}</p>
             </div>
           </div>
 
@@ -353,7 +352,6 @@ function Reviews() {
                 aria-invalid={Boolean(formErrors.comment)}
               />
               {formErrors.comment && <span className="customer-field-error">{formErrors.comment}</span>}
-              <span className="customer-field-help">Specific feedback helps improve future service visits.</span>
             </div>
 
             <div className="form-actions">
@@ -374,7 +372,7 @@ function Reviews() {
             <div className="section-header-text">
               <span className="customer-eyebrow">Manage feedback</span>
               <h2>Your reviews</h2>
-              <p>Edit, inspect, or remove feedback linked to your account.</p>
+              <p>Your submitted feedback.</p>
             </div>
           </div>
 
@@ -384,7 +382,7 @@ function Reviews() {
               imageSrc={customerPortalImages.review}
               imageAlt="Service advisor gathering customer feedback"
               title="No reviews submitted"
-              message="After a service visit, your feedback can help the team improve future experiences."
+              message="Submit feedback after a service visit."
             />
           ) : (
             <div className="portal-item-list">
@@ -439,7 +437,7 @@ function Reviews() {
             imageSrc={customerPortalImages.review}
             imageAlt="Service advisor gathering customer feedback"
             title="No shared reviews yet"
-            message="Customer reviews will appear here as soon as feedback is submitted."
+            message="Shared reviews will appear here."
           />
         ) : (
           <div className="review-card-grid">
@@ -483,15 +481,15 @@ function Reviews() {
       <section className="customer-trust-strip">
         <div>
           <strong>Appointment-specific</strong>
-          <span>Link feedback to completed service visits.</span>
+          <span>Review completed visits.</span>
         </div>
         <div>
           <strong>Editable feedback</strong>
-          <span>Update a review when your experience changes.</span>
+          <span>Update when needed.</span>
         </div>
         <div>
           <strong>History retained</strong>
-          <span>Keep service context visible over time.</span>
+          <span>Keep feedback visible.</span>
         </div>
       </section>
 
