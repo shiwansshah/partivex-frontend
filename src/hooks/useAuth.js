@@ -17,6 +17,14 @@ const ID_CLAIMS = [
   'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier',
 ]
 
+const NAME_CLAIMS = [
+  'fullName',
+  'FullName',
+  'name',
+  'given_name',
+  'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name',
+]
+
 function decodeBase64Url(value) {
   const normalized = value.replace(/-/g, '+').replace(/_/g, '/')
   const padded = normalized.padEnd(normalized.length + ((4 - (normalized.length % 4)) % 4), '=')
@@ -47,7 +55,7 @@ function getCurrentUser(token = getToken()) {
     token,
     customerId: getClaim(payload, ID_CLAIMS),
     email: payload.email || payload.unique_name || '',
-    fullName: payload.fullName || payload.name || '',
+    fullName: getClaim(payload, NAME_CLAIMS) || '',
     role: normalizeRole(getClaim(payload, ROLE_CLAIMS)),
     claims: payload,
   }
