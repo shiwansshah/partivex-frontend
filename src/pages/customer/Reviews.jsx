@@ -262,7 +262,7 @@ function Reviews() {
       <PortalHero
         eyebrow="Feedback"
         title="Review services and keep your feedback history visible"
-        description="Rate completed appointments or share general service feedback. Existing review APIs remain the source of truth."
+        description="Rate completed appointments or share general service feedback so the service team can keep improving each visit."
         imageSrc={customerPortalImages.review}
         imageAlt="Customer and service advisor discussing vehicle work"
       />

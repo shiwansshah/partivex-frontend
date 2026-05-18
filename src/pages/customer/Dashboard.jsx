@@ -4,9 +4,11 @@ import { getProfile } from '../../api/authApi'
 import { getRequestErrorMessage } from '../../api/axiosClient'
 import { getAppointments, getPartRequests, getReviews } from '../../api/customerPortalApi'
 import { getMyVehicles } from '../../api/vehicleApi'
+import PortalEmptyState from '../../components/customer/PortalEmptyState'
+import PortalHero from '../../components/customer/PortalHero'
 import StatusBadge from '../../components/customer/StatusBadge'
 import StatusMessage from '../../components/ui/StatusMessage'
-import { formatDate, formatTime } from '../../utils/customerPortalFormatters'
+import { formatDate, formatDateTime, formatTime } from '../../utils/customerPortalFormatters'
 import { customerPortalImages } from '../../utils/customerPortalImages'
 
 function Dashboard() {
@@ -68,7 +70,11 @@ function Dashboard() {
   }, [appointments])
 
   const pendingRequests = partRequests.filter((request) => request.status === 'Pending')
+  const openAppointments = appointments.filter((appointment) => ['Pending', 'Confirmed'].includes(appointment.status))
   const completedAppointments = appointments.filter((appointment) => appointment.status === 'Completed')
+  const recentPartRequests = [...partRequests]
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+    .slice(0, 3)
 
   if (loading) {
     return (
@@ -88,105 +94,165 @@ function Dashboard() {
     )
   }
 
-  return (
-    <div className="customer-page customer-dashboard-page">
-      <section className="customer-dashboard-hero">
-        <div className="dashboard-hero-copy">
-          <span className="customer-eyebrow">Welcome back</span>
-          <h1>{profile?.fullName ? `${profile.fullName}'s service hub` : 'Your service hub'}</h1>
-          <p>Track vehicles, book service visits, request parts, and keep your experience history organized.</p>
-          <div className="dashboard-hero-actions">
-            <Link className="btn-primary" to="/customer/appointments">Book service</Link>
-            <Link className="btn-outline btn-outline-on-dark" to="/customer/part-requests">Request a part</Link>
-          </div>
-        </div>
-        <img src={customerPortalImages.dashboardHero} alt="Mechanic servicing a vehicle in a professional garage" />
-      </section>
+  const firstName = profile?.fullName?.split(' ').filter(Boolean)[0] || 'there'
 
-      <section className="customer-metric-grid" aria-label="Portal summary">
+  return (
+    <div className="customer-page">
+      <PortalHero
+        eyebrow={`Welcome back, ${firstName}`}
+        title="A clear home for your vehicles, visits, and parts"
+        description="Review your registered vehicles, upcoming service requests, part inquiries, and feedback history from one organized customer workspace."
+        imageSrc={customerPortalImages.dashboardHero}
+        imageAlt="Technician working in a professional vehicle service bay"
+        actions={(
+          <>
+            <Link className="btn-primary" to="/customer/appointments">Book service</Link>
+            <Link className="btn-outline btn-outline-on-dark" to="/customer/part-requests">Request parts</Link>
+          </>
+        )}
+        meta={(
+          <>
+            <span>Vehicle-linked service records</span>
+            <span>Status tracking across requests</span>
+            <span>Customer feedback history</span>
+          </>
+        )}
+      />
+
+      <section className="customer-metric-grid" aria-label="Account overview">
         <Link className="customer-metric-card" to="/customer/vehicles">
-          <span>Registered vehicles</span>
-          <strong>{vehicles.length}</strong>
-          <small>Manage vehicle records and photos</small>
+          <span className="metric-label">Registered vehicles</span>
+          <strong className="metric-value">{vehicles.length}</strong>
+          <span className="metric-trend">Ready for service booking</span>
         </Link>
         <Link className="customer-metric-card" to="/customer/appointments">
-          <span>Appointments</span>
-          <strong>{appointments.length}</strong>
-          <small>{completedAppointments.length} completed services</small>
+          <span className="metric-label">Open appointments</span>
+          <strong className="metric-value">{openAppointments.length}</strong>
+          <span className="metric-trend">{completedAppointments.length} completed in history</span>
         </Link>
         <Link className="customer-metric-card" to="/customer/part-requests">
-          <span>Pending parts</span>
-          <strong>{pendingRequests.length}</strong>
-          <small>Requests awaiting review</small>
+          <span className="metric-label">Pending part requests</span>
+          <strong className="metric-value">{pendingRequests.length}</strong>
+          <span className="metric-trend">Awaiting staff review</span>
         </Link>
         <Link className="customer-metric-card" to="/customer/reviews">
-          <span>Reviews</span>
-          <strong>{reviews.length}</strong>
-          <small>Feedback shared with the team</small>
+          <span className="metric-label">Reviews shared</span>
+          <strong className="metric-value">{reviews.length}</strong>
+          <span className="metric-trend">Feedback linked to your account</span>
         </Link>
       </section>
 
-      <div className="dashboard-main-grid">
-        <section className="customer-card dashboard-focus-card">
+      <div className="dashboard-main-grid dashboard-activity-row">
+        <section className="customer-card">
           <div className="section-header">
             <div className="section-header-text">
-              <span className="customer-eyebrow">Next step</span>
-              <h2>{nextAppointment ? 'Upcoming appointment' : 'Plan your next service'}</h2>
-              <p>{nextAppointment ? 'Your next visit is ready to review.' : 'Choose a registered vehicle and preferred time when you are ready.'}</p>
+              <span className="customer-eyebrow">Next service movement</span>
+              <h2>{nextAppointment ? 'Upcoming appointment' : 'Start with a service booking'}</h2>
+              <p>Keep the next visit visible so planning does not get buried in history.</p>
             </div>
+            <Link to="/customer/appointments" className="btn-outline">View all</Link>
           </div>
 
           {nextAppointment ? (
-            <article className="dashboard-appointment-card">
-              <div>
+            <article className="dashboard-record-card">
+              <div className="portal-list-title-row">
                 <h3>{nextAppointment.serviceType}</h3>
-                <p>{nextAppointment.vehicleName} - {nextAppointment.vehicleNumber}</p>
+                <StatusBadge status={nextAppointment.status} />
               </div>
-              <StatusBadge status={nextAppointment.status} />
+              <p>{nextAppointment.vehicleName} - {nextAppointment.vehicleNumber}</p>
               <div className="portal-meta-grid">
                 <span>{formatDate(nextAppointment.preferredDate)}</span>
                 <span>{formatTime(nextAppointment.preferredTime)}</span>
               </div>
-              <Link className="btn-outline" to="/customer/appointments">View appointments</Link>
+              {nextAppointment.notes && <p className="record-note">{nextAppointment.notes}</p>}
             </article>
           ) : (
-            <div className="customer-empty-panel">
-              <img src={customerPortalImages.appointment} alt="Vehicle service appointment desk" />
-              <div>
-                <h3>No upcoming appointment</h3>
-                <p>Book a service visit to keep your vehicle records and service updates in one place.</p>
-                <Link className="btn-primary" to="/customer/appointments">Book appointment</Link>
-              </div>
+            <PortalEmptyState
+              imageSrc={customerPortalImages.appointment}
+              imageAlt="Service advisor planning a vehicle appointment"
+              title="No scheduled visits yet"
+              message="Book a regular inspection or a specific repair request and it will appear here as the next item to track."
+              action={<Link className="btn-primary" to="/customer/appointments">Schedule service</Link>}
+            />
+          )}
+        </section>
+
+        <aside className="customer-side-panel">
+          <img src={customerPortalImages.support} alt="Technician preparing a vehicle service bay" />
+          <div>
+            <span className="customer-eyebrow">Service reassurance</span>
+            <h2>Every request stays connected to the right vehicle and account.</h2>
+            <p>Appointments, part inquiries, and reviews remain easy to trace whenever you need to plan your next visit.</p>
+          </div>
+        </aside>
+      </div>
+
+      <div className="dashboard-main-grid dashboard-activity-row">
+        <section className="customer-card">
+          <div className="section-header">
+            <div className="section-header-text">
+              <span className="customer-eyebrow">Recent parts activity</span>
+              <h2>Part inquiry queue</h2>
+              <p>See your latest part requests and their current review status.</p>
+            </div>
+            <Link to="/customer/part-requests" className="btn-outline">Open parts</Link>
+          </div>
+
+          {recentPartRequests.length === 0 ? (
+            <PortalEmptyState
+              compact
+              imageSrc={customerPortalImages.parts}
+              imageAlt="Organized vehicle parts and tools"
+              title="No part inquiries yet"
+              message="Submit an inquiry when you need a spare part checked for availability or fitment."
+            />
+          ) : (
+            <div className="portal-item-list">
+              {recentPartRequests.map((request) => (
+                <article key={request.id} className="portal-list-item">
+                  <div className="portal-list-main">
+                    <div className="portal-list-title-row">
+                      <h3>{request.partName}</h3>
+                      <StatusBadge status={request.status} />
+                    </div>
+                    <p>{request.vehicleName ? `${request.vehicleName} - ${request.vehicleNumber}` : 'General inquiry'}</p>
+                    <div className="portal-meta-grid">
+                      <span>Qty {request.quantity}</span>
+                      <span>{formatDateTime(request.createdAt)}</span>
+                    </div>
+                  </div>
+                </article>
+              ))}
             </div>
           )}
         </section>
 
-        <section className="customer-card dashboard-support-card">
-          <img src={customerPortalImages.support} alt="Service support team discussing customer work" />
+        <aside className="customer-card dashboard-support-card">
+          <img src={customerPortalImages.partsDetail} alt="Vehicle parts ready for inspection" />
           <div>
-            <span className="customer-eyebrow">Service promise</span>
-            <h2>Clear status, fewer phone calls</h2>
-            <p>Each request keeps its status visible, so you can see whether a visit is pending, confirmed, completed, or cancelled.</p>
+            <span className="customer-eyebrow">Parts confidence</span>
+            <h2>Fitment details make requests easier to review.</h2>
+            <p>Adding vehicle context and notes gives the service team the information they need before they respond.</p>
           </div>
-        </section>
+        </aside>
       </div>
 
-      <section className="customer-trust-strip" aria-label="What you can manage">
+      <section className="customer-trust-strip" aria-label="Portal assurances">
         <div>
-          <strong>Vehicles</strong>
-          <span>Keep model and plate details current.</span>
+          <strong>Account-linked</strong>
+          <span>Your vehicles, appointments, part inquiries, and reviews stay tied to your customer account.</span>
         </div>
         <div>
-          <strong>Appointments</strong>
-          <span>Book visits and cancel eligible bookings.</span>
+          <strong>Vehicle-aware</strong>
+          <span>Bookings and part requests can stay connected to registered vehicles.</span>
         </div>
         <div>
-          <strong>Parts</strong>
-          <span>Request unavailable parts with specifications.</span>
+          <strong>Status-led</strong>
+          <span>Open, completed, cancelled, and reviewed records are easy to scan.</span>
         </div>
         <div>
-          <strong>Reviews</strong>
-          <span>Share feedback for completed or general service.</span>
+          <strong>Mobile-ready</strong>
+          <span>The portal keeps forms and history usable on smaller screens.</span>
         </div>
       </section>
     </div>

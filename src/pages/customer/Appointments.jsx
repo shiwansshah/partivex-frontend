@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import {
   cancelAppointment,
   createAppointment,
@@ -8,7 +9,10 @@ import {
 } from '../../api/customerPortalApi'
 import { getMyVehicles } from '../../api/vehicleApi'
 import { getRequestErrorMessage } from '../../api/axiosClient'
+import PortalEmptyState from '../../components/customer/PortalEmptyState'
+import PortalHero from '../../components/customer/PortalHero'
 import PortalModal from '../../components/customer/PortalModal'
+import PortalWorkflowSteps from '../../components/customer/PortalWorkflowSteps'
 import StatusBadge from '../../components/customer/StatusBadge'
 import StatusMessage from '../../components/ui/StatusMessage'
 import { formatDate, formatDateTime, formatTime } from '../../utils/customerPortalFormatters'
@@ -202,43 +206,48 @@ function Appointments() {
     )
   }
 
-  return (
-    <div className="customer-page portal-container">
-      <section className="portal-page-hero">
-        <div>
-          <span className="customer-eyebrow">Service booking</span>
-          <h1>Appointments</h1>
-          <p>Choose a registered vehicle, describe the service need, and keep every booking status visible.</p>
-        </div>
-        <img src={customerPortalImages.appointment} alt="Service advisor preparing an appointment for a vehicle" />
-      </section>
+  const today = new Date().toISOString().slice(0, 10)
 
-      <div className="portal-grid">
+  return (
+    <div className="customer-page">
+      <PortalHero
+        eyebrow="Service desk"
+        title="Book and track vehicle service appointments"
+        description="Choose a registered vehicle, select the work needed, and keep every request visible as it moves through the service timeline."
+        imageSrc={customerPortalImages.appointment}
+        imageAlt="Mechanic inspecting a vehicle in a service bay"
+        actions={vehicles.length === 0 && <Link className="btn-outline btn-outline-on-dark" to="/customer/vehicles">Register a vehicle first</Link>}
+      />
+
+      <div className="customer-workflow-grid">
         <section className="customer-card portal-form-card">
           <div className="section-header">
             <div className="section-header-text">
-              <span className="customer-eyebrow">Guided request</span>
-              <h2>Book an appointment</h2>
-              <p>Start with the vehicle, then choose the service and preferred time.</p>
+              <span className="customer-eyebrow">Guided booking</span>
+              <h2>Request a service visit</h2>
+              <p>Complete the essentials first. Notes are optional, but they help the service team prepare.</p>
             </div>
           </div>
 
-          <div className="workflow-steps" aria-label="Appointment booking steps">
-            <span>Vehicle</span>
-            <span>Service</span>
-            <span>Time</span>
-            <span>Notes</span>
-          </div>
+          <PortalWorkflowSteps
+            ariaLabel="Appointment booking steps"
+            steps={[
+              { label: 'Vehicle', completed: Boolean(values.vehicleId), current: !values.vehicleId },
+              { label: 'Service', completed: Boolean(values.serviceType), current: Boolean(values.vehicleId) && !values.serviceType },
+              { label: 'Schedule', completed: Boolean(values.preferredDate && values.preferredTime), current: Boolean(values.vehicleId && values.serviceType) },
+              { label: 'Notes', completed: Boolean(values.notes), current: false },
+            ]}
+          />
 
           {formStatus && (
-            <div className={`customer-form-alert ${formStatus.type === 'success' ? 'is-success' : ''}`}>
+            <div className={`customer-form-alert ${formStatus.type === 'success' ? 'is-success' : ''}`} role={formStatus.type === 'error' ? 'alert' : 'status'}>
               {formStatus.message}
             </div>
           )}
 
           <form className="customer-form" onSubmit={handleSubmit} noValidate>
             <div className="customer-form-group">
-              <label htmlFor="vehicleId">Vehicle</label>
+              <label htmlFor="vehicleId">Target vehicle</label>
               <select
                 id="vehicleId"
                 name="vehicleId"
@@ -246,8 +255,9 @@ function Appointments() {
                 value={values.vehicleId}
                 onChange={handleChange}
                 disabled={isSubmitting}
+                aria-invalid={Boolean(formErrors.vehicleId)}
               >
-                <option value="">Select vehicle</option>
+                <option value="">Select a registered vehicle</option>
                 {vehicles.map((vehicle) => (
                   <option key={vehicle.id} value={vehicle.id}>
                     {vehicle.name} - {vehicle.number}
@@ -256,12 +266,14 @@ function Appointments() {
               </select>
               {formErrors.vehicleId && <span className="customer-field-error">{formErrors.vehicleId}</span>}
               {vehicles.length === 0 && (
-                <span className="customer-field-help">Add a vehicle first so the appointment can be matched correctly.</span>
+                <span className="customer-field-help">
+                  Register a vehicle first to enable service booking.
+                </span>
               )}
             </div>
 
             <div className="customer-form-group">
-              <label htmlFor="serviceType">Service type</label>
+              <label htmlFor="serviceType">Required service</label>
               <select
                 id="serviceType"
                 name="serviceType"
@@ -269,8 +281,9 @@ function Appointments() {
                 value={values.serviceType}
                 onChange={handleChange}
                 disabled={isSubmitting}
+                aria-invalid={Boolean(formErrors.serviceType)}
               >
-                <option value="">Select service</option>
+                <option value="">Choose service type</option>
                 {serviceOptions.map((option) => (
                   <option key={option.name} value={option.name}>
                     {option.name}
@@ -287,10 +300,12 @@ function Appointments() {
                   id="preferredDate"
                   name="preferredDate"
                   type="date"
+                  min={today}
                   className={`customer-input ${formErrors.preferredDate ? 'is-invalid' : ''}`}
                   value={values.preferredDate}
                   onChange={handleChange}
                   disabled={isSubmitting}
+                  aria-invalid={Boolean(formErrors.preferredDate)}
                 />
                 {formErrors.preferredDate && <span className="customer-field-error">{formErrors.preferredDate}</span>}
               </div>
@@ -305,27 +320,28 @@ function Appointments() {
                   value={values.preferredTime}
                   onChange={handleChange}
                   disabled={isSubmitting}
+                  aria-invalid={Boolean(formErrors.preferredTime)}
                 />
                 {formErrors.preferredTime && <span className="customer-field-error">{formErrors.preferredTime}</span>}
               </div>
             </div>
 
             <div className="customer-form-group">
-              <label htmlFor="notes">Notes</label>
+              <label htmlFor="notes">Service notes and symptoms</label>
               <textarea
                 id="notes"
                 name="notes"
                 className="customer-input portal-textarea"
                 value={values.notes}
                 onChange={handleChange}
-                placeholder="Describe the problem or anything the service team should know."
+                placeholder="Describe any sounds, warning lights, symptoms, or service preferences."
                 disabled={isSubmitting}
               />
-              <span className="customer-field-help">Include symptoms, preferred contact notes, or anything the service team should know before arrival.</span>
+              <span className="customer-field-help">Helpful notes can reduce back-and-forth before your visit.</span>
             </div>
 
-            <button className="btn-primary" type="submit" disabled={isSubmitting || vehicles.length === 0}>
-              {isSubmitting ? 'Booking...' : 'Book appointment'}
+            <button className="btn-primary btn-block" type="submit" disabled={isSubmitting || vehicles.length === 0}>
+              {isSubmitting ? 'Submitting request...' : 'Confirm appointment request'}
             </button>
           </form>
         </section>
@@ -334,23 +350,22 @@ function Appointments() {
           <div className="section-header">
             <div className="section-header-text">
               <span className="customer-eyebrow">Service timeline</span>
-              <h2>My appointments</h2>
-              <p>Review upcoming and past service bookings with their current status.</p>
+              <h2>Your appointments</h2>
+              <p>Review upcoming, completed, and cancelled appointment records.</p>
             </div>
           </div>
 
           {appointments.length === 0 ? (
-            <div className="customer-empty-panel compact">
-              <img src={customerPortalImages.garage} alt="Open service bay awaiting a booked appointment" />
-              <div>
-                <h3>No appointments booked yet</h3>
-                <p>Once you book a visit, it will appear here with its latest status.</p>
-              </div>
-            </div>
+            <PortalEmptyState
+              imageSrc={customerPortalImages.serviceHistory}
+              imageAlt="Technician reviewing a service checklist"
+              title="No appointment history"
+              message="Your service requests and visit history will appear here once you book an appointment."
+            />
           ) : (
-            <div className="portal-item-list">
+            <div className="portal-item-list timeline-list">
               {appointments.map((appointment) => (
-                <article key={appointment.id} className="portal-list-item">
+                <article key={appointment.id} className="portal-list-item stacked">
                   <div className="portal-list-main">
                     <div className="portal-list-title-row">
                       <h3>{appointment.serviceType}</h3>
@@ -364,7 +379,7 @@ function Appointments() {
                   </div>
                   <div className="portal-actions">
                     <button className="btn-outline" type="button" onClick={() => handleViewDetails(appointment.id)}>
-                      Details
+                      View details
                     </button>
                     {cancellableStatuses.has(appointment.status) && (
                       <button className="btn-outline text-danger" type="button" onClick={() => setCancelTarget(appointment)}>
@@ -381,16 +396,16 @@ function Appointments() {
 
       <section className="customer-trust-strip">
         <div>
-          <strong>Before the visit</strong>
-          <span>Share notes so technicians can prepare.</span>
+          <strong>Vehicle-first booking</strong>
+          <span>Every appointment starts with a registered vehicle.</span>
         </div>
         <div>
-          <strong>Status clarity</strong>
-          <span>Pending and confirmed bookings are easy to spot.</span>
+          <strong>Service options</strong>
+          <span>Choose from the service types currently available at the workshop.</span>
         </div>
         <div>
-          <strong>Flexible control</strong>
-          <span>Cancel eligible appointments when plans change.</span>
+          <strong>Cancellation guardrails</strong>
+          <span>Only pending or confirmed requests can be cancelled.</span>
         </div>
       </section>
 
@@ -400,18 +415,18 @@ function Appointments() {
           setDetailError('')
           setDetailLoading(false)
         }}>
-          {detailLoading && <StatusMessage type="loading" message="Loading details..." />}
+          {detailLoading && <StatusMessage type="loading" message="Retrieving appointment record..." />}
           {detailError && <StatusMessage type="error" message={detailError} />}
           {detail && (
             <div className="portal-detail-list">
-              <div><span>Service</span><strong>{detail.serviceType}</strong></div>
-              <div><span>Status</span><StatusBadge status={detail.status} /></div>
+              <div><span>Service type</span><strong>{detail.serviceType}</strong></div>
+              <div><span>Current status</span><StatusBadge status={detail.status} /></div>
               <div><span>Vehicle</span><strong>{detail.vehicleName} - {detail.vehicleNumber}</strong></div>
-              <div><span>Date</span><strong>{formatDate(detail.preferredDate)}</strong></div>
-              <div><span>Time</span><strong>{formatTime(detail.preferredTime)}</strong></div>
-              <div><span>Notes</span><strong>{detail.notes || 'No notes provided'}</strong></div>
-              <div><span>Created</span><strong>{formatDateTime(detail.createdAt)}</strong></div>
-              <div><span>Updated</span><strong>{formatDateTime(detail.updatedAt)}</strong></div>
+              <div><span>Scheduled date</span><strong>{formatDate(detail.preferredDate)}</strong></div>
+              <div><span>Scheduled time</span><strong>{formatTime(detail.preferredTime)}</strong></div>
+              <div><span>Technical notes</span><strong>{detail.notes || 'No notes provided'}</strong></div>
+              <div><span>Record created</span><strong>{formatDateTime(detail.createdAt)}</strong></div>
+              <div><span>Last updated</span><strong>{formatDateTime(detail.updatedAt)}</strong></div>
             </div>
           )}
         </PortalModal>
@@ -419,7 +434,7 @@ function Appointments() {
 
       {cancelTarget && (
         <PortalModal
-          title="Cancel appointment"
+          title="Cancel appointment request"
           onClose={() => setCancelTarget(null)}
           footer={(
             <>
@@ -427,13 +442,13 @@ function Appointments() {
                 Keep appointment
               </button>
               <button className="btn-primary" type="button" onClick={handleConfirmCancel} disabled={isCancelling}>
-                {isCancelling ? 'Cancelling...' : 'Cancel appointment'}
+                {isCancelling ? 'Cancelling...' : 'Confirm cancellation'}
               </button>
             </>
           )}
         >
           <p className="portal-confirm-text">
-            This will cancel your {cancelTarget.serviceType} appointment for {formatDate(cancelTarget.preferredDate)} at {formatTime(cancelTarget.preferredTime)}.
+            Are you sure you want to cancel your <strong>{cancelTarget.serviceType}</strong> appointment for {formatDate(cancelTarget.preferredDate)}? This action cannot be undone.
           </p>
         </PortalModal>
       )}

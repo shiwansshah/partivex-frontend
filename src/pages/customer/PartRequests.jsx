@@ -7,7 +7,10 @@ import {
 } from '../../api/customerPortalApi'
 import { getMyVehicles } from '../../api/vehicleApi'
 import { getRequestErrorMessage } from '../../api/axiosClient'
+import PortalEmptyState from '../../components/customer/PortalEmptyState'
+import PortalHero from '../../components/customer/PortalHero'
 import PortalModal from '../../components/customer/PortalModal'
+import PortalWorkflowSteps from '../../components/customer/PortalWorkflowSteps'
 import StatusBadge from '../../components/customer/StatusBadge'
 import StatusMessage from '../../components/ui/StatusMessage'
 import { formatDateTime } from '../../utils/customerPortalFormatters'
@@ -181,42 +184,44 @@ function PartRequests() {
   }
 
   return (
-    <div className="customer-page portal-container">
-      <section className="portal-page-hero">
-        <div>
-          <span className="customer-eyebrow">Parts desk</span>
-          <h1>Part requests</h1>
-          <p>Send part details, fitment notes, and quantities so the team can review availability.</p>
-        </div>
-        <img src={customerPortalImages.parts} alt="Vehicle spare parts arranged in a workshop" />
-      </section>
+    <div className="customer-page">
+      <PortalHero
+        eyebrow="Spare parts"
+        title="Request vehicle parts with the right fitment context"
+        description="Submit part names, quantities, specifications, and optional vehicle details so the service team can review your inquiry with less guesswork."
+        imageSrc={customerPortalImages.parts}
+        imageAlt="Vehicle parts organized for workshop service"
+      />
 
-      <div className="portal-grid">
+      <div className="customer-workflow-grid">
         <section className="customer-card portal-form-card">
           <div className="section-header">
             <div className="section-header-text">
-              <span className="customer-eyebrow">Guided request</span>
-              <h2>Request a part</h2>
-              <p>Give enough detail to reduce matching errors before review.</p>
+              <span className="customer-eyebrow">Guided inquiry</span>
+              <h2>New part request</h2>
+              <p>Keep the request specific. Vehicle and fitment notes are optional, but they improve review quality.</p>
             </div>
           </div>
 
-          <div className="workflow-steps" aria-label="Part request steps">
-            <span>Part</span>
-            <span>Vehicle</span>
-            <span>Specs</span>
-            <span>Reason</span>
-          </div>
+          <PortalWorkflowSteps
+            ariaLabel="Part request steps"
+            steps={[
+              { label: 'Part', completed: Boolean(values.partName), current: !values.partName },
+              { label: 'Quantity', completed: Number(values.quantity) > 0, current: Boolean(values.partName) },
+              { label: 'Vehicle', completed: Boolean(values.vehicleId), current: false },
+              { label: 'Fitment', completed: Boolean(values.brandModelSpecification || values.reason), current: false },
+            ]}
+          />
 
           {formStatus && (
-            <div className={`customer-form-alert ${formStatus.type === 'success' ? 'is-success' : ''}`}>
+            <div className={`customer-form-alert ${formStatus.type === 'success' ? 'is-success' : ''}`} role={formStatus.type === 'error' ? 'alert' : 'status'}>
               {formStatus.message}
             </div>
           )}
 
           <form className="customer-form" onSubmit={handleSubmit} noValidate>
             <div className="customer-form-group">
-              <label htmlFor="partName">Part name</label>
+              <label htmlFor="partName">Part name or category</label>
               <input
                 id="partName"
                 name="partName"
@@ -224,13 +229,14 @@ function PartRequests() {
                 value={values.partName}
                 onChange={handleChange}
                 disabled={isSubmitting}
+                placeholder="Brake pads, headlamp assembly, air filter"
+                aria-invalid={Boolean(formErrors.partName)}
               />
               {formErrors.partName && <span className="customer-field-error">{formErrors.partName}</span>}
-              <span className="customer-field-help">Use the common part name, for example brake pad, headlamp, filter, or belt.</span>
             </div>
 
             <div className="customer-form-group">
-              <label htmlFor="vehicleId">Vehicle</label>
+              <label htmlFor="vehicleId">Target vehicle</label>
               <select
                 id="vehicleId"
                 name="vehicleId"
@@ -239,18 +245,19 @@ function PartRequests() {
                 onChange={handleChange}
                 disabled={isSubmitting}
               >
-                <option value="">General or not sure</option>
+                <option value="">General inquiry, not vehicle specific</option>
                 {vehicles.map((vehicle) => (
                   <option key={vehicle.id} value={vehicle.id}>
                     {vehicle.name} - {vehicle.number}
                   </option>
                 ))}
               </select>
+              <span className="customer-field-help">Linking a vehicle helps with compatibility checks when the part is model specific.</span>
             </div>
 
             <div className="portal-form-row">
               <div className="customer-form-group">
-                <label htmlFor="brandModelSpecification">Brand, model, or specification</label>
+                <label htmlFor="brandModelSpecification">Brand or specification</label>
                 <input
                   id="brandModelSpecification"
                   name="brandModelSpecification"
@@ -258,11 +265,12 @@ function PartRequests() {
                   value={values.brandModelSpecification}
                   onChange={handleChange}
                   disabled={isSubmitting}
+                  placeholder="OEM, Bosch, performance grade"
                 />
               </div>
 
               <div className="customer-form-group">
-                <label htmlFor="quantity">Quantity</label>
+                <label htmlFor="quantity">Quantity required</label>
                 <input
                   id="quantity"
                   name="quantity"
@@ -272,27 +280,27 @@ function PartRequests() {
                   value={values.quantity}
                   onChange={handleChange}
                   disabled={isSubmitting}
+                  aria-invalid={Boolean(formErrors.quantity)}
                 />
                 {formErrors.quantity && <span className="customer-field-error">{formErrors.quantity}</span>}
               </div>
             </div>
 
             <div className="customer-form-group">
-              <label htmlFor="reason">Reason or notes</label>
+              <label htmlFor="reason">Fitment notes and purpose</label>
               <textarea
                 id="reason"
                 name="reason"
                 className="customer-input portal-textarea"
                 value={values.reason}
                 onChange={handleChange}
-                placeholder="Mention fitment notes, urgency, or symptoms if helpful."
+                placeholder="Explain the issue, side of the vehicle, engine variant, or fitment requirement."
                 disabled={isSubmitting}
               />
-              <span className="customer-field-help">Fitment details, urgency, symptoms, or preferred brand can help the team review faster.</span>
             </div>
 
-            <button className="btn-primary" type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Submitting...' : 'Submit request'}
+            <button className="btn-primary btn-block" type="submit" disabled={isSubmitting}>
+              {isSubmitting ? 'Submitting inquiry...' : 'Submit part inquiry'}
             </button>
           </form>
         </section>
@@ -301,29 +309,28 @@ function PartRequests() {
           <div className="section-header">
             <div className="section-header-text">
               <span className="customer-eyebrow">Request history</span>
-              <h2>My part requests</h2>
-              <p>Track requests from review through availability.</p>
+              <h2>Part inquiries</h2>
+              <p>Track quantity, vehicle context, and the latest status for every inquiry.</p>
             </div>
           </div>
 
           {requests.length === 0 ? (
-            <div className="customer-empty-panel compact">
-              <img src={customerPortalImages.parts} alt="Organized vehicle parts storage" />
-              <div>
-                <h3>No part requests submitted yet</h3>
-                <p>Requests you submit will appear here with their current review status.</p>
-              </div>
-            </div>
+            <PortalEmptyState
+              imageSrc={customerPortalImages.partsDetail}
+              imageAlt="Vehicle parts ready for inspection"
+              title="No part inquiries yet"
+              message="Submit your first part request and the status trail will appear here."
+            />
           ) : (
             <div className="portal-item-list">
               {requests.map((request) => (
-                <article key={request.id} className="portal-list-item">
+                <article key={request.id} className="portal-list-item stacked">
                   <div className="portal-list-main">
                     <div className="portal-list-title-row">
                       <h3>{request.partName}</h3>
                       <StatusBadge status={request.status} />
                     </div>
-                    <p>{request.vehicleName ? `${request.vehicleName} - ${request.vehicleNumber}` : 'General request'}</p>
+                    <p>{request.vehicleName ? `${request.vehicleName} - ${request.vehicleNumber}` : 'General inquiry'}</p>
                     <div className="portal-meta-grid">
                       <span>Qty {request.quantity}</span>
                       <span>{formatDateTime(request.createdAt)}</span>
@@ -331,11 +338,11 @@ function PartRequests() {
                   </div>
                   <div className="portal-actions">
                     <button className="btn-outline" type="button" onClick={() => handleViewDetails(request.id)}>
-                      Details
+                      View record
                     </button>
                     {request.status === 'Pending' && (
                       <button className="btn-outline text-danger" type="button" onClick={() => setCancelTarget(request)}>
-                        Cancel
+                        Withdraw
                       </button>
                     )}
                   </div>
@@ -349,36 +356,36 @@ function PartRequests() {
       <section className="customer-trust-strip">
         <div>
           <strong>Optional vehicle link</strong>
-          <span>Attach a vehicle when fitment matters.</span>
+          <span>Submit general or vehicle-specific part inquiries.</span>
         </div>
         <div>
-          <strong>Clear quantity</strong>
-          <span>Review starts with the amount you need.</span>
+          <strong>Quantity validation</strong>
+          <span>Requests must include a positive whole-number quantity.</span>
         </div>
         <div>
-          <strong>Cancelable while pending</strong>
-          <span>Pending requests can still be withdrawn.</span>
+          <strong>Pending withdrawals</strong>
+          <span>Only pending part inquiries can be withdrawn.</span>
         </div>
       </section>
 
       {(detailLoading || detail || detailError) && (
-        <PortalModal title="Part request details" onClose={() => {
+        <PortalModal title="Part inquiry record" onClose={() => {
           setDetail(null)
           setDetailError('')
           setDetailLoading(false)
         }}>
-          {detailLoading && <StatusMessage type="loading" message="Loading details..." />}
+          {detailLoading && <StatusMessage type="loading" message="Retrieving part inquiry record..." />}
           {detailError && <StatusMessage type="error" message={detailError} />}
           {detail && (
             <div className="portal-detail-list">
-              <div><span>Part</span><strong>{detail.partName}</strong></div>
-              <div><span>Status</span><StatusBadge status={detail.status} /></div>
-              <div><span>Vehicle</span><strong>{detail.vehicleName ? `${detail.vehicleName} - ${detail.vehicleNumber}` : 'General request'}</strong></div>
-              <div><span>Specification</span><strong>{detail.brandModelSpecification || 'Not provided'}</strong></div>
+              <div><span>Requested part</span><strong>{detail.partName}</strong></div>
+              <div><span>Inquiry status</span><StatusBadge status={detail.status} /></div>
+              <div><span>Target vehicle</span><strong>{detail.vehicleName ? `${detail.vehicleName} - ${detail.vehicleNumber}` : 'General inquiry'}</strong></div>
+              <div><span>Specification</span><strong>{detail.brandModelSpecification || 'Standard grade'}</strong></div>
               <div><span>Quantity</span><strong>{detail.quantity}</strong></div>
-              <div><span>Reason</span><strong>{detail.reason || 'No notes provided'}</strong></div>
-              <div><span>Created</span><strong>{formatDateTime(detail.createdAt)}</strong></div>
-              <div><span>Updated</span><strong>{formatDateTime(detail.updatedAt)}</strong></div>
+              <div><span>Inquiry notes</span><strong>{detail.reason || 'No notes provided'}</strong></div>
+              <div><span>Record created</span><strong>{formatDateTime(detail.createdAt)}</strong></div>
+              <div><span>Last updated</span><strong>{formatDateTime(detail.updatedAt)}</strong></div>
             </div>
           )}
         </PortalModal>
@@ -386,21 +393,21 @@ function PartRequests() {
 
       {cancelTarget && (
         <PortalModal
-          title="Cancel part request"
+          title="Withdraw part inquiry"
           onClose={() => setCancelTarget(null)}
           footer={(
             <>
               <button className="btn-outline" type="button" onClick={() => setCancelTarget(null)} disabled={isCancelling}>
-                Keep request
+                Keep inquiry
               </button>
               <button className="btn-primary" type="button" onClick={handleConfirmCancel} disabled={isCancelling}>
-                {isCancelling ? 'Cancelling...' : 'Cancel request'}
+                {isCancelling ? 'Withdrawing...' : 'Confirm withdrawal'}
               </button>
             </>
           )}
         >
           <p className="portal-confirm-text">
-            This will cancel your request for {cancelTarget.partName}. Only pending requests can be cancelled.
+            Are you sure you want to withdraw your inquiry for <strong>{cancelTarget.partName}</strong>? This removes it from the active review queue.
           </p>
         </PortalModal>
       )}
