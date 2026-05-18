@@ -17,8 +17,10 @@ function AdminLayout() {
     ...(isAdmin ? [{ to: `${basePath}/staff`, label: 'Staff Management' }] : []),
     { to: `${basePath}/customers`, label: 'Customer Management' },
     { to: `${basePath}/vehicles`, label: 'Vehicles' },
-    ...(isAdmin
+          ...(isAdmin
       ? [
+          { to: `${basePath}/vendors`, label: 'Vendor Management' },
+          { to: `${basePath}/parts`, label: 'Parts Management' },
           { to: `${basePath}/inventory`, label: 'Inventory Monitoring' },
           { to: `${basePath}/purchases`, label: 'Purchase Invoices' },
         ]

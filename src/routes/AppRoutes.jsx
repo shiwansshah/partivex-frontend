@@ -20,6 +20,8 @@ import NotificationsPage from '../pages/notifications/NotificationsPage'
 import AdminDashboard from '../pages/admin/Dashboard'
 import StaffManagement from '../pages/admin/StaffManagement'
 import CustomerManagement from '../pages/admin/CustomerManagement'
+import VendorManagement from '../pages/admin/VendorManagement'
+import PartManagement from '../pages/admin/PartManagement'
 import CustomerDashboard from '../pages/customer/Dashboard'
 import Profile from '../pages/customer/Profile'
 import CustomerVehicles from '../pages/customer/Vehicles'
@@ -140,6 +142,8 @@ function AppRoutes() {
         <Route path="customers/:id/edit" element={<EditCustomer />} />
         <Route path="customers/:id/add-vehicle" element={<AddVehicle />} />
         <Route path="vehicles" element={<VehiclesPage />} />
+        <Route path="vendors" element={<VendorManagement />} />
+        <Route path="parts" element={<PartManagement />} />
         <Route path="inventory" element={<InventoryPage />} />
         <Route path="purchases" element={<PurchasesPage />} />
       </Route>
