@@ -63,9 +63,12 @@ const portalLinks = [
       </svg>
     ),
   },
+]
+
+const profileMenuItems = [
   {
     to: '/customer/profile',
-    label: 'Profile',
+    label: 'Profile settings',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
@@ -73,7 +76,28 @@ const portalLinks = [
       </svg>
     ),
   },
+  {
+    to: '/customer/appointments',
+    label: 'Appointments',
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+        <line x1="16" y1="2" x2="16" y2="6"></line>
+        <line x1="8" y1="2" x2="8" y2="6"></line>
+        <line x1="3" y1="10" x2="21" y2="10"></line>
+        <path d="m9 16 2 2 4-5"></path>
+      </svg>
+    ),
+  },
 ]
+
+const logoutIcon = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+    <polyline points="16 17 21 12 16 7"></polyline>
+    <line x1="21" y1="12" x2="9" y2="12"></line>
+  </svg>
+)
 
 function CustomerLayout() {
   const [dropdownOpen, setDropdownOpen] = useState(false)
@@ -85,6 +109,8 @@ function CustomerLayout() {
   const { user } = useAuth()
 
   const pageTitle = useMemo(() => {
+    if (location.pathname.startsWith('/customer/profile')) return 'Profile'
+
     const activeLink = portalLinks.find((link) => {
       if (link.to === '/customer') return location.pathname === '/customer'
       return location.pathname.startsWith(link.to)
@@ -202,20 +228,32 @@ function CustomerLayout() {
               <div className="avatar-circle" aria-hidden="true">
                 {userInitials}
               </div>
-              <span className="profile-avatar-name">{customerName}</span>
             </button>
 
             {dropdownOpen && (
-              <div className="profile-dropdown" role="menu">
-                <NavLink to="/customer/profile" className="dropdown-item" role="menuitem" onClick={closeMenus}>
-                  Profile settings
-                </NavLink>
-                <NavLink to="/customer/appointments" className="dropdown-item" role="menuitem" onClick={closeMenus}>
-                  Appointments
-                </NavLink>
-                <div className="dropdown-divider"></div>
-                <button className="dropdown-item text-danger" role="menuitem" onClick={handleLogout} type="button">
-                  Logout
+              <div className="profile-stack-menu" role="menu" aria-label="Customer quick menu">
+                {profileMenuItems.map((item) => (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    className="profile-stack-item"
+                    role="menuitem"
+                    aria-label={item.label}
+                    title={item.label}
+                    onClick={closeMenus}
+                  >
+                    {item.icon}
+                  </NavLink>
+                ))}
+                <button
+                  className="profile-stack-item is-danger"
+                  role="menuitem"
+                  aria-label="Logout"
+                  title="Logout"
+                  onClick={handleLogout}
+                  type="button"
+                >
+                  {logoutIcon}
                 </button>
               </div>
             )}
