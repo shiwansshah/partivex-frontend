@@ -1189,7 +1189,9 @@
 }
 
 .vehicle-carousel-slide .vehicle-image-wrap {
-  max-height: 168px;
+  height: 136px;
+  max-height: 136px;
+  aspect-ratio: auto;
 }
 
 .vehicle-carousel-controls {
@@ -1341,11 +1343,11 @@
 
 .vehicle-item {
   position: relative;
-  min-height: 254px;
+  min-height: 0;
   align-items: stretch;
   flex-direction: column;
   justify-content: flex-start;
-  gap: var(--space-3);
+  gap: var(--space-2);
   padding: var(--space-3);
 }
 
@@ -1376,8 +1378,13 @@
 
 .vehicle-info {
   display: grid;
-  gap: var(--space-2);
+  flex: none;
+  gap: 6px;
   padding: 0 var(--space-1) var(--space-1);
+}
+
+.vehicle-info h3 {
+  font-size: var(--text-lg);
 }
 
 .vehicle-info .customer-eyebrow {
