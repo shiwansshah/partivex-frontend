@@ -22,6 +22,7 @@ import StaffManagement from '../pages/admin/StaffManagement'
 import CustomerManagement from '../pages/admin/CustomerManagement'
 import VendorManagement from '../pages/admin/VendorManagement'
 import PartManagement from '../pages/admin/PartManagement'
+import FinancialReports from '../pages/admin/FinancialReports'
 import CustomerDashboard from '../pages/customer/Dashboard'
 import Profile from '../pages/customer/Profile'
 import CustomerVehicles from '../pages/customer/Vehicles'
@@ -149,6 +150,7 @@ function AppRoutes() {
         <Route path="parts" element={<PartManagement />} />
         <Route path="inventory" element={<InventoryPage />} />
         <Route path="purchases" element={<PurchasesPage />} />
+        <Route path="financial-reports" element={<FinancialReports />} />
         <Route path="customer-part-invoices" element={<CustomerPartInvoicesPage />} />
         <Route path="appointment-invoices" element={<AppointmentInvoicesPage />} />
       </Route>
