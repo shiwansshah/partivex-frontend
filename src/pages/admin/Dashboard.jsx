@@ -75,7 +75,7 @@ function Dashboard() {
               <span>Customers</span>
               <strong>{stats.customers}</strong>
             </Link>
-            <Link className="stat-card stat-link" to="/vehicles">
+            <Link className="stat-card stat-link" to="/admin/vehicles">
               <span>Vehicles</span>
               <strong>{stats.vehicles}</strong>
             </Link>

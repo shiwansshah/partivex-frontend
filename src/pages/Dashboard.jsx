@@ -38,8 +38,8 @@ function Dashboard() {
             <span style={{
               display: 'inline-block',
               padding: '4px 12px',
-              background: 'rgba(255,255,255,0.1)',
-              backdropFilter: 'blur(10px)',
+              background: '#2B303B',
+              border: '1px solid #3A404C',
               borderRadius: '999px',
               fontSize: 'var(--text-sm)',
               fontWeight: 'var(--weight-semibold)',
@@ -57,7 +57,7 @@ function Dashboard() {
               <Link className="button" style={{ background: 'white', color: 'black' }} to="/vehicles">
                 Manage Vehicles
               </Link>
-              <Link className="button" style={{ background: 'rgba(255,255,255,0.1)', color: 'white', backdropFilter: 'blur(10px)' }} to="/customers">
+              <Link className="button" style={{ background: '#2B303B', color: 'white', border: '1px solid #3A404C' }} to="/customers">
                 View Customers
               </Link>
             </div>

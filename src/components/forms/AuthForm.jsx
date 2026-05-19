@@ -3,7 +3,7 @@ function AuthForm({ title, subtitle, children, footer, sidePanelTitle, sidePanel
     <main className="auth-page">
       <div className="auth-container">
 
-        {/* Left Side: Massive Premium Image with Floating Overlay */}
+        {/* Left Side: Image panel with solid content block */}
         <section className="auth-side-panel" style={{
           position: 'relative',
           display: 'flex',
@@ -11,26 +11,24 @@ function AuthForm({ title, subtitle, children, footer, sidePanelTitle, sidePanel
           justifyContent: 'flex-end',
           padding: 'var(--space-12)'
         }}>
-          {/* Subtle gradient overlay to ensure text readability */}
           <div style={{
             position: 'absolute',
             inset: 0,
-            background: 'linear-gradient(180deg, rgba(0,0,0,0) 40%, rgba(0,0,0,0.8) 100%)',
+            background: 'linear-gradient(180deg, rgba(0,0,0,0.12) 35%, rgba(0,0,0,0.82) 100%)',
             zIndex: 1
           }} />
 
           <div className="side-panel-content" style={{
             position: 'relative',
             zIndex: 2,
-            background: 'rgba(255, 255, 255, 0.1)',
-            backdropFilter: 'blur(16px)',
-            WebkitBackdropFilter: 'blur(16px)',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
+            background: '#171A21',
+            border: '1px solid #2B303B',
             borderRadius: 'var(--radius-xl)',
             padding: 'var(--space-8)',
             maxWidth: '480px',
             color: 'white',
-            boxShadow: '0 24px 48px rgba(0,0,0,0.2)'
+            boxShadow: 'var(--shadow-lg)',
+            transition: 'border-color var(--transition-fast), box-shadow var(--transition-fast)'
           }}>
             <h2 style={{ fontSize: 'var(--text-4xl)', fontWeight: 'var(--weight-extrabold)', marginBottom: 'var(--space-3)', letterSpacing: '-0.5px' }}>
               {sidePanelTitle || 'Welcome to Partivex'}

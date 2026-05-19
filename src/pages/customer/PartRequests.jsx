@@ -1,416 +1,438 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useOutletContext } from 'react-router-dom'
+import { createPartRequest, getPartRequests } from '../../api/customerPortalApi'
 import {
-  cancelPartRequest,
-  createPartRequest,
-  getPartRequest,
-  getPartRequests,
-} from '../../api/customerPortalApi'
+  checkoutCustomerParts,
+  downloadMyCustomerPartInvoicePdf,
+  getCustomerPartCatalog,
+  getMyCustomerPartInvoices,
+} from '../../api/customerPartPurchaseApi'
+import { getRequestErrorMessage, apiBaseUrl } from '../../api/axiosClient'
 import { getMyVehicles } from '../../api/vehicleApi'
-import { getRequestErrorMessage } from '../../api/axiosClient'
-import PortalEmptyState from '../../components/customer/PortalEmptyState'
 import PortalHero from '../../components/customer/PortalHero'
 import PortalModal from '../../components/customer/PortalModal'
-import PortalWorkflowSteps from '../../components/customer/PortalWorkflowSteps'
-import StatusBadge from '../../components/customer/StatusBadge'
 import StatusMessage from '../../components/ui/StatusMessage'
-import { formatDateTime } from '../../utils/customerPortalFormatters'
 import { customerPortalImages } from '../../utils/customerPortalImages'
+import { formatDateTime } from '../../utils/customerPortalFormatters'
+import { sweetAlert, sweetConfirm } from '../../utils/sweetAlert'
 
-const emptyForm = {
-  partName: '',
-  vehicleId: '',
-  brandModelSpecification: '',
-  quantity: '1',
-  reason: '',
-}
+const loyaltyThreshold = 5000
+const loyaltyRate = 0.05
 
 function PartRequests() {
-  const [vehicles, setVehicles] = useState([])
+  const { setPartShopCart } = useOutletContext() || {}
+  const [parts, setParts] = useState([])
   const [requests, setRequests] = useState([])
+  const [invoices, setInvoices] = useState([])
+  const [vehicles, setVehicles] = useState([])
+  const [cart, setCart] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [values, setValues] = useState(emptyForm)
-  const [formErrors, setFormErrors] = useState({})
-  const [formStatus, setFormStatus] = useState(null)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [detail, setDetail] = useState(null)
-  const [detailLoading, setDetailLoading] = useState(false)
-  const [detailError, setDetailError] = useState('')
-  const [cancelTarget, setCancelTarget] = useState(null)
-  const [isCancelling, setIsCancelling] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [stockFilter, setStockFilter] = useState('all')
+  const [cartOpen, setCartOpen] = useState(false)
+  const [checkoutOpen, setCheckoutOpen] = useState(false)
+  const [requestsOpen, setRequestsOpen] = useState(false)
+  const [invoicesOpen, setInvoicesOpen] = useState(false)
+  const [requestPart, setRequestPart] = useState(null)
+  const [requestValues, setRequestValues] = useState({ vehicleId: '', quantity: '1', notes: '' })
+  const [isSaving, setIsSaving] = useState(false)
+  const openCart = useCallback(() => setCartOpen(true), [])
 
-  const loadData = useCallback(async () => {
-    const [vehicleResponse, requestResponse] = await Promise.all([
-      getMyVehicles(),
+  async function loadData() {
+    const [partsResponse, requestsResponse, invoicesResponse, vehiclesResponse] = await Promise.all([
+      getCustomerPartCatalog(),
       getPartRequests(),
+      getMyCustomerPartInvoices(),
+      getMyVehicles(),
     ])
-
-    setVehicles(vehicleResponse.data)
-    setRequests(requestResponse.data)
-  }, [])
+    setParts(partsResponse.data || [])
+    setRequests(requestsResponse.data || [])
+    setInvoices(invoicesResponse.data || [])
+    setVehicles(vehiclesResponse.data || [])
+  }
 
   useEffect(() => {
     let isCurrent = true
-
     async function fetchData() {
       try {
-        const [vehicleResponse, requestResponse] = await Promise.all([
-          getMyVehicles(),
-          getPartRequests(),
-        ])
-
-        if (!isCurrent) return
-
-        setVehicles(vehicleResponse.data)
-        setRequests(requestResponse.data)
+        await loadData()
       } catch (err) {
-        if (isCurrent) {
-          setError(getRequestErrorMessage(err, 'Failed to load part requests.'))
-        }
+        if (isCurrent) setError(getRequestErrorMessage(err, 'Failed to load parts catalog.'))
       } finally {
         if (isCurrent) setLoading(false)
       }
     }
-
     fetchData()
-
     return () => {
       isCurrent = false
     }
   }, [])
 
-  function handleChange(event) {
-    const { name, value } = event.target
-    setValues((current) => ({ ...current, [name]: value }))
+  useEffect(() => {
+    if (!setPartShopCart) return
+    setPartShopCart({ count: cart.length, onOpen: openCart })
+  }, [cart.length, openCart, setPartShopCart])
+
+  useEffect(() => {
+    return () => {
+      if (setPartShopCart) setPartShopCart({ count: 0, onOpen: null })
+    }
+  }, [setPartShopCart])
+
+  const visibleParts = parts.filter((part) => {
+    const query = searchTerm.trim().toLowerCase()
+    const matchesSearch = !query || [part.name, part.partCode, part.category, part.compatibleVehicle]
+      .join(' ')
+      .toLowerCase()
+      .includes(query)
+    const matchesStock =
+      stockFilter === 'all' ||
+      (stockFilter === 'available' && part.currentStock > 0) ||
+      (stockFilter === 'unavailable' && part.currentStock <= 0)
+    return matchesSearch && matchesStock
+  })
+
+  const totals = useMemo(() => {
+    const subTotal = cart.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0)
+    const discount = subTotal > loyaltyThreshold ? subTotal * loyaltyRate : 0
+    return { subTotal, discount, total: subTotal - discount }
+  }, [cart])
+
+  function resolveImageUrl(url) {
+    if (!url) return customerPortalImages.partsDetail
+    if (url.startsWith('http')) return url
+    return `${apiBaseUrl.replace('/api', '')}${url}`
   }
 
-  function validate() {
-    const nextErrors = {}
-    const quantity = Number(values.quantity)
-
-    if (!values.partName.trim()) {
-      nextErrors.partName = 'Part name is required.'
-    }
-
-    if (!Number.isInteger(quantity) || quantity <= 0) {
-      nextErrors.quantity = 'Quantity must be greater than zero.'
-    }
-
-    setFormErrors(nextErrors)
-    return Object.keys(nextErrors).length === 0
-  }
-
-  async function handleSubmit(event) {
-    event.preventDefault()
-    setFormStatus(null)
-
-    if (!validate()) return
-
-    try {
-      setIsSubmitting(true)
-      await createPartRequest({
-        partName: values.partName.trim(),
-        vehicleId: values.vehicleId || null,
-        brandModelSpecification: values.brandModelSpecification.trim() || null,
-        quantity: Number(values.quantity),
-        reason: values.reason.trim() || null,
-      })
-      setValues(emptyForm)
-      setFormErrors({})
-      setFormStatus({ type: 'success', message: 'Part request submitted successfully.' })
-      await loadData()
-    } catch (err) {
-      setFormStatus({
-        type: 'error',
-        message: getRequestErrorMessage(err, 'Failed to submit part request.'),
-      })
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
-
-  async function handleViewDetails(id) {
-    setDetail(null)
-    setDetailError('')
-    setDetailLoading(true)
-
-    try {
-      const response = await getPartRequest(id)
-      setDetail(response.data)
-    } catch (err) {
-      setDetailError(getRequestErrorMessage(err, 'Failed to load request details.'))
-    } finally {
-      setDetailLoading(false)
-    }
-  }
-
-  async function handleConfirmCancel() {
-    if (!cancelTarget) return
-
-    try {
-      setIsCancelling(true)
-      await cancelPartRequest(cancelTarget.id)
-      setCancelTarget(null)
-      setFormStatus({ type: 'success', message: 'Part request cancelled successfully.' })
-      await loadData()
-      if (detail?.id === cancelTarget.id) {
-        const response = await getPartRequest(cancelTarget.id)
-        setDetail(response.data)
+  function addToCart(part, quantity = 1) {
+    setCart((current) => {
+      const existing = current.find((item) => item.id === part.id)
+      if (existing) {
+        return current.map((item) =>
+          item.id === part.id
+            ? { ...item, quantity: Math.min(part.currentStock, item.quantity + quantity) }
+            : item)
       }
+      return [...current, { ...part, quantity: Math.min(part.currentStock, quantity) }]
+    })
+    setCartOpen(true)
+  }
+
+  async function buyNow(part) {
+    setCart([{ ...part, quantity: 1 }])
+    setCheckoutOpen(true)
+  }
+
+  function updateCartQuantity(partId, quantity) {
+    setCart((current) => current.map((item) => {
+      if (item.id !== partId) return item
+      return { ...item, quantity: Math.max(1, Math.min(item.currentStock, Number(quantity) || 1)) }
+    }))
+  }
+
+  function removeCartItem(partId) {
+    setCart((current) => current.filter((item) => item.id !== partId))
+  }
+
+  async function submitCheckout() {
+    if (cart.length === 0) return
+    const confirmed = await sweetConfirm({
+      title: 'Place order?',
+      message: `Your invoice total will be ${formatCurrency(totals.total)}.`,
+      confirmText: 'Checkout',
+    })
+    if (!confirmed) return
+
+    try {
+      setIsSaving(true)
+      await checkoutCustomerParts(cart.map((item) => ({ partId: item.id, quantity: item.quantity })))
+      setCart([])
+      setCartOpen(false)
+      setCheckoutOpen(false)
+      await loadData()
+      await sweetAlert({ title: 'Order confirmed', message: 'Your invoice has been created.', icon: 'success' })
     } catch (err) {
-      setFormStatus({
-        type: 'error',
-        message: getRequestErrorMessage(err, 'Failed to cancel part request.'),
-      })
+      await sweetAlert({ title: 'Checkout failed', message: getRequestErrorMessage(err, 'Unable to checkout.'), icon: 'error' })
     } finally {
-      setIsCancelling(false)
+      setIsSaving(false)
+    }
+  }
+
+  async function submitUnavailableRequest(event) {
+    event.preventDefault()
+    if (!requestPart) return
+    const quantity = Number(requestValues.quantity)
+    if (!Number.isInteger(quantity) || quantity <= 0) {
+      await sweetAlert({ title: 'Quantity needed', message: 'Enter a valid requested quantity.', icon: 'error' })
+      return
+    }
+
+    try {
+      setIsSaving(true)
+      await createPartRequest({
+        partId: requestPart.id,
+        partName: requestPart.name,
+        vehicleId: requestValues.vehicleId || null,
+        brandModelSpecification: requestPart.compatibleVehicle || null,
+        quantity,
+        reason: requestValues.notes.trim() || `Customer requested unavailable part ${requestPart.partCode}.`,
+      })
+      setRequestPart(null)
+      setRequestValues({ vehicleId: '', quantity: '1', notes: '' })
+      await loadData()
+      await sweetAlert({ title: 'Request sent', message: 'Staff can review this unavailable part request.', icon: 'success' })
+    } catch (err) {
+      await sweetAlert({ title: 'Request failed', message: getRequestErrorMessage(err, 'Unable to request this part.'), icon: 'error' })
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  async function downloadInvoice(invoice) {
+    try {
+      const response = await downloadMyCustomerPartInvoicePdf(invoice.id)
+      downloadBlob(response.data, `${invoice.invoiceNumber}.pdf`)
+    } catch (err) {
+      await sweetAlert({ title: 'Download failed', message: getRequestErrorMessage(err, 'Unable to download invoice.'), icon: 'error' })
     }
   }
 
   if (loading) {
-    return (
-      <div className="customer-container portal-container">
-        <StatusMessage type="loading" message="Loading your part requests..." />
-      </div>
-    )
+    return <div className="customer-container portal-container"><StatusMessage type="loading" message="Loading parts shop..." /></div>
   }
 
   if (error) {
-    return (
-      <div className="customer-container">
-        <StatusMessage type="error" message={error} />
-      </div>
-    )
+    return <div className="customer-card"><StatusMessage type="error" message={error} /></div>
   }
 
   return (
-    <div className="customer-page">
+    <div className="customer-page part-shop-page">
       <PortalHero
-        eyebrow="Spare parts"
-        title="Part requests"
-        description="Ask for parts and track review status."
+        eyebrow="Parts shop"
+        title="Buy genuine parts"
+        description="Browse available stock, checkout with invoices, or request unavailable parts."
         imageSrc={customerPortalImages.parts}
-        imageAlt="Vehicle parts organized for workshop service"
+        imageAlt="Vehicle parts catalog"
+        actions={(
+          <>
+            <button className="btn-primary" type="button" onClick={() => setRequestsOpen(true)}>Unavailable requests</button>
+            <button className="btn-outline btn-outline-on-dark" type="button" onClick={() => setInvoicesOpen(true)}>Purchase invoices</button>
+          </>
+        )}
       />
 
-      <div className="customer-workflow-grid">
-        <section className="customer-card portal-form-card">
-          <div className="section-header">
-            <div className="section-header-text">
-              <span className="customer-eyebrow">Guided inquiry</span>
-              <h2>New part request</h2>
-            </div>
-          </div>
-
-          <PortalWorkflowSteps
-            ariaLabel="Part request steps"
-            steps={[
-              { label: 'Part', completed: Boolean(values.partName.trim()), current: !values.partName.trim() },
-              { label: 'Quantity', completed: Number(values.quantity) > 0, current: Boolean(values.partName.trim()) && !(Number(values.quantity) > 0) },
-              { label: 'Vehicle', completed: Boolean(values.vehicleId), current: Boolean(values.partName.trim() && Number(values.quantity) > 0) && !values.vehicleId },
-              { label: 'Fitment', completed: Boolean(values.brandModelSpecification.trim() || values.reason.trim()), current: Boolean(values.partName.trim() && Number(values.quantity) > 0 && values.vehicleId) && !(values.brandModelSpecification.trim() || values.reason.trim()) },
-            ]}
-          />
-
-          {formStatus && (
-            <div className={`customer-form-alert ${formStatus.type === 'success' ? 'is-success' : ''}`} role={formStatus.type === 'error' ? 'alert' : 'status'}>
-              {formStatus.message}
-            </div>
-          )}
-
-          <form className="customer-form" onSubmit={handleSubmit} noValidate>
-            <div className="customer-form-group">
-              <label htmlFor="partName">Part name or category</label>
-              <input
-                id="partName"
-                name="partName"
-                className={`customer-input ${formErrors.partName ? 'is-invalid' : ''}`}
-                value={values.partName}
-                onChange={handleChange}
-                disabled={isSubmitting}
-                placeholder="Brake pads, headlamp assembly, air filter"
-                aria-invalid={Boolean(formErrors.partName)}
-              />
-              {formErrors.partName && <span className="customer-field-error">{formErrors.partName}</span>}
-            </div>
-
-            <div className="customer-form-group">
-              <label htmlFor="vehicleId">Target vehicle</label>
-              <select
-                id="vehicleId"
-                name="vehicleId"
-                className="customer-input"
-                value={values.vehicleId}
-                onChange={handleChange}
-                disabled={isSubmitting}
-              >
-                <option value="">General inquiry, not vehicle specific</option>
-                {vehicles.map((vehicle) => (
-                  <option key={vehicle.id} value={vehicle.id}>
-                    {vehicle.name} - {vehicle.number}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="portal-form-row">
-              <div className="customer-form-group">
-                <label htmlFor="brandModelSpecification">Brand or specification</label>
-                <input
-                  id="brandModelSpecification"
-                  name="brandModelSpecification"
-                  className="customer-input"
-                  value={values.brandModelSpecification}
-                  onChange={handleChange}
-                  disabled={isSubmitting}
-                  placeholder="OEM, Bosch, performance grade"
-                />
-              </div>
-
-              <div className="customer-form-group">
-                <label htmlFor="quantity">Quantity required</label>
-                <input
-                  id="quantity"
-                  name="quantity"
-                  type="number"
-                  min="1"
-                  className={`customer-input ${formErrors.quantity ? 'is-invalid' : ''}`}
-                  value={values.quantity}
-                  onChange={handleChange}
-                  disabled={isSubmitting}
-                  aria-invalid={Boolean(formErrors.quantity)}
-                />
-                {formErrors.quantity && <span className="customer-field-error">{formErrors.quantity}</span>}
-              </div>
-            </div>
-
-            <div className="customer-form-group">
-              <label htmlFor="reason">Fitment notes and purpose</label>
-              <textarea
-                id="reason"
-                name="reason"
-                className="customer-input portal-textarea"
-                value={values.reason}
-                onChange={handleChange}
-                placeholder="Explain the issue, side of the vehicle, engine variant, or fitment requirement."
-                disabled={isSubmitting}
-              />
-            </div>
-
-            <button className="btn-primary btn-block" type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Submitting inquiry...' : 'Submit part inquiry'}
-            </button>
-          </form>
-        </section>
-
-        <section className="customer-card portal-list-card">
-          <div className="section-header">
-            <div className="section-header-text">
-              <span className="customer-eyebrow">Request history</span>
-              <h2>Part inquiries</h2>
-              <p>Recent requests and status updates.</p>
-            </div>
-          </div>
-
-          {requests.length === 0 ? (
-            <PortalEmptyState
-              imageSrc={customerPortalImages.partsDetail}
-              imageAlt="Vehicle parts ready for inspection"
-              title="No part inquiries yet"
-              message="Submit a part request to see it here."
-            />
-          ) : (
-            <div className="portal-item-list">
-              {requests.map((request) => (
-                <article key={request.id} className="portal-list-item stacked">
-                  <div className="portal-list-main">
-                    <div className="portal-list-title-row">
-                      <h3>{request.partName}</h3>
-                      <StatusBadge status={request.status} />
-                    </div>
-                    <p>{request.vehicleName ? `${request.vehicleName} - ${request.vehicleNumber}` : 'General inquiry'}</p>
-                    <div className="portal-meta-grid">
-                      <span>Qty {request.quantity}</span>
-                      <span>{formatDateTime(request.createdAt)}</span>
-                    </div>
-                  </div>
-                  <div className="portal-actions">
-                    <button className="btn-outline" type="button" onClick={() => handleViewDetails(request.id)}>
-                      View record
-                    </button>
-                    {request.status === 'Pending' && (
-                      <button className="btn-outline text-danger" type="button" onClick={() => setCancelTarget(request)}>
-                        Withdraw
-                      </button>
-                    )}
-                  </div>
-                </article>
-              ))}
-            </div>
-          )}
-        </section>
-      </div>
-
-      <section className="customer-trust-strip">
+      <section className="customer-card part-shop-toolbar">
         <div>
-          <strong>Optional vehicle link</strong>
-          <span>General or vehicle-specific.</span>
+          <span className="customer-eyebrow">Catalog</span>
+          <h2>{visibleParts.length} parts shown</h2>
         </div>
-        <div>
-          <strong>Quantity validation</strong>
-          <span>Positive quantities only.</span>
-        </div>
-        <div>
-          <strong>Pending withdrawals</strong>
-          <span>Withdraw pending requests.</span>
-        </div>
+        <input className="customer-input" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} placeholder="Search parts, SKU, category, vehicle..." />
+        <select className="customer-input" value={stockFilter} onChange={(event) => setStockFilter(event.target.value)}>
+          <option value="all">All stock</option>
+          <option value="available">Available only</option>
+          <option value="unavailable">Out of stock</option>
+        </select>
       </section>
 
-      {(detailLoading || detail || detailError) && (
-        <PortalModal title="Part inquiry record" onClose={() => {
-          setDetail(null)
-          setDetailError('')
-          setDetailLoading(false)
-        }}>
-          {detailLoading && <StatusMessage type="loading" message="Retrieving part inquiry record..." />}
-          {detailError && <StatusMessage type="error" message={detailError} />}
-          {detail && (
-            <div className="portal-detail-list">
-              <div><span>Requested part</span><strong>{detail.partName}</strong></div>
-              <div><span>Inquiry status</span><StatusBadge status={detail.status} /></div>
-              <div><span>Target vehicle</span><strong>{detail.vehicleName ? `${detail.vehicleName} - ${detail.vehicleNumber}` : 'General inquiry'}</strong></div>
-              <div><span>Specification</span><strong>{detail.brandModelSpecification || 'Standard grade'}</strong></div>
-              <div><span>Quantity</span><strong>{detail.quantity}</strong></div>
-              <div><span>Inquiry notes</span><strong>{detail.reason || 'No notes provided'}</strong></div>
-              <div><span>Record created</span><strong>{formatDateTime(detail.createdAt)}</strong></div>
-              <div><span>Last updated</span><strong>{formatDateTime(detail.updatedAt)}</strong></div>
-            </div>
-          )}
-        </PortalModal>
-      )}
+      <section className="part-product-grid">
+        {visibleParts.map((part) => {
+          const inStock = part.currentStock > 0
+          return (
+            <article key={part.id} className={`part-product-card ${!inStock ? 'is-out' : ''}`}>
+              <div className="part-product-media">
+                <img src={resolveImageUrl(part.imageUrl)} alt={part.name} />
+                <span className={`part-stock-badge ${inStock ? 'is-in' : 'is-out'}`}>{inStock ? 'In stock' : 'Out of stock'}</span>
+              </div>
+              <div className="part-product-body">
+                <span className="customer-eyebrow">{part.category}</span>
+                <h3>{part.name}</h3>
+                <p>{part.compatibleVehicle || 'Universal fitment check required'}</p>
+                <div className="part-price-row">
+                  <strong>{formatCurrency(part.unitPrice)}</strong>
+                  <span>{inStock ? `${part.currentStock} available` : 'Request restock'}</span>
+                </div>
+                <div className="part-card-actions">
+                  {inStock ? (
+                    <>
+                      <button
+                        className="part-card-cart-button"
+                        type="button"
+                        onClick={() => addToCart(part)}
+                        aria-label={`Add ${part.name} to cart`}
+                        title="Add to cart"
+                      >
+                        <CartIcon />
+                      </button>
+                      <button className="btn-primary part-card-buy-button" type="button" onClick={() => buyNow(part)}>Buy now</button>
+                    </>
+                  ) : (
+                    <button className="btn-primary" type="button" onClick={() => setRequestPart(part)}>Request part</button>
+                  )}
+                </div>
+              </div>
+            </article>
+          )
+        })}
+      </section>
 
-      {cancelTarget && (
+      {(cartOpen || checkoutOpen) && (
         <PortalModal
-          title="Withdraw part inquiry"
-          onClose={() => setCancelTarget(null)}
+          title={checkoutOpen ? 'Secure checkout' : 'Shopping cart'}
+          onClose={() => { setCartOpen(false); setCheckoutOpen(false) }}
           footer={(
             <>
-              <button className="btn-outline" type="button" onClick={() => setCancelTarget(null)} disabled={isCancelling}>
-                Keep inquiry
-              </button>
-              <button className="btn-primary" type="button" onClick={handleConfirmCancel} disabled={isCancelling}>
-                {isCancelling ? 'Withdrawing...' : 'Confirm withdrawal'}
+              <button className="btn-outline" type="button" onClick={() => setCartOpen(false)}>Continue shopping</button>
+              <button className="btn-primary" type="button" disabled={cart.length === 0 || isSaving} onClick={checkoutOpen ? submitCheckout : () => setCheckoutOpen(true)}>
+                {isSaving ? 'Processing...' : checkoutOpen ? 'Place order' : 'Checkout'}
               </button>
             </>
           )}
         >
-          <p className="portal-confirm-text">
-            Are you sure you want to withdraw your inquiry for <strong>{cancelTarget.partName}</strong>? This removes it from the active review queue.
-          </p>
+          <CartPanel cart={cart} totals={totals} onQuantityChange={updateCartQuantity} onRemove={removeCartItem} />
+        </PortalModal>
+      )}
+
+      {requestsOpen && (
+        <PortalModal title="Unavailable requests" className="portal-modal-wide" onClose={() => setRequestsOpen(false)}>
+          <div className="part-shop-modal-table">
+            <div className="table-wrap">
+              <table className="table">
+                <thead>
+                  <tr><th>Part</th><th>Vehicle</th><th>Qty</th><th>Status</th><th>Requested</th></tr>
+                </thead>
+                <tbody>
+                  {requests.map((request) => (
+                    <tr key={request.id}>
+                      <td><div className="inventory-part-cell"><strong>{request.partName}</strong><span>{request.brandModelSpecification || 'No specification'}</span></div></td>
+                      <td>{request.vehicleName ? `${request.vehicleName} - ${request.vehicleNumber}` : 'General request'}</td>
+                      <td>{request.quantity}</td>
+                      <td><span className="status-pill is-draft">{request.status}</span></td>
+                      <td>{formatDateTime(request.createdAt)}</td>
+                    </tr>
+                  ))}
+                  {requests.length === 0 && <tr><td colSpan="5" className="table-empty">No unavailable part requests yet.</td></tr>}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </PortalModal>
+      )}
+
+      {invoicesOpen && (
+        <PortalModal title="Purchase invoices" className="portal-modal-wide" onClose={() => setInvoicesOpen(false)}>
+          <div className="part-shop-modal-table">
+            <div className="table-wrap">
+              <table className="table">
+                <thead>
+                  <tr><th>Invoice</th><th>Date</th><th>Source</th><th>Total</th><th>Status</th><th>Actions</th></tr>
+                </thead>
+                <tbody>
+                  {invoices.map((invoice) => (
+                    <tr key={invoice.id}>
+                      <td><div className="inventory-part-cell"><strong>{invoice.invoiceNumber}</strong><span>{invoice.items?.length || 0} items</span></div></td>
+                      <td>{formatDateTime(invoice.createdAt)}</td>
+                      <td>{invoice.source}</td>
+                      <td>{formatCurrency(invoice.totalAmount)}</td>
+                      <td><span className={`status-pill ${getStatusPillClass(invoice.status)}`}>{invoice.status}</span></td>
+                      <td>
+                        <div className="table-actions">
+                          <button className="button button-outline" type="button" onClick={() => downloadInvoice(invoice)}>PDF</button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                  {invoices.length === 0 && <tr><td colSpan="6" className="table-empty">No customer part invoices found.</td></tr>}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </PortalModal>
+      )}
+
+      {requestPart && (
+        <PortalModal title="Request unavailable part" onClose={() => setRequestPart(null)}>
+          <form className="customer-form" onSubmit={submitUnavailableRequest}>
+            <div className="part-request-summary">
+              <strong>{requestPart.name}</strong>
+              <span>{requestPart.partCode} - {requestPart.category}</span>
+            </div>
+            <div className="portal-form-row">
+              <label className="customer-form-group">
+                <span>Quantity</span>
+                <input className="customer-input" type="number" min="1" value={requestValues.quantity} onChange={(event) => setRequestValues((current) => ({ ...current, quantity: event.target.value }))} />
+              </label>
+              <label className="customer-form-group">
+                <span>Vehicle</span>
+                <select className="customer-input" value={requestValues.vehicleId} onChange={(event) => setRequestValues((current) => ({ ...current, vehicleId: event.target.value }))}>
+                  <option value="">General request</option>
+                  {vehicles.map((vehicle) => <option key={vehicle.id} value={vehicle.id}>{vehicle.name} - {vehicle.number}</option>)}
+                </select>
+              </label>
+            </div>
+            <label className="customer-form-group">
+              <span>Notes</span>
+              <textarea className="customer-input portal-textarea" value={requestValues.notes} onChange={(event) => setRequestValues((current) => ({ ...current, notes: event.target.value }))} placeholder="Fitment, preferred brand, urgency..." />
+            </label>
+            <button className="btn-primary" type="submit" disabled={isSaving}>{isSaving ? 'Sending...' : 'Send request'}</button>
+          </form>
         </PortalModal>
       )}
     </div>
   )
+}
+
+function CartPanel({ cart, totals, onQuantityChange, onRemove }) {
+  if (cart.length === 0) return <p className="text-muted">Your cart is empty.</p>
+  return (
+    <div className="cart-checkout-panel">
+      {cart.map((item) => (
+        <div key={item.id} className="cart-line">
+          <div><strong>{item.name}</strong><span>{formatCurrency(item.unitPrice)} · {item.currentStock} in stock</span></div>
+          <input className="customer-input" type="number" min="1" max={item.currentStock} value={item.quantity} onChange={(event) => onQuantityChange(item.id, event.target.value)} />
+          <button className="btn-outline" type="button" onClick={() => onRemove(item.id)}>Remove</button>
+        </div>
+      ))}
+      <div className="checkout-totals">
+        <div><span>Subtotal</span><strong>{formatCurrency(totals.subTotal)}</strong></div>
+        <div><span>Loyalty discount</span><strong>-{formatCurrency(totals.discount)}</strong></div>
+        <div><span>Total</span><strong>{formatCurrency(totals.total)}</strong></div>
+      </div>
+      <p className="customer-field-help">A 5% loyalty discount applies when the purchase total is above NPR 5,000.</p>
+    </div>
+  )
+}
+
+function CartIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="8" cy="21" r="1"></circle>
+      <circle cx="19" cy="21" r="1"></circle>
+      <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h8.72a2 2 0 0 0 2-1.61l1.38-7.39H5.12"></path>
+    </svg>
+  )
+}
+
+function getStatusPillClass(status) {
+  const normalized = String(status || '').toLowerCase()
+  if (normalized.includes('approved') || normalized.includes('paid') || normalized.includes('completed')) return 'is-good'
+  if (normalized.includes('reject') || normalized.includes('cancel') || normalized.includes('out')) return 'is-alert'
+  return 'is-draft'
+}
+
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  URL.revokeObjectURL(url)
+}
+
+function formatCurrency(value) {
+  return new Intl.NumberFormat('en-NP', { style: 'currency', currency: 'NPR', minimumFractionDigits: 0 }).format(value ?? 0)
 }
 
 export default PartRequests

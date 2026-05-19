@@ -1,98 +1,71 @@
-import { useDeferredValue, useEffect, useState } from 'react'
-import InventoryItemForm from '../../components/inventory/InventoryItemForm'
+import { useDeferredValue, useEffect, useMemo, useState } from 'react'
 import Button from '../../components/ui/Button'
 import Input from '../../components/ui/Input'
-import {
-  createInventoryItem,
-  deleteInventoryItem,
-  getInventoryMonitoring,
-  updateInventoryItem,
-} from '../../api/inventoryApi'
+import { addInventoryStock, getInventoryMonitoring } from '../../api/inventoryApi'
+import { getParts } from '../../api/partApi'
+import { getVendors } from '../../api/vendorApi'
 import { getRequestErrorMessage } from '../../api/axiosClient'
-import { required } from '../../utils/validator'
+
+const today = new Date().toISOString().slice(0, 10)
 
 const initialFormValues = {
-  partNumber: '',
-  name: '',
-  category: '',
-  vendorName: '',
-  storageLocation: '',
-  quantityInStock: '0',
-  reorderLevel: '10',
-  unitCost: '0',
+  vendorSearch: '',
+  partSearch: '',
+  purchaseQuantity: '',
+  purchaseDate: today,
+  invoiceNumber: '',
   changedBy: 'Partivex Admin',
-  referenceCode: '',
-  notes: '',
-  stockChangeType: '',
+  remarks: '',
 }
 
 function InventoryPage() {
   const [monitoring, setMonitoring] = useState(null)
+  const [parts, setParts] = useState([])
+  const [vendors, setVendors] = useState([])
   const [status, setStatus] = useState({ type: '', message: '' })
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
-  const [activeItemId, setActiveItemId] = useState(null)
   const [formValues, setFormValues] = useState(initialFormValues)
   const [formErrors, setFormErrors] = useState({})
   const [searchTerm, setSearchTerm] = useState('')
   const [stockFilter, setStockFilter] = useState('all')
 
   const deferredSearchTerm = useDeferredValue(searchTerm)
+  const selectedVendor = useMemo(
+    () => vendors.find((vendor) => optionLabel(vendor.name, vendor.email) === formValues.vendorSearch),
+    [formValues.vendorSearch, vendors],
+  )
+  const selectedPart = useMemo(
+    () => parts.find((part) => optionLabel(part.name, part.partCode) === formValues.partSearch),
+    [formValues.partSearch, parts],
+  )
+  const purchaseQuantity = Number(formValues.purchaseQuantity) || 0
+  const totalAmount = selectedPart ? selectedPart.unitPrice * purchaseQuantity : 0
 
-  async function loadInventory({ showLoading = true, nextStatus = null } = {}) {
+  async function loadData({ showLoading = true, nextStatus = null } = {}) {
     try {
-      if (showLoading) {
-        setIsLoading(true)
-      }
-
-      const response = await getInventoryMonitoring()
-      setMonitoring(response.data)
-
-      if (nextStatus) {
-        setStatus(nextStatus)
-      }
+      if (showLoading) setIsLoading(true)
+      const [monitoringRes, partsRes, vendorsRes] = await Promise.all([
+        getInventoryMonitoring(),
+        getParts(),
+        getVendors(),
+      ])
+      setMonitoring(monitoringRes.data)
+      setParts((partsRes.data || []).filter((part) => part.isActive))
+      setVendors((vendorsRes.data || []).filter((vendor) => vendor.isActive))
+      if (nextStatus) setStatus(nextStatus)
     } catch (error) {
       setStatus({
         type: 'error',
-        message: getRequestErrorMessage(
-          error,
-          'Inventory data could not be loaded. Check the backend and try again.',
-        ),
+        message: getRequestErrorMessage(error, 'Inventory data could not be loaded.'),
       })
     } finally {
-      if (showLoading) {
-        setIsLoading(false)
-      }
+      if (showLoading) setIsLoading(false)
     }
   }
 
   useEffect(() => {
-    let isCurrent = true
-
-    async function loadInitialInventory() {
-      try {
-        const response = await getInventoryMonitoring()
-        if (isCurrent) setMonitoring(response.data)
-      } catch (error) {
-        if (isCurrent) {
-          setStatus({
-            type: 'error',
-            message: getRequestErrorMessage(
-              error,
-              'Inventory data could not be loaded. Check the backend and try again.',
-            ),
-          })
-        }
-      } finally {
-        if (isCurrent) setIsLoading(false)
-      }
-    }
-
-    loadInitialInventory()
-
-    return () => {
-      isCurrent = false
-    }
+    loadData()
   }, [])
 
   function handleFieldChange(event) {
@@ -101,148 +74,48 @@ function InventoryPage() {
     setFormErrors((current) => ({ ...current, [name]: '' }))
   }
 
+  function validateForm() {
+    const nextErrors = {}
+    if (!selectedVendor) nextErrors.vendorSearch = 'Select an active vendor from the list.'
+    if (!selectedPart) nextErrors.partSearch = 'Select an active part from the list.'
+    if (!Number.isInteger(purchaseQuantity) || purchaseQuantity <= 0) {
+      nextErrors.purchaseQuantity = 'Enter a purchase quantity greater than zero.'
+    }
+    if (!formValues.purchaseDate) nextErrors.purchaseDate = 'Purchase date is required.'
+    setFormErrors(nextErrors)
+    return Object.keys(nextErrors).length === 0
+  }
+
   async function handleSubmit(event) {
     event.preventDefault()
     setStatus({ type: '', message: '' })
-
-    if (!validateForm()) {
-      return
-    }
+    if (!validateForm()) return
 
     try {
       setIsSaving(true)
-      const payload = buildPayload(formValues)
-
-      if (activeItemId) {
-        await updateInventoryItem(activeItemId, payload)
-        await loadInventory({
-          showLoading: false,
-          nextStatus: {
-            type: 'success',
-            message: 'Inventory item updated successfully.',
-          },
-        })
-      } else {
-        await createInventoryItem(payload)
-        await loadInventory({
-          showLoading: false,
-          nextStatus: {
-            type: 'success',
-            message: 'Inventory item created successfully.',
-          },
-        })
-      }
-
-      resetEditor()
-    } catch (error) {
-      setFormErrors(extractValidationErrors(error))
-      setStatus({
-        type: 'error',
-        message: getRequestErrorMessage(
-          error,
-          'The inventory item could not be saved. Review the form and try again.',
-        ),
+      await addInventoryStock({
+        vendorId: selectedVendor.id,
+        partId: selectedPart.id,
+        purchaseQuantity,
+        purchaseDate: new Date(formValues.purchaseDate).toISOString(),
+        invoiceNumber: formValues.invoiceNumber.trim(),
+        changedBy: formValues.changedBy.trim(),
+        remarks: formValues.remarks.trim(),
       })
-    } finally {
-      setIsSaving(false)
-    }
-  }
-
-  function handleEdit(item) {
-    setActiveItemId(item.id)
-    setFormErrors({})
-    setStatus({ type: '', message: '' })
-    setFormValues({
-      partNumber: item.partNumber,
-      name: item.name,
-      category: item.category,
-      vendorName: item.vendorName,
-      storageLocation: item.storageLocation,
-      quantityInStock: String(item.quantityInStock),
-      reorderLevel: String(item.reorderLevel),
-      unitCost: String(item.unitCost),
-      changedBy: 'Partivex Admin',
-      referenceCode: '',
-      notes: '',
-      stockChangeType: '',
-    })
-  }
-
-  async function handleDelete(item) {
-    const confirmed = window.confirm(
-      `Delete ${item.name}? This removes the inventory record and its stock history.`,
-    )
-
-    if (!confirmed) {
-      return
-    }
-
-    try {
-      setStatus({ type: '', message: '' })
-      setIsSaving(true)
-      await deleteInventoryItem(item.id)
-      await loadInventory({
+      await loadData({
         showLoading: false,
-        nextStatus: {
-          type: 'success',
-          message: `${item.name} was deleted successfully.`,
-        },
+        nextStatus: { type: 'success', message: 'Stock updated and purchase invoice created.' },
       })
-
-      if (activeItemId === item.id) {
-        resetEditor()
-      }
+      setFormValues(initialFormValues)
+      setFormErrors({})
     } catch (error) {
       setStatus({
         type: 'error',
-        message: getRequestErrorMessage(
-          error,
-          'The inventory item could not be deleted. Try again in a moment.',
-        ),
+        message: getRequestErrorMessage(error, 'The stock update could not be saved.'),
       })
     } finally {
       setIsSaving(false)
     }
-  }
-
-  function resetEditor() {
-    setActiveItemId(null)
-    setFormValues(initialFormValues)
-    setFormErrors({})
-  }
-
-  function handleSearchChange(event) {
-    setSearchTerm(event.target.value)
-  }
-
-  function handleStockFilterChange(event) {
-    setStockFilter(event.target.value)
-  }
-
-  function validateForm() {
-    const nextErrors = {}
-
-    if (!required(formValues.partNumber)) nextErrors.partNumber = 'Part number is required.'
-    if (!required(formValues.name)) nextErrors.name = 'Part name is required.'
-    if (!required(formValues.category)) nextErrors.category = 'Category is required.'
-    if (!required(formValues.vendorName)) nextErrors.vendorName = 'Vendor name is required.'
-    if (!required(formValues.storageLocation)) nextErrors.storageLocation = 'Storage location is required.'
-    if (!required(formValues.changedBy)) nextErrors.changedBy = 'Handled by is required.'
-
-    if (!isWholeNumber(formValues.quantityInStock)) {
-      nextErrors.quantityInStock = 'Enter a valid stock quantity.'
-    }
-
-    if (!isWholeNumber(formValues.reorderLevel)) {
-      nextErrors.reorderLevel = 'Enter a valid reorder level.'
-    }
-
-    if (!isDecimalNumber(formValues.unitCost)) {
-      nextErrors.unitCost = 'Enter a valid unit cost.'
-    }
-
-    setFormErrors(nextErrors)
-    return Object.keys(nextErrors).length === 0
   }
 
   const summary = monitoring?.summary
@@ -252,15 +125,16 @@ function InventoryPage() {
     const searchValue = deferredSearchTerm.trim().toLowerCase()
     const matchesSearch =
       searchValue.length === 0 ||
-      [item.name, item.partNumber, item.category, item.vendorName, item.storageLocation]
+      [item.name, item.partNumber, item.category, item.compatibleVehicle, item.stockStatus]
         .join(' ')
         .toLowerCase()
         .includes(searchValue)
 
     const matchesStockFilter =
       stockFilter === 'all' ||
-      (stockFilter === 'low' && item.isLowStock) ||
-      (stockFilter === 'healthy' && !item.isLowStock)
+      (stockFilter === 'low' && item.stockStatus === 'Low Stock') ||
+      (stockFilter === 'out' && item.stockStatus === 'Out of Stock') ||
+      (stockFilter === 'in' && item.stockStatus === 'In Stock')
 
     return matchesSearch && matchesStockFilter
   })
@@ -270,122 +144,91 @@ function InventoryPage() {
       <section className="card inventory-hero">
         <div className="inventory-hero-copy">
           <span className="auth-brand">Partivex</span>
-          <h2>Inventory Monitoring</h2>
-          <p>
-            View the current stock overview from the admin dashboard and refresh the latest
-            numbers from the backend.
-          </p>
+          <h2>Inventory</h2>
+          <p>Update stock for existing active parts from existing active vendors.</p>
         </div>
         <div className="inventory-hero-actions">
-          <Button onClick={() => loadInventory()} disabled={isLoading || isSaving}>
-            {isLoading ? 'Refreshing...' : 'Refresh data'}
+          <Button onClick={() => loadData()} disabled={isLoading || isSaving}>
+            {isLoading ? 'Refreshing...' : 'Refresh'}
           </Button>
         </div>
       </section>
 
-      {status.message && (
-        <div className={`inventory-notice ${status.type === 'success' ? 'is-success' : 'is-error'}`}>
-          {status.message}
-        </div>
-      )}
+      {status.message && <div className={`inventory-notice ${status.type === 'success' ? 'is-success' : 'is-error'}`}>{status.message}</div>}
 
       <section className="card">
         <div className="section-heading">
           <div>
-            <h2>Inventory Summary</h2>
-            <p>Live stock overview based on the current inventory records in the backend.</p>
+            <h2>Add / Update Stock</h2>
+            <p>Saving this form increases stock, creates a purchase invoice, and records stock history.</p>
+          </div>
+        </div>
+
+        <form className="purchase-form" onSubmit={handleSubmit} noValidate>
+          <datalist id="vendor-options">
+            {vendors.map((vendor) => <option key={vendor.id} value={optionLabel(vendor.name, vendor.email)} />)}
+          </datalist>
+          <datalist id="part-options">
+            {parts.map((part) => <option key={part.id} value={optionLabel(part.name, part.partCode)} />)}
+          </datalist>
+
+          <div className="purchase-form-header-grid">
+            <Input id="vendorSearch" label="Vendor" name="vendorSearch" list="vendor-options" value={formValues.vendorSearch} onChange={handleFieldChange} error={formErrors.vendorSearch} placeholder="Search active vendors..." />
+            <Input id="partSearch" label="Part" name="partSearch" list="part-options" value={formValues.partSearch} onChange={handleFieldChange} error={formErrors.partSearch} placeholder="Search active parts..." />
+            <Input id="currentStock" label="Current Stock" name="currentStock" value={selectedPart?.currentStock ?? ''} readOnly />
+            <Input id="unitPrice" label="Unit Price" name="unitPrice" value={selectedPart ? formatCurrency(selectedPart.unitPrice) : ''} readOnly />
+            <Input id="purchaseQuantity" label="Purchase Quantity" name="purchaseQuantity" type="number" min="1" step="1" value={formValues.purchaseQuantity} onChange={handleFieldChange} error={formErrors.purchaseQuantity} />
+            <Input id="totalAmount" label="Total Amount" name="totalAmount" value={formatCurrency(totalAmount)} readOnly />
+            <Input id="purchaseDate" label="Purchase Date" name="purchaseDate" type="date" value={formValues.purchaseDate} onChange={handleFieldChange} error={formErrors.purchaseDate} />
+            <Input id="invoiceNumber" label="Invoice Number" name="invoiceNumber" value={formValues.invoiceNumber} onChange={handleFieldChange} placeholder="Auto-generated if blank" />
+            <Input id="changedBy" label="Created By" name="changedBy" value={formValues.changedBy} onChange={handleFieldChange} />
+            <div className="form-group purchase-form-span-2">
+              <label htmlFor="remarks">Remarks</label>
+              <textarea id="remarks" name="remarks" className="form-control inventory-textarea" value={formValues.remarks} onChange={handleFieldChange} rows="2" />
+            </div>
+          </div>
+
+          <div className="inventory-form-actions">
+            <Button type="submit" disabled={isSaving}>{isSaving ? 'Saving...' : 'Save Stock Update'}</Button>
+          </div>
+        </form>
+      </section>
+
+      <section className="card">
+        <div className="section-heading">
+          <div>
+            <h2>Stock Summary</h2>
+            <p>Current stock status is calculated from current stock and minimum stock level.</p>
           </div>
           <div className="inventory-meta">
             <span>Last updated</span>
             <strong>{formatDate(summary?.lastUpdatedAt)}</strong>
           </div>
         </div>
-
         <div className="stats-grid inventory-stats-grid">
-          <div className="stat-card">
-            <span>Tracked Parts</span>
-            <strong>{summary?.totalParts ?? 0}</strong>
-          </div>
-          <div className="stat-card">
-            <span>Units in Stock</span>
-            <strong>{summary?.totalUnits ?? 0}</strong>
-          </div>
-          <div className="stat-card stat-card-alert">
-            <span>Low Stock Items</span>
-            <strong>{summary?.lowStockItems ?? 0}</strong>
-          </div>
+          <div className="stat-card"><span>Tracked Parts</span><strong>{summary?.totalParts ?? 0}</strong></div>
+          <div className="stat-card"><span>Units in Stock</span><strong>{summary?.totalUnits ?? 0}</strong></div>
+          <div className="stat-card stat-card-alert"><span>Attention Needed</span><strong>{summary?.lowStockItems ?? 0}</strong></div>
         </div>
       </section>
-
-      <div className="inventory-management-grid">
-        <InventoryItemForm
-          values={formValues}
-          errors={formErrors}
-          onChange={handleFieldChange}
-          onSubmit={handleSubmit}
-          onCancel={resetEditor}
-          isSaving={isSaving}
-          isEditing={Boolean(activeItemId)}
-        />
-
-        <section className="card inventory-workflow-card">
-          <div className="page-header">
-            <h2>Workflow Notes</h2>
-            <p>Keep the CRUD process aligned with the coursework’s inventory monitoring flow.</p>
-          </div>
-
-          <div className="inventory-workflow-list">
-            <div>
-              <strong>1. Create part records</strong>
-              <p>Register vendor, storage, stock level, and opening metadata in one action.</p>
-            </div>
-            <div>
-              <strong>2. Update stock carefully</strong>
-              <p>When quantity changes, the system records a movement entry for audit tracking.</p>
-            </div>
-            <div>
-              <strong>3. Watch low stock</strong>
-              <p>Use the low-stock filter to identify items that are approaching reorder level.</p>
-            </div>
-            <div>
-              <strong>4. Delete with intent</strong>
-              <p>Removing an item clears its history, so only delete retired or duplicate parts.</p>
-            </div>
-          </div>
-        </section>
-      </div>
 
       <section className="card">
         <div className="section-heading">
           <div>
             <h2>Current Stock</h2>
-            <p>
-              Search, filter, edit, and remove inventory records while keeping the stock table
-              aligned with the admin workflow.
-            </p>
+            <p>Search and filter existing parts.</p>
           </div>
           <div className="inventory-toolbar">
             <div className="inventory-toolbar-field">
-              <Input
-                id="inventorySearch"
-                label="Search parts"
-                name="inventorySearch"
-                value={searchTerm}
-                onChange={handleSearchChange}
-                placeholder="Name, part number, category, vendor..."
-              />
+              <Input id="inventorySearch" label="Search parts" name="inventorySearch" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} placeholder="Name, SKU, category, vehicle..." />
             </div>
             <div className="form-group inventory-toolbar-select">
               <label htmlFor="stockFilter">Stock Filter</label>
-              <select
-                id="stockFilter"
-                className="form-control"
-                value={stockFilter}
-                onChange={handleStockFilterChange}
-              >
-                <option value="all">All items</option>
-                <option value="low">Low stock only</option>
-                <option value="healthy">Healthy stock only</option>
+              <select id="stockFilter" className="form-control" value={stockFilter} onChange={(event) => setStockFilter(event.target.value)}>
+                <option value="all">All parts</option>
+                <option value="in">In stock</option>
+                <option value="low">Low stock</option>
+                <option value="out">Out of stock</option>
               </select>
             </div>
           </div>
@@ -394,72 +237,20 @@ function InventoryPage() {
         <div className="table-wrap">
           <table className="table inventory-table">
             <thead>
-              <tr>
-                <th>Part</th>
-                <th>Category</th>
-                <th>Vendor</th>
-                <th>Location</th>
-                <th>Stock</th>
-                <th>Unit Cost</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
+              <tr><th>Part</th><th>Category</th><th>Vehicle</th><th>Stock</th><th>Unit Price</th><th>Status</th></tr>
             </thead>
             <tbody>
               {visibleItems.map((item) => (
                 <tr key={item.id}>
-                  <td>
-                    <div className="inventory-part-cell">
-                      <strong>{item.name}</strong>
-                      <span>{item.partNumber}</span>
-                    </div>
-                  </td>
+                  <td><div className="inventory-part-cell"><strong>{item.name}</strong><span>{item.partNumber}</span></div></td>
                   <td>{item.category}</td>
-                  <td>{item.vendorName}</td>
-                  <td>{item.storageLocation}</td>
-                  <td>
-                    <div className="inventory-stock-cell">
-                      <strong>{item.quantityInStock}</strong>
-                      <span>Reorder at {item.reorderLevel}</span>
-                    </div>
-                  </td>
-                  <td>{formatCurrency(item.unitCost)}</td>
-                  <td>
-                    <span className={`status-pill ${item.isLowStock ? 'is-alert' : 'is-good'}`}>
-                      {item.isLowStock ? 'Low stock' : 'Healthy'}
-                    </span>
-                  </td>
-                  <td>
-                    <div className="inventory-action-group">
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        className="inventory-action-button"
-                        onClick={() => handleEdit(item)}
-                        disabled={isSaving}
-                      >
-                        Edit
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="danger"
-                        className="inventory-action-button"
-                        onClick={() => handleDelete(item)}
-                        disabled={isSaving}
-                      >
-                        Delete
-                      </Button>
-                    </div>
-                  </td>
+                  <td>{item.compatibleVehicle || 'Any compatible model'}</td>
+                  <td><div className="inventory-stock-cell"><strong>{item.quantityInStock}</strong><span>Minimum {item.reorderLevel}</span></div></td>
+                  <td>{formatCurrency(item.unitPrice)}</td>
+                  <td><span className={`status-pill ${item.stockStatus === 'In Stock' ? 'is-good' : 'is-alert'}`}>{item.stockStatus}</span></td>
                 </tr>
               ))}
-              {visibleItems.length === 0 && !isLoading && (
-                <tr>
-                  <td colSpan="8" className="table-empty">
-                    No inventory items match the current filters.
-                  </td>
-                </tr>
-              )}
+              {visibleItems.length === 0 && !isLoading && <tr><td colSpan="6" className="table-empty">No parts match the current filters.</td></tr>}
             </tbody>
           </table>
         </div>
@@ -467,54 +258,27 @@ function InventoryPage() {
 
       <section className="card">
         <div className="page-header">
-          <h2>Stock Change Tracking</h2>
-          <p>Recent stock movements for quick auditing of purchase and sales activity.</p>
+          <h2>Stock History</h2>
+          <p>Recent stock updates and purchases.</p>
         </div>
-
         <div className="table-wrap">
           <table className="table inventory-table">
             <thead>
-              <tr>
-                <th>Date</th>
-                <th>Part</th>
-                <th>Change</th>
-                <th>After Change</th>
-                <th>Reference</th>
-                <th>Handled By</th>
-                <th>Notes</th>
-              </tr>
+              <tr><th>Date</th><th>Vendor</th><th>Part</th><th>Qty</th><th>After</th><th>Invoice</th><th>Remarks</th></tr>
             </thead>
             <tbody>
               {recentChanges.map((change) => (
                 <tr key={change.id}>
                   <td>{formatDate(change.changedAt)}</td>
-                  <td>
-                    <div className="inventory-part-cell">
-                      <strong>{change.partName}</strong>
-                      <span>{change.partNumber}</span>
-                    </div>
-                  </td>
-                  <td>
-                    <div className="inventory-change-cell">
-                      <span className="change-type">{change.changeType}</span>
-                      <strong className={change.quantityChanged < 0 ? 'change-loss' : 'change-gain'}>
-                        {formatQuantity(change.quantityChanged)}
-                      </strong>
-                    </div>
-                  </td>
+                  <td>{change.vendorName}</td>
+                  <td><div className="inventory-part-cell"><strong>{change.partName}</strong><span>{change.partNumber}</span></div></td>
+                  <td className="change-gain">+{change.quantityChanged}</td>
                   <td>{change.quantityAfterChange}</td>
                   <td>{change.referenceCode}</td>
-                  <td>{change.changedBy}</td>
-                  <td>{change.notes}</td>
+                  <td>{change.notes || 'No remarks'}</td>
                 </tr>
               ))}
-              {recentChanges.length === 0 && !isLoading && (
-                <tr>
-                  <td colSpan="7" className="table-empty">
-                    No stock movements recorded yet.
-                  </td>
-                </tr>
-              )}
+              {recentChanges.length === 0 && !isLoading && <tr><td colSpan="7" className="table-empty">No stock movements recorded yet.</td></tr>}
             </tbody>
           </table>
         </div>
@@ -523,66 +287,21 @@ function InventoryPage() {
   )
 }
 
-function buildPayload(values) {
-  return {
-    partNumber: values.partNumber.trim(),
-    name: values.name.trim(),
-    category: values.category.trim(),
-    vendorName: values.vendorName.trim(),
-    storageLocation: values.storageLocation.trim(),
-    quantityInStock: Number.parseInt(values.quantityInStock, 10),
-    reorderLevel: Number.parseInt(values.reorderLevel, 10),
-    unitCost: Number.parseFloat(values.unitCost),
-    changedBy: values.changedBy.trim(),
-    referenceCode: values.referenceCode.trim(),
-    notes: values.notes.trim(),
-    stockChangeType: values.stockChangeType.trim(),
-  }
-}
-
-function extractValidationErrors(error) {
-  const validationErrors = error.response?.data?.errors
-  if (!validationErrors) {
-    return {}
-  }
-
-  return Object.entries(validationErrors).reduce((accumulator, [field, messages]) => {
-    const message = Array.isArray(messages) ? messages[0] : messages
-    const normalizedField = field.charAt(0).toLowerCase() + field.slice(1)
-    accumulator[normalizedField] = message
-    return accumulator
-  }, {})
-}
-
-function isWholeNumber(value) {
-  return /^-?\d+$/.test(String(value).trim())
-}
-
-function isDecimalNumber(value) {
-  return !Number.isNaN(Number.parseFloat(value)) && Number.isFinite(Number.parseFloat(value))
+function optionLabel(primary, secondary) {
+  return secondary ? `${primary} (${secondary})` : primary
 }
 
 function formatDate(value) {
-  if (!value) {
-    return 'Waiting for data'
-  }
-
-  return new Intl.DateTimeFormat('en-US', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  }).format(new Date(value))
+  if (!value) return 'Waiting for data'
+  return new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' }).format(new Date(value))
 }
 
 function formatCurrency(value) {
-  return new Intl.NumberFormat('en-US', {
+  return new Intl.NumberFormat('en-NP', {
     style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 2,
+    currency: 'NPR',
+    minimumFractionDigits: 0,
   }).format(value ?? 0)
-}
-
-function formatQuantity(value) {
-  return value > 0 ? `+${value}` : String(value)
 }
 
 export default InventoryPage

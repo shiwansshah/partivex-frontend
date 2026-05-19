@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 
-function PortalModal({ title, children, footer, onClose }) {
+function PortalModal({ title, children, footer, onClose, className = '' }) {
   const dialogRef = useRef(null)
 
   useEffect(() => {
@@ -48,7 +48,7 @@ function PortalModal({ title, children, footer, onClose }) {
 
   return (
     <div className="portal-modal-backdrop" onMouseDown={handleBackdropClick}>
-      <section ref={dialogRef} className="portal-modal" role="dialog" aria-modal="true" aria-labelledby="portal-modal-title">
+      <section ref={dialogRef} className={`portal-modal ${className}`.trim()} role="dialog" aria-modal="true" aria-labelledby="portal-modal-title">
         <div className="portal-modal-header">
           <h3 id="portal-modal-title">{title}</h3>
           <button className="btn-outline portal-modal-close" type="button" onClick={onClose}>
