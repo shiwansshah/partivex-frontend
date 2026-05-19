@@ -649,6 +649,7 @@
 }
 
 .vehicles-workflow-grid {
+  --vehicle-panel-height: 470px;
   grid-template-columns: minmax(0, 1fr) 380px;
   align-items: stretch;
 }
@@ -658,19 +659,90 @@
 }
 
 .vehicle-list-card,
-.vehicle-form-card,
-.vehicle-static-panel {
-  min-height: 520px;
-}
-
-.vehicle-list-card,
-.vehicle-form-card {
+.vehicle-action-panel {
+  height: var(--vehicle-panel-height);
+  max-height: var(--vehicle-panel-height);
+  min-height: 0;
   display: flex;
   flex-direction: column;
 }
 
-.vehicle-static-panel {
-  grid-template-rows: minmax(0, 1fr) auto;
+.vehicle-action-panel {
+  overflow: hidden;
+  transition: background var(--transition-smooth), border-color var(--transition-smooth), box-shadow var(--transition-smooth);
+}
+
+.vehicle-action-panel.is-form {
+  background: var(--color-body);
+}
+
+.vehicle-action-panel.is-cta {
+  padding: 0;
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+}
+
+.vehicle-form-content {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  animation: vehiclePanelIn 180ms ease-out;
+}
+
+.vehicle-form-content .customer-form {
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: var(--space-1);
+}
+
+.vehicle-register-box {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  align-content: center;
+  gap: var(--space-3);
+  padding: var(--space-6);
+  border: 0;
+  color: var(--color-body);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--transition-fast), transform var(--transition-fast);
+}
+
+.vehicle-register-box:hover,
+.vehicle-register-box:focus-visible {
+  background: #D91F36;
+}
+
+.vehicle-register-box .customer-eyebrow {
+  color: #FFE2E6;
+}
+
+.vehicle-register-box strong {
+  max-width: 280px;
+  font-size: var(--text-3xl);
+  line-height: var(--leading-tight);
+}
+
+.vehicle-register-box > span:last-child {
+  max-width: 280px;
+  color: rgba(255, 255, 255, 0.86);
+  font-size: var(--text-sm);
+  line-height: var(--leading-relaxed);
+}
+
+@keyframes vehiclePanelIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .dashboard-record-card {
@@ -1095,18 +1167,29 @@
 .vehicle-carousel-track {
   height: 100%;
   display: flex;
+  gap: var(--space-4);
   transition: transform var(--transition-smooth);
 }
 
 .vehicle-carousel-slide {
-  min-width: 100%;
+  flex: 0 0 calc((100% - var(--space-4)) / 2);
+  min-width: 0;
   height: 100%;
   display: flex;
+}
+
+.vehicle-carousel-track.is-single .vehicle-carousel-slide {
+  flex-basis: 100%;
 }
 
 .vehicle-carousel-slide .vehicle-item {
   width: 100%;
   height: 100%;
+  min-height: 0;
+}
+
+.vehicle-carousel-slide .vehicle-image-wrap {
+  max-height: 168px;
 }
 
 .vehicle-carousel-controls {
@@ -1867,6 +1950,7 @@
 .image-upload-btn:focus-visible,
 .customer-page-button:focus-visible,
 .vehicle-carousel-button:focus-visible,
+.vehicle-register-box:focus-visible,
 .customer-input:focus-visible {
   outline: none;
   box-shadow: var(--customer-focus);

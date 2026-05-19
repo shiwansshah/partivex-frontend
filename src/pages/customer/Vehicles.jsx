@@ -9,6 +9,7 @@ import StatusMessage from '../../components/ui/StatusMessage'
 import { customerPortalImages } from '../../utils/customerPortalImages'
 
 const emptyForm = { name: '', number: '' }
+const vehiclesPerView = 2
 
 function Vehicles() {
   const [vehicles, setVehicles] = useState([])
@@ -61,7 +62,7 @@ function Vehicles() {
   useEffect(() => {
     setActiveVehicleIndex((current) => {
       if (vehicles.length === 0) return 0
-      return Math.min(current, vehicles.length - 1)
+      return Math.min(current, Math.max(0, vehicles.length - vehiclesPerView))
     })
   }, [vehicles.length])
 
@@ -162,8 +163,14 @@ function Vehicles() {
     )
   }
 
-  const canMoveCarousel = vehicles.length > 1
-  const activeVehiclePage = vehicles.length === 0 ? 0 : activeVehicleIndex + 1
+  const canMoveCarousel = vehicles.length > vehiclesPerView
+  const visibleVehicles = vehicles.slice(activeVehicleIndex, activeVehicleIndex + vehiclesPerView)
+  const totalVehiclePages = Math.max(1, Math.ceil(vehicles.length / vehiclesPerView))
+  const activeVehiclePage = vehicles.length === 0
+    ? 0
+    : activeVehicleIndex >= vehicles.length - vehiclesPerView
+      ? totalVehiclePages
+      : Math.floor(activeVehicleIndex / vehiclesPerView) + 1
 
   return (
     <div className="customer-page">
@@ -201,11 +208,8 @@ function Vehicles() {
           ) : (
             <div className="vehicle-carousel">
               <div className="vehicle-carousel-viewport" aria-live="polite">
-                <div
-                  className="vehicle-carousel-track"
-                  style={{ transform: `translateX(-${activeVehicleIndex * 100}%)` }}
-                >
-                  {vehicles.map((vehicle) => {
+                <div className={`vehicle-carousel-track ${visibleVehicles.length === 1 ? 'is-single' : ''}`}>
+                  {visibleVehicles.map((vehicle) => {
                     const imageUrl = resolveImageUrl(vehicle.imageUrl)
 
                     return (
@@ -248,71 +252,70 @@ function Vehicles() {
                 <button
                   className="vehicle-carousel-button"
                   type="button"
-                  onClick={() => setActiveVehicleIndex((index) => Math.max(0, index - 1))}
+                  onClick={() => setActiveVehicleIndex((index) => Math.max(0, index - vehiclesPerView))}
                   disabled={!canMoveCarousel || activeVehicleIndex === 0}
                   aria-label="Previous vehicle"
                   title="Previous vehicle"
                 >
-                  <span aria-hidden="true">‹</span>
+                  <span aria-hidden="true">&lt;</span>
                 </button>
-                <span>{activeVehiclePage} / {vehicles.length}</span>
+                <span>{activeVehiclePage} / {totalVehiclePages}</span>
                 <button
                   className="vehicle-carousel-button"
                   type="button"
-                  onClick={() => setActiveVehicleIndex((index) => Math.min(vehicles.length - 1, index + 1))}
-                  disabled={!canMoveCarousel || activeVehicleIndex === vehicles.length - 1}
+                  onClick={() => setActiveVehicleIndex((index) => Math.min(Math.max(0, vehicles.length - vehiclesPerView), index + vehiclesPerView))}
+                  disabled={!canMoveCarousel || activeVehicleIndex >= vehicles.length - vehiclesPerView}
                   aria-label="Next vehicle"
                   title="Next vehicle"
                 >
-                  <span aria-hidden="true">›</span>
+                  <span aria-hidden="true">&gt;</span>
                 </button>
               </div>
             </div>
           )}
         </section>
 
-        {showForm ? (
-          <section className="customer-card portal-form-card vehicle-form-card">
-            <div className="section-header">
-              <div className="section-header-text">
-                <span className="customer-eyebrow">{editingId ? 'Update record' : 'Guided setup'}</span>
-                <h2>{editingId ? 'Edit vehicle' : 'Register vehicle'}</h2>
+        <section className={`customer-card vehicle-action-panel ${showForm ? 'is-form' : 'is-cta'}`}>
+          {showForm ? (
+            <div className="vehicle-form-content">
+              <div className="section-header">
+                <div className="section-header-text">
+                  <span className="customer-eyebrow">{editingId ? 'Update record' : 'Guided setup'}</span>
+                  <h2>{editingId ? 'Edit vehicle' : 'Register vehicle'}</h2>
+                </div>
               </div>
-            </div>
 
-            <PortalWorkflowSteps
-              ariaLabel="Vehicle registration steps"
-              steps={[
-                { label: 'Model', completed: Boolean(values.name.trim()), current: !values.name.trim() },
-                { label: 'Plate', completed: Boolean(values.number.trim()), current: Boolean(values.name.trim()) && !values.number.trim() },
-                { label: 'Image', completed: Boolean(imageFile || existingImageUrl), current: Boolean(values.name.trim() && values.number.trim()) && !imageFile && !existingImageUrl },
-              ]}
-            />
+              <PortalWorkflowSteps
+                ariaLabel="Vehicle registration steps"
+                steps={[
+                  { label: 'Model', completed: Boolean(values.name.trim()), current: !values.name.trim() },
+                  { label: 'Plate', completed: Boolean(values.number.trim()), current: Boolean(values.name.trim()) && !values.number.trim() },
+                  { label: 'Image', completed: Boolean(imageFile || existingImageUrl), current: Boolean(values.name.trim() && values.number.trim()) && !imageFile && !existingImageUrl },
+                ]}
+              />
 
-            <VehicleForm
-              values={values}
-              errors={formErrors}
-              status={formStatus}
-              isSubmitting={isSubmitting}
-              existingImageUrl={existingImageUrl}
-              previewUrl={previewUrl}
-              onChange={handleChange}
-              onImageChange={handleImageChange}
-              onSubmit={handleSubmit}
-              onCancel={resetForm}
-              submitLabel={editingId ? 'Update vehicle' : 'Register vehicle'}
-            />
-          </section>
-        ) : (
-          <aside className="customer-side-panel vehicle-static-panel">
-            <img src={customerPortalImages.garage} alt="Vehicle service bay with technicians" />
-            <div>
-              <span className="customer-eyebrow">Why it matters</span>
-              <h2>Vehicle details reduce follow-up.</h2>
-              <p>Names and plate numbers keep service requests clear.</p>
+              <VehicleForm
+                values={values}
+                errors={formErrors}
+                status={formStatus}
+                isSubmitting={isSubmitting}
+                existingImageUrl={existingImageUrl}
+                previewUrl={previewUrl}
+                onChange={handleChange}
+                onImageChange={handleImageChange}
+                onSubmit={handleSubmit}
+                onCancel={resetForm}
+                submitLabel={editingId ? 'Update vehicle' : 'Register vehicle'}
+              />
             </div>
-          </aside>
-        )}
+          ) : (
+            <button className="vehicle-register-box" type="button" onClick={handleAdd}>
+              <span className="customer-eyebrow">Register vehicle</span>
+              <strong>Add a vehicle record</strong>
+              <span>Keep service and parts requests tied to the right plate.</span>
+            </button>
+          )}
+        </section>
       </div>
     </div>
   )
