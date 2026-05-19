@@ -18,11 +18,12 @@ export async function getStaff() {
   return response.data.map(StaffDto)
 }
 
-export async function createStaff({ fullName, email, password }) {
+export async function createStaff({ fullName, email, password, featureKeys = [] }) {
   const response = await axiosInstance.post('/api/staff', {
     fullName,
     email,
     password,
+    featureKeys,
   })
 
   return StaffDto(response.data)

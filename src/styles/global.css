@@ -516,6 +516,16 @@
   gap: var(--space-5);
 }
 
+.form-section {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.form-section h3 {
+  font-size: var(--text-lg);
+  margin: 0;
+}
+
 .form-check-row {
   align-items: center;
   display: flex;

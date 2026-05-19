@@ -154,6 +154,7 @@ function StaffPage() {
           fullName: values.fullName.trim(),
           email: values.email.trim(),
           password: values.password,
+          featureKeys: selectedFeatureKeys,
         })
       }
 
@@ -235,15 +236,32 @@ function StaffPage() {
               disabled={Boolean(editingStaff)}
             />
             {!editingStaff && (
-              <Input
-                id="staffPassword"
-                label="Temporary password"
-                name="password"
-                type="password"
-                value={values.password}
-                onChange={handleChange}
-                error={errors.password}
-              />
+              <>
+                <Input
+                  id="staffPassword"
+                  label="Temporary password"
+                  name="password"
+                  type="password"
+                  value={values.password}
+                  onChange={handleChange}
+                  error={errors.password}
+                />
+
+                <div className="form-section">
+                  <h3>Feature Access</h3>
+                  {STAFF_FEATURES.map((feature) => (
+                    <label key={feature.key} className="form-check-row">
+                      <input
+                        type="checkbox"
+                        checked={selectedFeatureKeys.includes(feature.key)}
+                        onChange={() => handleFeatureToggle(feature.key)}
+                        disabled={isSubmitting}
+                      />
+                      <span>{feature.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </>
             )}
             <div className="form-actions">
               <Button type="submit" disabled={isSubmitting}>
