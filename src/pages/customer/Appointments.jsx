@@ -392,21 +392,6 @@ function Appointments() {
         </section>
       </div>
 
-      <section className="customer-trust-strip">
-        <div>
-          <strong>Vehicle-first booking</strong>
-          <span>Start with a registered vehicle.</span>
-        </div>
-        <div>
-          <strong>Service options</strong>
-          <span>Pick the work you need.</span>
-        </div>
-        <div>
-          <strong>Cancellation guardrails</strong>
-          <span>Cancel eligible requests only.</span>
-        </div>
-      </section>
-
       {(detailLoading || detail || detailError) && (
         <PortalModal title="Appointment details" onClose={() => {
           setDetail(null)

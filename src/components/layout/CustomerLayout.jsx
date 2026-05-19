@@ -1,8 +1,11 @@
 import { useState, useRef, useEffect } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { getProfile } from '../../api/authApi'
+import { downloadMyAppointmentInvoicePdf, getMyAppointmentInvoices, payMyAppointmentInvoice } from '../../api/appointmentInvoiceApi'
 import { removeToken } from '../../utils/tokenStorage'
+import { sweetAlert } from '../../utils/sweetAlert'
 import useAuth from '../../hooks/useAuth'
+import PortalModal from '../customer/PortalModal'
 import '../../styles/customer.css'
 
 const portalLinks = [
@@ -44,7 +47,7 @@ const portalLinks = [
   },
   {
     to: '/customer/part-requests',
-    label: 'Part Requests',
+    label: 'Parts Shop',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="m7.5 4.27 9 5.15"></path>
@@ -103,6 +106,10 @@ function CustomerLayout() {
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const [profileName, setProfileName] = useState('')
+  const [partShopCart, setPartShopCart] = useState({ count: 0, onOpen: null })
+  const [appointmentInvoicesOpen, setAppointmentInvoicesOpen] = useState(false)
+  const [appointmentInvoices, setAppointmentInvoices] = useState([])
+  const [appointmentInvoicesLoading, setAppointmentInvoicesLoading] = useState(false)
   const dropdownRef = useRef(null)
   const navigate = useNavigate()
   const { user } = useAuth()
@@ -149,6 +156,49 @@ function CustomerLayout() {
   function closeMenus() {
     setDropdownOpen(false)
     setMobileNavOpen(false)
+  }
+
+  function openPartShopCart() {
+    if (typeof partShopCart.onOpen === 'function') {
+      partShopCart.onOpen()
+      return
+    }
+
+    navigate('/customer/part-requests')
+  }
+
+  async function openAppointmentInvoices() {
+    setAppointmentInvoicesOpen(true)
+    setAppointmentInvoicesLoading(true)
+    try {
+      const response = await getMyAppointmentInvoices()
+      setAppointmentInvoices(response.data || [])
+    } catch {
+      setAppointmentInvoices([])
+      await sweetAlert({ title: 'Invoices unavailable', message: 'Appointment invoices could not be loaded.', icon: 'error' })
+    } finally {
+      setAppointmentInvoicesLoading(false)
+    }
+  }
+
+  async function payAppointmentInvoice(invoice) {
+    try {
+      await payMyAppointmentInvoice(invoice.id)
+      const response = await getMyAppointmentInvoices()
+      setAppointmentInvoices(response.data || [])
+      await sweetAlert({ title: 'Payment complete', message: `${invoice.invoiceNumber} is marked as paid.`, icon: 'success' })
+    } catch {
+      await sweetAlert({ title: 'Payment failed', message: 'Appointment invoice could not be paid.', icon: 'error' })
+    }
+  }
+
+  async function downloadAppointmentInvoice(invoice) {
+    try {
+      const response = await downloadMyAppointmentInvoicePdf(invoice.id)
+      downloadBlob(response.data, `${invoice.invoiceNumber}.pdf`)
+    } catch {
+      await sweetAlert({ title: 'Download failed', message: 'Appointment invoice PDF could not be downloaded.', icon: 'error' })
+    }
   }
 
   const tokenName = user?.fullName && !user.fullName.includes('@') ? user.fullName : ''
@@ -207,6 +257,36 @@ function CustomerLayout() {
 
           <div className="customer-nav-right" ref={dropdownRef}>
             <button
+              className={`customer-cart-nav-button ${appointmentInvoices.some((invoice) => invoice.paymentStatus === 'Pending') ? 'has-items' : ''}`}
+              type="button"
+              onClick={openAppointmentInvoices}
+              aria-label="Open appointment invoices"
+              title="Appointment invoices"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M4 2h16v20l-3-2-3 2-3-2-3 2-4-2V2Z"></path>
+                <path d="M8 7h8"></path>
+                <path d="M8 11h8"></path>
+                <path d="M8 15h5"></path>
+              </svg>
+            </button>
+
+            <button
+              className={`customer-cart-nav-button ${partShopCart.count > 0 ? 'has-items' : ''}`}
+              type="button"
+              onClick={openPartShopCart}
+              aria-label={`Open cart${partShopCart.count > 0 ? ` with ${partShopCart.count} items` : ''}`}
+              title="Cart"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <circle cx="8" cy="21" r="1"></circle>
+                <circle cx="19" cy="21" r="1"></circle>
+                <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h8.72a2 2 0 0 0 2-1.61l1.38-7.39H5.12"></path>
+              </svg>
+              {partShopCart.count > 0 && <span>{partShopCart.count}</span>}
+            </button>
+
+            <button
               className="profile-avatar-btn"
               onClick={() => setDropdownOpen(!dropdownOpen)}
               aria-label="Profile menu"
@@ -254,11 +334,65 @@ function CustomerLayout() {
 
       <div className="customer-app">
         <main id="customer-main" className="customer-content" tabIndex="-1">
-          <Outlet />
+          <Outlet context={{ setPartShopCart }} />
         </main>
       </div>
+
+      {appointmentInvoicesOpen && (
+        <PortalModal title="Appointment invoices" className="portal-modal-wide" onClose={() => setAppointmentInvoicesOpen(false)}>
+          {appointmentInvoicesLoading ? (
+            <p className="text-muted">Loading appointment invoices...</p>
+          ) : (
+            <div className="part-shop-modal-table">
+              <div className="table-wrap">
+                <table className="table">
+                  <thead><tr><th>Invoice</th><th>Service</th><th>Vehicle</th><th>Total</th><th>Payment</th><th>Actions</th></tr></thead>
+                  <tbody>
+                    {appointmentInvoices.map((invoice) => (
+                      <tr key={invoice.id}>
+                        <td><div className="inventory-part-cell"><strong>{invoice.invoiceNumber}</strong><span>{formatDateTime(invoice.invoiceDate)}</span></div></td>
+                        <td>{invoice.serviceType}</td>
+                        <td>{invoice.vehicleName} - {invoice.vehicleNumber}</td>
+                        <td>{formatCurrency(invoice.amount)}</td>
+                        <td><span className={`status-pill ${invoice.paymentStatus === 'Paid' ? 'is-good' : 'is-draft'}`}>{invoice.paymentStatus}</span></td>
+                        <td>
+                          <div className="table-actions">
+                            {invoice.paymentStatus === 'Pending' && <button className="button button-outline" type="button" onClick={() => payAppointmentInvoice(invoice)}>Pay</button>}
+                            <button className="button button-outline" type="button" onClick={() => downloadAppointmentInvoice(invoice)}>PDF</button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                    {appointmentInvoices.length === 0 && <tr><td colSpan="6" className="table-empty">No appointment invoices yet.</td></tr>}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </PortalModal>
+      )}
     </div>
   )
+}
+
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  URL.revokeObjectURL(url)
+}
+
+function formatCurrency(value) {
+  return new Intl.NumberFormat('en-NP', { style: 'currency', currency: 'NPR', minimumFractionDigits: 0 }).format(value ?? 0)
+}
+
+function formatDateTime(value) {
+  if (!value) return '-'
+  return new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value))
 }
 
 export default CustomerLayout

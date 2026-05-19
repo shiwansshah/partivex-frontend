@@ -478,21 +478,6 @@ function Reviews() {
         )}
       </section>
 
-      <section className="customer-trust-strip">
-        <div>
-          <strong>Appointment-specific</strong>
-          <span>Review completed visits.</span>
-        </div>
-        <div>
-          <strong>Editable feedback</strong>
-          <span>Update when needed.</span>
-        </div>
-        <div>
-          <strong>History retained</strong>
-          <span>Keep feedback visible.</span>
-        </div>
-      </section>
-
       {(detailLoading || detail || detailError) && (
         <PortalModal title="Review details" onClose={() => {
           setDetail(null)

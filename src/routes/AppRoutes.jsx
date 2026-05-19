@@ -28,6 +28,9 @@ import CustomerVehicles from '../pages/customer/Vehicles'
 import Appointments from '../pages/customer/Appointments'
 import PartRequests from '../pages/customer/PartRequests'
 import Reviews from '../pages/customer/Reviews'
+import CustomerPartInvoicesPage from '../pages/customer-parts/CustomerPartInvoicesPage'
+import AppointmentInvoicesPage from '../pages/appointments/AppointmentInvoicesPage'
+import PartRequestApprovals from '../pages/staff/PartRequestApprovals'
 import { getHomePathForRole, hasRole, ROLES } from '../utils/roles'
 
 function RequireAuth({ children }) {
@@ -146,6 +149,8 @@ function AppRoutes() {
         <Route path="parts" element={<PartManagement />} />
         <Route path="inventory" element={<InventoryPage />} />
         <Route path="purchases" element={<PurchasesPage />} />
+        <Route path="customer-part-invoices" element={<CustomerPartInvoicesPage />} />
+        <Route path="appointment-invoices" element={<AppointmentInvoicesPage />} />
       </Route>
       <Route
         path="/staff"
@@ -164,6 +169,9 @@ function AppRoutes() {
         <Route path="customers/:id/add-vehicle" element={<AddVehicle />} />
         <Route path="vehicles" element={<VehiclesPage />} />
         <Route path="sales" element={<SalesPage />} />
+        <Route path="part-requests" element={<PartRequestApprovals />} />
+        <Route path="customer-part-invoices" element={<CustomerPartInvoicesPage />} />
+        <Route path="appointment-invoices" element={<AppointmentInvoicesPage />} />
         <Route path="notifications" element={<NotificationsPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
