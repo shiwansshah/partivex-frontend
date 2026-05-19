@@ -47,8 +47,16 @@ export function getApiErrorMessage(error, fallbackMessage = 'Something went wron
   const data = error?.response?.data
 
   if (data?.message) return data.message
-  if (data?.title) return data.title
   if (typeof data === 'string') return data
+
+  if (data?.errors && typeof data.errors === 'object') {
+    const messages = Object.values(data.errors).flat().filter(Boolean)
+    if (messages.length > 0) {
+      return messages.join(' ')
+    }
+  }
+
+  if (data?.title) return data.title
 
   if (status === 400) return 'Validation failed. Check the details and try again.'
   if (status === 401) return 'Your session expired. Please login again.'

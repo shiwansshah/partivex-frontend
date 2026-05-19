@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { apiBaseUrl } from '../api/axiosClient'
 import { getApiErrorMessage } from '../api/axiosInstance'
 import VehicleForm from '../components/VehicleForm'
 import VehicleList from '../components/VehicleList'
@@ -17,14 +18,18 @@ function VehiclesPage() {
   const [searchParams] = useSearchParams()
   const customerIdFromQuery = searchParams.get('customerId') || ''
   const role = user?.role || 'Customer'
-  const isAdmin = role === 'Admin'
-  const canSelectCustomer = isAdmin || role === 'Staff'
+  const canSelectCustomer = role === 'Admin' || role === 'Staff'
 
   const [customers, setCustomers] = useState([])
   const [selectedCustomerId, setSelectedCustomerId] = useState(customerIdFromQuery || user?.customerId || '')
   const [vehicles, setVehicles] = useState([])
   const [editingVehicle, setEditingVehicle] = useState(null)
   const [formVersion, setFormVersion] = useState(0)
+  const [formValues, setFormValues] = useState({ name: '', number: '' })
+  const [formErrors, setFormErrors] = useState({})
+  const [previewUrl, setPreviewUrl] = useState('')
+  const [existingImageUrl, setExistingImageUrl] = useState('')
+  const [imageFile, setImageFile] = useState(null)
   const [status, setStatus] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -33,6 +38,24 @@ function VehiclesPage() {
     () => role === 'Admin' || role === 'Staff' || role === 'Customer',
     [role],
   )
+
+  const resolveImageUrl = useCallback((url) => {
+    if (!url) return ''
+    if (url.startsWith('http')) return url
+
+    const normalizedBase = apiBaseUrl.replace(/\/+$/, '').replace(/\/api$/i, '')
+    return `${normalizedBase}${url}`
+  }, [])
+
+  const resetForm = useCallback(() => {
+    setEditingVehicle(null)
+    setFormValues({ name: '', number: '' })
+    setFormErrors({})
+    setPreviewUrl('')
+    setExistingImageUrl('')
+    setImageFile(null)
+    setStatus('')
+  }, [])
 
   const loadVehicles = useCallback(async (customerId) => {
     if (!customerId) return
@@ -71,9 +94,6 @@ function VehiclesPage() {
     async function fetchVehicles() {
       if (!selectedCustomerId) return
 
-      await Promise.resolve()
-      if (!isCurrent) return
-
       try {
         setIsLoading(true)
         setStatus('')
@@ -93,10 +113,53 @@ function VehiclesPage() {
     }
   }, [selectedCustomerId])
 
-  async function handleSubmit(values) {
+  useEffect(() => {
+    return () => {
+      if (previewUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(previewUrl)
+      }
+    }
+  }, [previewUrl])
+
+  function handleChange(event) {
+    const { name, value } = event.target
+    setFormValues((current) => ({ ...current, [name]: value }))
+  }
+
+  function handleImageChange(file) {
+    setImageFile(file)
+    setPreviewUrl(URL.createObjectURL(file))
+  }
+
+  function validate(values) {
+    const nextErrors = {}
+
+    if (!values.name.trim()) nextErrors.name = 'Vehicle name is required.'
+    if (!values.number.trim()) nextErrors.number = 'Vehicle number is required.'
+
+    setFormErrors(nextErrors)
+    return Object.keys(nextErrors).length === 0
+  }
+
+  async function handleSubmit(event) {
+    event.preventDefault()
+
     if (!selectedCustomerId) {
       setStatus('Customer is required before saving a vehicle.')
       return
+    }
+
+    if (!validate(formValues)) {
+      return
+    }
+
+    const payload = new FormData()
+    payload.append('customerId', selectedCustomerId)
+    payload.append('name', formValues.name.trim())
+    payload.append('number', formValues.number.trim())
+
+    if (imageFile) {
+      payload.append('image', imageFile)
     }
 
     try {
@@ -104,12 +167,12 @@ function VehiclesPage() {
       setStatus('')
 
       if (editingVehicle) {
-        await updateVehicle(editingVehicle.id, values)
+        await updateVehicle(editingVehicle.id, payload)
       } else {
-        await createVehicle({ ...values, customerId: selectedCustomerId })
+        await createVehicle(payload)
       }
 
-      setEditingVehicle(null)
+      resetForm()
       setFormVersion((current) => current + 1)
       await loadVehicles(selectedCustomerId)
     } catch (error) {
@@ -129,32 +192,56 @@ function VehiclesPage() {
     }
   }
 
+  function handleEditVehicle(vehicle) {
+    setEditingVehicle(vehicle)
+    setFormValues({
+      name: vehicle.name || vehicle.model || '',
+      number: vehicle.number || vehicle.vehicleNumber || '',
+    })
+    setExistingImageUrl(resolveImageUrl(vehicle.imageUrl))
+    setPreviewUrl('')
+    setImageFile(null)
+    setFormErrors({})
+    setStatus('')
+  }
+
   return (
     <section className="vehicles-layout" style={{ padding: '0 var(--space-4)' }}>
-      {/* Premium Header matching dashboard hero style */}
-      <div className="panel" style={{
-        marginBottom: 'var(--space-6)',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        flexWrap: 'wrap',
-        gap: 'var(--space-6)',
-        background: 'linear-gradient(135deg, rgba(239, 35, 60, 0.05), transparent)',
-      }}>
+      <div
+        className="panel"
+        style={{
+          marginBottom: 'var(--space-6)',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: 'var(--space-6)',
+          background: 'linear-gradient(135deg, rgba(239, 35, 60, 0.05), transparent)',
+        }}
+      >
         <div>
-          <span style={{
-            display: 'inline-block',
-            padding: '4px 12px',
-            background: 'var(--color-primary-lighter)',
-            color: 'var(--color-primary-dark)',
-            borderRadius: '999px',
-            fontSize: 'var(--text-sm)',
-            fontWeight: 'var(--weight-bold)',
-            marginBottom: 'var(--space-2)'
-          }}>
+          <span
+            style={{
+              display: 'inline-block',
+              padding: '4px 12px',
+              background: 'var(--color-primary-lighter)',
+              color: 'var(--color-primary-dark)',
+              borderRadius: '999px',
+              fontSize: 'var(--text-sm)',
+              fontWeight: 'var(--weight-bold)',
+              marginBottom: 'var(--space-2)',
+            }}
+          >
             Vehicles
           </span>
-          <h1 style={{ fontSize: 'var(--text-5xl)', fontWeight: 'var(--weight-extrabold)', letterSpacing: '-1px', marginBottom: 'var(--space-2)' }}>
+          <h1
+            style={{
+              fontSize: 'var(--text-5xl)',
+              fontWeight: 'var(--weight-extrabold)',
+              letterSpacing: '-1px',
+              marginBottom: 'var(--space-2)',
+            }}
+          >
             Customer Vehicles
           </h1>
           <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--text-lg)', margin: 0 }}>
@@ -163,8 +250,25 @@ function VehiclesPage() {
         </div>
 
         {canSelectCustomer && (
-          <div style={{ minWidth: '280px', background: 'white', padding: 'var(--space-4)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-sm)' }}>
-            <label htmlFor="customerId" style={{ display: 'block', fontSize: 'var(--text-sm)', fontWeight: 'var(--weight-bold)', marginBottom: 'var(--space-2)', color: 'var(--color-text-secondary)' }}>
+          <div
+            style={{
+              minWidth: '280px',
+              background: 'white',
+              padding: 'var(--space-4)',
+              borderRadius: 'var(--radius-lg)',
+              boxShadow: 'var(--shadow-sm)',
+            }}
+          >
+            <label
+              htmlFor="customerId"
+              style={{
+                display: 'block',
+                fontSize: 'var(--text-sm)',
+                fontWeight: 'var(--weight-bold)',
+                marginBottom: 'var(--space-2)',
+                color: 'var(--color-text-secondary)',
+              }}
+            >
               Active Customer
             </label>
             <select
@@ -174,7 +278,7 @@ function VehiclesPage() {
               value={selectedCustomerId}
               onChange={(event) => {
                 setSelectedCustomerId(event.target.value)
-                setEditingVehicle(null)
+                resetForm()
                 setFormVersion((current) => current + 1)
               }}
             >
@@ -191,23 +295,39 @@ function VehiclesPage() {
 
       {status && <div className="form-alert" style={{ marginBottom: 'var(--space-6)' }}>{status}</div>}
 
-      <div className="vehicles-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: 'var(--space-6)' }}>
+      <div
+        className="vehicles-grid"
+        style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: 'var(--space-6)' }}
+      >
         <aside className="panel" style={{ alignSelf: 'start', position: 'sticky', top: '100px' }}>
-          <div className="section-heading" style={{ marginBottom: 'var(--space-6)', paddingBottom: 'var(--space-4)', borderBottom: '1px solid var(--color-border)' }}>
-            <h2 style={{ fontSize: 'var(--text-2xl)', fontWeight: 'var(--weight-bold)' }}>{editingVehicle ? 'Update Vehicle' : 'Add New Vehicle'}</h2>
+          <div
+            className="section-heading"
+            style={{ marginBottom: 'var(--space-6)', paddingBottom: 'var(--space-4)', borderBottom: '1px solid var(--color-border)' }}
+          >
+            <h2 style={{ fontSize: 'var(--text-2xl)', fontWeight: 'var(--weight-bold)' }}>
+              {editingVehicle ? 'Update Vehicle' : 'Add New Vehicle'}
+            </h2>
             <p style={{ color: 'var(--color-text-secondary)', marginTop: '4px' }}>Fill in the details below to save a vehicle record.</p>
           </div>
 
           <VehicleForm
             key={`${editingVehicle?.id || 'new-vehicle'}-${formVersion}`}
+            values={formValues}
+            errors={formErrors}
+            status={status}
             initialVehicle={editingVehicle}
             isSubmitting={isSaving}
             isReadOnly={!canManageVehicles}
+            existingImageUrl={existingImageUrl}
+            previewUrl={previewUrl}
+            onChange={handleChange}
+            onImageChange={handleImageChange}
+            onSubmit={handleSubmit}
             onCancel={() => {
-              setEditingVehicle(null)
+              resetForm()
               setFormVersion((current) => current + 1)
             }}
-            onSubmit={handleSubmit}
+            submitLabel={editingVehicle ? 'Update Vehicle' : 'Add Vehicle'}
           />
         </aside>
 
@@ -225,7 +345,7 @@ function VehiclesPage() {
             vehicles={vehicles}
             isReadOnly={!canManageVehicles}
             onDelete={handleDelete}
-            onEdit={setEditingVehicle}
+            onEdit={handleEditVehicle}
           />
         </div>
       </div>
