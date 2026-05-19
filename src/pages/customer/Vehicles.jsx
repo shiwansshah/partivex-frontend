@@ -225,7 +225,7 @@ function Vehicles() {
                           <div className="vehicle-info">
                             <span className="customer-eyebrow">Vehicle record</span>
                             <h3>{vehicle.name}</h3>
-                            <p>{vehicle.number}</p>
+                            <p className="vehicle-number">{vehicle.number}</p>
                           </div>
                           <div className="vehicle-actions">
                             <button
