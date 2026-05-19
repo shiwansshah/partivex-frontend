@@ -1,6 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { getSmtpSetting, updateSmtpSetting } from '../../api/appointmentInvoiceApi'
+import { getMyStaffFeatureAccess } from '../../api/staffFeatureAccessApi'
+import { STAFF_FEATURES } from '../../constants/staffFeatures'
 import useAuth from '../../hooks/useAuth'
 import { sweetAlert } from '../../utils/sweetAlert'
 import { hasRole, ROLES } from '../../utils/roles'
@@ -16,12 +18,41 @@ function AdminLayout() {
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [senderEmail, setSenderEmail] = useState('')
   const [settingsSaving, setSettingsSaving] = useState(false)
+  const [staffFeatures, setStaffFeatures] = useState([])
+
+  useEffect(() => {
+    let isCurrent = true
+
+    async function loadStaffFeatures() {
+      if (isAdmin) {
+        setStaffFeatures([])
+        return
+      }
+
+      try {
+        const response = await getMyStaffFeatureAccess()
+        if (isCurrent) setStaffFeatures(response.data.features)
+      } catch {
+        if (isCurrent) setStaffFeatures([])
+      }
+    }
+
+    loadStaffFeatures()
+
+    return () => {
+      isCurrent = false
+    }
+  }, [isAdmin])
+
+  const enabledStaffFeatureKeys = new Set(
+    staffFeatures.filter((feature) => feature.isEnabled).map((feature) => feature.featureKey),
+  )
 
   const navItems = [
     ...(isAdmin ? [{ to: basePath, label: 'Dashboard', end: true }] : []),
     ...(isAdmin ? [{ to: `${basePath}/staff`, label: 'Staff Management' }] : []),
-    { to: `${basePath}/customers`, label: 'Customer Management' },
-    { to: `${basePath}/vehicles`, label: 'Vehicles' },
+    ...(isAdmin ? [{ to: `${basePath}/customers`, label: 'Customer Management' }] : []),
+    ...(isAdmin ? [{ to: `${basePath}/vehicles`, label: 'Vehicles' }] : []),
           ...(isAdmin
       ? [
           { to: `${basePath}/vendors`, label: 'Vendor Management' },
@@ -31,14 +62,10 @@ function AdminLayout() {
           { to: `${basePath}/customer-part-invoices`, label: 'Customer Part Invoices' },
           { to: `${basePath}/appointment-invoices`, label: 'Appointment Invoices' },
         ]
-      : [
-          { to: `${basePath}/customers/reports`, label: 'Customer Reports' },
-          { to: `${basePath}/part-requests`, label: 'Part Request Approvals' },
-          { to: `${basePath}/customer-part-invoices`, label: 'Customer Part Invoices' },
-          { to: `${basePath}/appointment-invoices`, label: 'Appointment Invoices' },
-          { to: `${basePath}/sales`, label: 'Sales' },
-          { to: `${basePath}/notifications`, label: 'Notifications' },
-        ]),
+      : STAFF_FEATURES.filter((feature) => enabledStaffFeatureKeys.has(feature.key)).map((feature) => ({
+          to: feature.path,
+          label: feature.label,
+        }))),
   ]
 
   function handleLogout() {

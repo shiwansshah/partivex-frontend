@@ -1,6 +1,10 @@
+import { useEffect, useState } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
+import { getMyStaffFeatureAccess } from '../api/staffFeatureAccessApi'
 import AdminLayout from '../components/layout/AdminLayout'
 import CustomerLayout from '../components/layout/CustomerLayout'
+import StatusMessage from '../components/ui/StatusMessage'
+import { getFirstEnabledStaffFeature } from '../constants/staffFeatures'
 import useAuth from '../hooks/useAuth'
 import MainLayout from '../layouts/MainLayout'
 import Dashboard from '../pages/Dashboard'
@@ -15,8 +19,6 @@ import AddVehicle from '../pages/customers/AddVehicle'
 import CustomerReports from '../pages/customers/CustomerReports'
 import InventoryPage from '../pages/inventory/InventoryPage'
 import PurchasesPage from '../pages/purchases/PurchasesPage'
-import SalesPage from '../pages/sales/SalesPage'
-import NotificationsPage from '../pages/notifications/NotificationsPage'
 import AdminDashboard from '../pages/admin/Dashboard'
 import StaffManagement from '../pages/admin/StaffManagement'
 import CustomerManagement from '../pages/admin/CustomerManagement'
@@ -55,6 +57,74 @@ function RequireRole({ allowedRoles, children }) {
 function PublicOnly({ children }) {
   const { isAuthenticated, user } = useAuth()
   return isAuthenticated ? <Navigate to={getHomePathForRole(user?.role)} replace /> : children
+}
+
+function AccessDenied() {
+  return (
+    <section className="surface-panel">
+      <StatusMessage
+        type="error"
+        message="Access denied. Ask an admin to enable a staff feature for your account."
+      />
+    </section>
+  )
+}
+
+function useMyStaffFeatures() {
+  const [features, setFeatures] = useState([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [status, setStatus] = useState('')
+
+  useEffect(() => {
+    let isCurrent = true
+
+    async function loadFeatures() {
+      try {
+        const response = await getMyStaffFeatureAccess()
+        if (isCurrent) setFeatures(response.data.features)
+      } catch {
+        if (isCurrent) setStatus('Unable to load staff feature access.')
+      } finally {
+        if (isCurrent) setIsLoading(false)
+      }
+    }
+
+    loadFeatures()
+
+    return () => {
+      isCurrent = false
+    }
+  }, [])
+
+  return { features, isLoading, status }
+}
+
+function StaffHomeRedirect() {
+  const { features, isLoading, status } = useMyStaffFeatures()
+
+  if (isLoading) return <StatusMessage message="Loading staff features..." />
+  if (status) return <AccessDenied />
+
+  const firstFeature = getFirstEnabledStaffFeature(features)
+
+  return firstFeature ? <Navigate to={firstFeature.path.replace('/staff/', '')} replace /> : <AccessDenied />
+}
+
+function RequireStaffFeature({ featureKey, children }) {
+  const { features, isLoading, status } = useMyStaffFeatures()
+
+  if (isLoading) return <StatusMessage message="Checking staff access..." />
+  if (status) return <AccessDenied />
+
+  const hasFeature = features.some((feature) => feature.featureKey === featureKey && feature.isEnabled)
+
+  if (hasFeature) {
+    return children
+  }
+
+  const firstFeature = getFirstEnabledStaffFeature(features)
+
+  return firstFeature ? <Navigate to={firstFeature.path} replace /> : <AccessDenied />
 }
 
 function RoleHomeRedirect() {
@@ -125,8 +195,6 @@ function AppRoutes() {
         <Route path="/customers/:id" element={<CustomerDetails />} />
         <Route path="/customers/:id/edit" element={<EditCustomer />} />
         <Route path="/customers/:id/add-vehicle" element={<AddVehicle />} />
-        <Route path="/sales" element={<SalesPage />} />
-        <Route path="/notifications" element={<NotificationsPage />} />
       </Route>
       <Route
         path="/admin"
@@ -160,19 +228,87 @@ function AppRoutes() {
           </RequireRole>
         }
       >
-        <Route index element={<Navigate to="customers" replace />} />
-        <Route path="customers" element={<CustomerManagement />} />
-        <Route path="customers/add" element={<AddCustomer />} />
-        <Route path="customers/reports" element={<CustomerReports />} />
-        <Route path="customers/:id" element={<CustomerDetails />} />
-        <Route path="customers/:id/edit" element={<EditCustomer />} />
-        <Route path="customers/:id/add-vehicle" element={<AddVehicle />} />
-        <Route path="vehicles" element={<VehiclesPage />} />
-        <Route path="sales" element={<SalesPage />} />
-        <Route path="part-requests" element={<PartRequestApprovals />} />
-        <Route path="customer-part-invoices" element={<CustomerPartInvoicesPage />} />
-        <Route path="appointment-invoices" element={<AppointmentInvoicesPage />} />
-        <Route path="notifications" element={<NotificationsPage />} />
+        <Route index element={<StaffHomeRedirect />} />
+        <Route
+          path="customers"
+          element={
+            <RequireStaffFeature featureKey="CustomerManagement">
+              <CustomerManagement />
+            </RequireStaffFeature>
+          }
+        />
+        <Route
+          path="customers/add"
+          element={
+            <RequireStaffFeature featureKey="CustomerManagement">
+              <AddCustomer />
+            </RequireStaffFeature>
+          }
+        />
+        <Route
+          path="customers/reports"
+          element={
+            <RequireStaffFeature featureKey="CustomerReports">
+              <CustomerReports />
+            </RequireStaffFeature>
+          }
+        />
+        <Route
+          path="customers/:id"
+          element={
+            <RequireStaffFeature featureKey="CustomerManagement">
+              <CustomerDetails />
+            </RequireStaffFeature>
+          }
+        />
+        <Route
+          path="customers/:id/edit"
+          element={
+            <RequireStaffFeature featureKey="CustomerManagement">
+              <EditCustomer />
+            </RequireStaffFeature>
+          }
+        />
+        <Route
+          path="customers/:id/add-vehicle"
+          element={
+            <RequireStaffFeature featureKey="CustomerManagement">
+              <AddVehicle />
+            </RequireStaffFeature>
+          }
+        />
+        <Route
+          path="vehicles"
+          element={
+            <RequireStaffFeature featureKey="Vehicles">
+              <VehiclesPage />
+            </RequireStaffFeature>
+          }
+        />
+        <Route
+          path="part-requests"
+          element={
+            <RequireStaffFeature featureKey="PartRequestApprovals">
+              <PartRequestApprovals />
+            </RequireStaffFeature>
+          }
+        />
+        <Route
+          path="customer-part-invoices"
+          element={
+            <RequireStaffFeature featureKey="CustomerPartInvoices">
+              <CustomerPartInvoicesPage />
+            </RequireStaffFeature>
+          }
+        />
+        <Route
+          path="appointment-invoices"
+          element={
+            <RequireStaffFeature featureKey="AppointmentInvoices">
+              <AppointmentInvoicesPage />
+            </RequireStaffFeature>
+          }
+        />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

@@ -516,6 +516,18 @@
   gap: var(--space-5);
 }
 
+.form-check-row {
+  align-items: center;
+  display: flex;
+  gap: var(--space-3);
+  font-weight: 700;
+}
+
+.form-check-row input {
+  height: 18px;
+  width: 18px;
+}
+
 .toolbar {
   display: flex;
   align-items: center;

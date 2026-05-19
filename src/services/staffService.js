@@ -1,4 +1,8 @@
 import axiosInstance from '../api/axiosInstance'
+import {
+  getStaffFeatureAccess,
+  updateStaffFeatureAccess,
+} from '../api/staffFeatureAccessApi'
 
 export function StaffDto(data = {}) {
   return {
@@ -30,4 +34,14 @@ export async function updateStaff(id, { fullName }) {
 
 export async function deleteStaff(id) {
   await axiosInstance.delete(`/api/staff/${id}`)
+}
+
+export async function getStaffAccess(id) {
+  const response = await getStaffFeatureAccess(id)
+  return response.data
+}
+
+export async function updateStaffAccess(id, enabledFeatureKeys) {
+  const response = await updateStaffFeatureAccess(id, enabledFeatureKeys)
+  return response.data
 }
