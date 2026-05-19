@@ -27,6 +27,7 @@ const emptyForm = {
 }
 
 const cancellableStatuses = new Set(['Pending', 'Confirmed'])
+const appointmentsPerPage = 2
 
 function Appointments() {
   const [vehicles, setVehicles] = useState([])
@@ -43,6 +44,7 @@ function Appointments() {
   const [detailError, setDetailError] = useState('')
   const [cancelTarget, setCancelTarget] = useState(null)
   const [isCancelling, setIsCancelling] = useState(false)
+  const [appointmentPage, setAppointmentPage] = useState(1)
 
   const loadData = useCallback(async () => {
     const [vehicleResponse, serviceResponse, appointmentResponse] = await Promise.all([
@@ -54,6 +56,7 @@ function Appointments() {
     setVehicles(vehicleResponse.data)
     setServiceOptions(serviceResponse.data)
     setAppointments(appointmentResponse.data)
+    setAppointmentPage(1)
   }, [])
 
   useEffect(() => {
@@ -72,6 +75,7 @@ function Appointments() {
         setVehicles(vehicleResponse.data)
         setServiceOptions(serviceResponse.data)
         setAppointments(appointmentResponse.data)
+        setAppointmentPage(1)
       } catch (err) {
         if (isCurrent) {
           setError(getRequestErrorMessage(err, 'Failed to load appointment data.'))
@@ -207,6 +211,12 @@ function Appointments() {
   }
 
   const today = new Date().toISOString().slice(0, 10)
+  const totalAppointmentPages = Math.max(1, Math.ceil(appointments.length / appointmentsPerPage))
+  const currentAppointmentPage = Math.min(appointmentPage, totalAppointmentPages)
+  const pagedAppointments = appointments.slice(
+    (currentAppointmentPage - 1) * appointmentsPerPage,
+    currentAppointmentPage * appointmentsPerPage,
+  )
 
   return (
     <div className="customer-page">
@@ -219,7 +229,7 @@ function Appointments() {
         actions={vehicles.length === 0 && <Link className="btn-outline btn-outline-on-dark" to="/customer/vehicles">Register a vehicle first</Link>}
       />
 
-      <div className="customer-workflow-grid">
+      <div className="customer-workflow-grid appointments-workflow-grid">
         <section className="customer-card portal-form-card">
           <div className="section-header">
             <div className="section-header-text">
@@ -344,12 +354,12 @@ function Appointments() {
           </form>
         </section>
 
-        <section className="customer-card portal-list-card">
+        <section className="customer-card portal-list-card appointments-list-card">
           <div className="section-header">
             <div className="section-header-text">
               <span className="customer-eyebrow">Service timeline</span>
               <h2>Your appointments</h2>
-              <p>Upcoming and past service visits.</p>
+              <p>{appointments.length} upcoming and past service visits.</p>
             </div>
           </div>
 
@@ -361,32 +371,58 @@ function Appointments() {
               message="Book a service visit to see it here."
             />
           ) : (
-            <div className="portal-item-list timeline-list">
-              {appointments.map((appointment) => (
-                <article key={appointment.id} className="portal-list-item stacked">
-                  <div className="portal-list-main">
-                    <div className="portal-list-title-row">
-                      <h3>{appointment.serviceType}</h3>
-                      <StatusBadge status={appointment.status} />
+            <div className="appointments-list-shell">
+              <div className="portal-item-list timeline-list">
+                {pagedAppointments.map((appointment) => (
+                  <article key={appointment.id} className="portal-list-item stacked">
+                    <div className="portal-list-main">
+                      <div className="portal-list-title-row">
+                        <h3>{appointment.serviceType}</h3>
+                        <StatusBadge status={appointment.status} />
+                      </div>
+                      <p>{appointment.vehicleName} - {appointment.vehicleNumber}</p>
+                      <div className="portal-meta-grid">
+                        <span>{formatDate(appointment.preferredDate)}</span>
+                        <span>{formatTime(appointment.preferredTime)}</span>
+                      </div>
                     </div>
-                    <p>{appointment.vehicleName} - {appointment.vehicleNumber}</p>
-                    <div className="portal-meta-grid">
-                      <span>{formatDate(appointment.preferredDate)}</span>
-                      <span>{formatTime(appointment.preferredTime)}</span>
-                    </div>
-                  </div>
-                  <div className="portal-actions">
-                    <button className="btn-outline" type="button" onClick={() => handleViewDetails(appointment.id)}>
-                      View details
-                    </button>
-                    {cancellableStatuses.has(appointment.status) && (
-                      <button className="btn-outline text-danger" type="button" onClick={() => setCancelTarget(appointment)}>
-                        Cancel
+                    <div className="portal-actions">
+                      <button className="btn-outline" type="button" onClick={() => handleViewDetails(appointment.id)}>
+                        View details
                       </button>
-                    )}
-                  </div>
-                </article>
-              ))}
+                      {cancellableStatuses.has(appointment.status) && (
+                        <button className="btn-outline text-danger" type="button" onClick={() => setCancelTarget(appointment)}>
+                          Cancel
+                        </button>
+                      )}
+                    </div>
+                  </article>
+                ))}
+              </div>
+
+              {totalAppointmentPages > 1 && (
+                <div className="customer-pagination appointments-pagination" aria-label="Appointment pages">
+                  <button
+                    className="customer-page-button"
+                    type="button"
+                    onClick={() => setAppointmentPage((page) => Math.max(1, page - 1))}
+                    disabled={currentAppointmentPage === 1}
+                  >
+                    Previous
+                  </button>
+                  <span>
+                    Page {currentAppointmentPage} of {totalAppointmentPages}
+                  </span>
+                  <button
+                    className="customer-page-button"
+                    type="button"
+                    onClick={() => setAppointmentPage((page) => Math.min(totalAppointmentPages, page + 1))}
+                    disabled={currentAppointmentPage === totalAppointmentPages}
+                  >
+                    Next
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </section>

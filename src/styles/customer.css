@@ -652,6 +652,10 @@
   grid-template-columns: minmax(0, 1fr) 380px;
 }
 
+.appointments-workflow-grid {
+  align-items: stretch;
+}
+
 .dashboard-record-card {
   display: grid;
   gap: var(--space-3);
@@ -990,6 +994,65 @@
 .vehicle-list {
   display: grid;
   gap: var(--space-4);
+}
+
+.appointments-list-card {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.appointments-list-shell {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-height: 0;
+}
+
+.appointments-list-shell .timeline-list {
+  flex: 1;
+  align-content: start;
+}
+
+.customer-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+}
+
+.customer-page-button {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px var(--space-4);
+  border: 1px solid #171A21;
+  border-radius: var(--radius-sm);
+  color: var(--color-body);
+  background: #171A21;
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+  cursor: pointer;
+  transition: color var(--transition-fast), background var(--transition-fast), border-color var(--transition-fast);
+}
+
+.customer-page-button:hover:not(:disabled),
+.customer-page-button:focus-visible {
+  color: #171A21;
+  background: var(--color-body);
+}
+
+.customer-page-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .vehicle-list {
@@ -1712,6 +1775,7 @@
 .customer-menu-btn:focus-visible,
 .vehicle-edit-button:focus-visible,
 .image-upload-btn:focus-visible,
+.customer-page-button:focus-visible,
 .customer-input:focus-visible {
   outline: none;
   box-shadow: var(--customer-focus);
