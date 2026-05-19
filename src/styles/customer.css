@@ -650,10 +650,27 @@
 
 .vehicles-workflow-grid {
   grid-template-columns: minmax(0, 1fr) 380px;
+  align-items: stretch;
 }
 
 .appointments-workflow-grid {
   align-items: stretch;
+}
+
+.vehicle-list-card,
+.vehicle-form-card,
+.vehicle-static-panel {
+  min-height: 520px;
+}
+
+.vehicle-list-card,
+.vehicle-form-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.vehicle-static-panel {
+  grid-template-rows: minmax(0, 1fr) auto;
 }
 
 .dashboard-record-card {
@@ -1058,6 +1075,79 @@
 .vehicle-list {
   grid-template-columns: repeat(auto-fill, minmax(238px, 1fr));
   align-items: stretch;
+}
+
+.vehicle-carousel {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.vehicle-carousel-viewport {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+}
+
+.vehicle-carousel-track {
+  height: 100%;
+  display: flex;
+  transition: transform var(--transition-smooth);
+}
+
+.vehicle-carousel-slide {
+  min-width: 100%;
+  height: 100%;
+  display: flex;
+}
+
+.vehicle-carousel-slide .vehicle-item {
+  width: 100%;
+  height: 100%;
+}
+
+.vehicle-carousel-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+}
+
+.vehicle-carousel-button {
+  width: 38px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #171A21;
+  border-radius: var(--radius-full);
+  color: var(--color-body);
+  background: #171A21;
+  font: inherit;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  transition: color var(--transition-fast), background var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast);
+}
+
+.vehicle-carousel-button:hover:not(:disabled),
+.vehicle-carousel-button:focus-visible {
+  color: #171A21;
+  background: var(--color-body);
+  transform: translateY(-1px);
+}
+
+.vehicle-carousel-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .portal-list-item,
@@ -1776,6 +1866,7 @@
 .vehicle-edit-button:focus-visible,
 .image-upload-btn:focus-visible,
 .customer-page-button:focus-visible,
+.vehicle-carousel-button:focus-visible,
 .customer-input:focus-visible {
   outline: none;
   box-shadow: var(--customer-focus);

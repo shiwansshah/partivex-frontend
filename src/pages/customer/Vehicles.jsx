@@ -14,6 +14,7 @@ function Vehicles() {
   const [vehicles, setVehicles] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [activeVehicleIndex, setActiveVehicleIndex] = useState(0)
 
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState(null)
@@ -56,6 +57,13 @@ function Vehicles() {
       isCurrent = false
     }
   }, [])
+
+  useEffect(() => {
+    setActiveVehicleIndex((current) => {
+      if (vehicles.length === 0) return 0
+      return Math.min(current, vehicles.length - 1)
+    })
+  }, [vehicles.length])
 
   function resolveImageUrl(url) {
     if (!url) return null
@@ -154,6 +162,9 @@ function Vehicles() {
     )
   }
 
+  const canMoveCarousel = vehicles.length > 1
+  const activeVehiclePage = vehicles.length === 0 ? 0 : activeVehicleIndex + 1
+
   return (
     <div className="customer-page">
       <PortalHero
@@ -166,7 +177,7 @@ function Vehicles() {
       />
 
       <div className="customer-workflow-grid vehicles-workflow-grid">
-        <section className="customer-card portal-list-card">
+        <section className="customer-card portal-list-card vehicle-list-card">
           <div className="section-header">
             <div className="section-header-text">
               <span className="customer-eyebrow">Registered fleet</span>
@@ -188,47 +199,80 @@ function Vehicles() {
               action={<button className="btn-primary" type="button" onClick={handleAdd}>Register first vehicle</button>}
             />
           ) : (
-            <div className="vehicle-list">
-              {vehicles.map((vehicle) => {
-                const imageUrl = resolveImageUrl(vehicle.imageUrl)
+            <div className="vehicle-carousel">
+              <div className="vehicle-carousel-viewport" aria-live="polite">
+                <div
+                  className="vehicle-carousel-track"
+                  style={{ transform: `translateX(-${activeVehicleIndex * 100}%)` }}
+                >
+                  {vehicles.map((vehicle) => {
+                    const imageUrl = resolveImageUrl(vehicle.imageUrl)
 
-                return (
-                  <article key={vehicle.id} className="vehicle-item">
-                    <div className="vehicle-image-wrap">
-                      {imageUrl ? (
-                        <img src={imageUrl} alt={vehicle.name} />
-                      ) : (
-                        <img src={customerPortalImages.inspection} alt="" />
-                      )}
-                    </div>
-                    <div className="vehicle-info">
-                      <span className="customer-eyebrow">Vehicle record</span>
-                      <h3>{vehicle.name}</h3>
-                      <p>{vehicle.number}</p>
-                    </div>
-                    <div className="vehicle-actions">
-                      <button
-                        className="vehicle-edit-button"
-                        type="button"
-                        onClick={() => handleEdit(vehicle)}
-                        aria-label={`Edit ${vehicle.name}`}
-                        title="Edit vehicle"
-                      >
-                        <svg viewBox="0 0 24 24" aria-hidden="true">
-                          <circle cx="12" cy="12" r="3" />
-                          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.65 1.65 0 0 0 15 19.4a1.65 1.65 0 0 0-1 .6 1.65 1.65 0 0 0-.33 1.1V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 8.6 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-.6-1 1.65 1.65 0 0 0-1.1-.33H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 8.6a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-.6 1.65 1.65 0 0 0 .33-1.1V3a2 2 0 1 1 4 0v.09A1.65 1.65 0 0 0 15.4 4.6a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 .6 1 1.65 1.65 0 0 0 1.1.33H21a2 2 0 1 1 0 4h-.09A1.65 1.65 0 0 0 19.4 15Z" />
-                        </svg>
-                      </button>
-                    </div>
-                  </article>
-                )
-              })}
+                    return (
+                      <div key={vehicle.id} className="vehicle-carousel-slide">
+                        <article className="vehicle-item">
+                          <div className="vehicle-image-wrap">
+                            {imageUrl ? (
+                              <img src={imageUrl} alt={vehicle.name} />
+                            ) : (
+                              <img src={customerPortalImages.inspection} alt="" />
+                            )}
+                          </div>
+                          <div className="vehicle-info">
+                            <span className="customer-eyebrow">Vehicle record</span>
+                            <h3>{vehicle.name}</h3>
+                            <p>{vehicle.number}</p>
+                          </div>
+                          <div className="vehicle-actions">
+                            <button
+                              className="vehicle-edit-button"
+                              type="button"
+                              onClick={() => handleEdit(vehicle)}
+                              aria-label={`Edit ${vehicle.name}`}
+                              title="Edit vehicle"
+                            >
+                              <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <circle cx="12" cy="12" r="3" />
+                                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.65 1.65 0 0 0 15 19.4a1.65 1.65 0 0 0-1 .6 1.65 1.65 0 0 0-.33 1.1V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 8.6 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-.6-1 1.65 1.65 0 0 0-1.1-.33H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 8.6a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-.6 1.65 1.65 0 0 0 .33-1.1V3a2 2 0 1 1 4 0v.09A1.65 1.65 0 0 0 15.4 4.6a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 .6 1 1.65 1.65 0 0 0 1.1.33H21a2 2 0 1 1 0 4h-.09A1.65 1.65 0 0 0 19.4 15Z" />
+                              </svg>
+                            </button>
+                          </div>
+                        </article>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+
+              <div className="vehicle-carousel-controls" aria-label="Vehicle carousel controls">
+                <button
+                  className="vehicle-carousel-button"
+                  type="button"
+                  onClick={() => setActiveVehicleIndex((index) => Math.max(0, index - 1))}
+                  disabled={!canMoveCarousel || activeVehicleIndex === 0}
+                  aria-label="Previous vehicle"
+                  title="Previous vehicle"
+                >
+                  <span aria-hidden="true">‹</span>
+                </button>
+                <span>{activeVehiclePage} / {vehicles.length}</span>
+                <button
+                  className="vehicle-carousel-button"
+                  type="button"
+                  onClick={() => setActiveVehicleIndex((index) => Math.min(vehicles.length - 1, index + 1))}
+                  disabled={!canMoveCarousel || activeVehicleIndex === vehicles.length - 1}
+                  aria-label="Next vehicle"
+                  title="Next vehicle"
+                >
+                  <span aria-hidden="true">›</span>
+                </button>
+              </div>
             </div>
           )}
         </section>
 
         {showForm ? (
-          <section className="customer-card portal-form-card">
+          <section className="customer-card portal-form-card vehicle-form-card">
             <div className="section-header">
               <div className="section-header-text">
                 <span className="customer-eyebrow">{editingId ? 'Update record' : 'Guided setup'}</span>
@@ -260,7 +304,7 @@ function Vehicles() {
             />
           </section>
         ) : (
-          <aside className="customer-side-panel">
+          <aside className="customer-side-panel vehicle-static-panel">
             <img src={customerPortalImages.garage} alt="Vehicle service bay with technicians" />
             <div>
               <span className="customer-eyebrow">Why it matters</span>
