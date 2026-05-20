@@ -52,8 +52,6 @@ function Navbar() {
         {canUseStaffWorkspace && <NavLink to="/customers" onClick={handleNavClick}>Customers</NavLink>}
         {canUseStaffWorkspace && <NavLink to="/customers/reports" onClick={handleNavClick}>Customer Reports</NavLink>}
         {canUseStaffWorkspace && <NavLink to="/sales" onClick={handleNavClick}>Sales</NavLink>}
-        {isAdmin && <NavLink to="/admin/staff" onClick={handleNavClick}>Staff</NavLink>}
-        {canUseStaffWorkspace && <NavLink to="/notifications" onClick={handleNavClick}>Notifications</NavLink>}
         <NavLink to={getHomePathForRole(user?.role)} onClick={handleNavClick}>
           {isAdmin ? 'Admin Panel' : 'Staff Panel'}
         </NavLink>

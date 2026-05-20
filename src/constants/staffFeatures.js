@@ -34,11 +34,6 @@ export const STAFF_FEATURES = [
     label: 'Appointment Invoices',
     path: '/staff/appointment-invoices',
   },
-  {
-    key: 'Notifications',
-    label: 'Notifications',
-    path: '/staff/notifications',
-  },
 ]
 
 export function getFirstEnabledStaffFeature(features = []) {
