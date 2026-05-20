@@ -1,6 +1,7 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { getProfile } from '../../api/authApi'
+import { getUnreadCount } from '../../api/notificationApi'
 import { downloadMyAppointmentInvoicePdf, getMyAppointmentInvoices, payMyAppointmentInvoice } from '../../api/appointmentInvoiceApi'
 import { removeToken } from '../../utils/tokenStorage'
 import { sweetAlert } from '../../utils/sweetAlert'
@@ -110,9 +111,23 @@ function CustomerLayout() {
   const [appointmentInvoicesOpen, setAppointmentInvoicesOpen] = useState(false)
   const [appointmentInvoices, setAppointmentInvoices] = useState([])
   const [appointmentInvoicesLoading, setAppointmentInvoicesLoading] = useState(false)
+  const [notifUnreadCount, setNotifUnreadCount] = useState(0)
   const dropdownRef = useRef(null)
   const navigate = useNavigate()
   const { user } = useAuth()
+
+  const refreshNotifCount = useCallback(async () => {
+    try {
+      const res = await getUnreadCount()
+      setNotifUnreadCount(res.data ?? 0)
+    } catch { /* silent */ }
+  }, [])
+
+  useEffect(() => {
+    refreshNotifCount()
+    const id = setInterval(refreshNotifCount, 30000)
+    return () => clearInterval(id)
+  }, [refreshNotifCount])
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -256,6 +271,30 @@ function CustomerLayout() {
           </nav>
 
           <div className="customer-nav-right" ref={dropdownRef}>
+            <button
+              className="customer-cart-nav-button"
+              type="button"
+              onClick={() => navigate('/customer/notifications')}
+              aria-label="Notifications"
+              title="Notifications"
+              style={{ position: 'relative' }}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+              </svg>
+              {notifUnreadCount > 0 && (
+                <span style={{
+                  position: 'absolute', top: 2, right: 2,
+                  background: 'var(--color-danger, #e53e3e)', color: '#fff',
+                  borderRadius: '50%', fontSize: 10, fontWeight: 700,
+                  width: 16, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  lineHeight: 1, pointerEvents: 'none'
+                }}>
+                  {notifUnreadCount > 9 ? '9+' : notifUnreadCount}
+                </span>
+              )}
+            </button>
             <button
               className={`customer-cart-nav-button ${appointmentInvoices.some((invoice) => invoice.paymentStatus === 'Pending') ? 'has-items' : ''}`}
               type="button"

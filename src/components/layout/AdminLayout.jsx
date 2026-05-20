@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { getSmtpSetting, updateSmtpSetting } from '../../api/appointmentInvoiceApi'
+import { getUnreadCount } from '../../api/notificationApi'
 import useAuth from '../../hooks/useAuth'
 import { sweetAlert } from '../../utils/sweetAlert'
 import { hasRole, ROLES } from '../../utils/roles'
@@ -16,6 +17,22 @@ function AdminLayout() {
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [senderEmail, setSenderEmail] = useState('')
   const [settingsSaving, setSettingsSaving] = useState(false)
+  const [unreadCount, setUnreadCount] = useState(0)
+
+  const refreshUnreadCount = useCallback(async () => {
+    try {
+      const res = await getUnreadCount()
+      setUnreadCount(res.data ?? 0)
+    } catch {
+      // silent
+    }
+  }, [])
+
+  useEffect(() => {
+    refreshUnreadCount()
+    const interval = setInterval(refreshUnreadCount, 30000)
+    return () => clearInterval(interval)
+  }, [refreshUnreadCount])
 
   const navItems = [
     ...(isAdmin ? [{ to: basePath, label: 'Dashboard', end: true }] : []),
@@ -134,6 +151,30 @@ function AdminLayout() {
                 </svg>
               </button>
             )}
+            <button
+              className="topbar-icon-button"
+              type="button"
+              onClick={() => navigate(`${basePath}/notifications`)}
+              aria-label="Notifications"
+              title="Notifications"
+              style={{ position: 'relative' }}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+              </svg>
+              {unreadCount > 0 && (
+                <span style={{
+                  position: 'absolute', top: 2, right: 2,
+                  background: 'var(--color-danger, #e53e3e)', color: '#fff',
+                  borderRadius: '50%', fontSize: 10, fontWeight: 700,
+                  width: 16, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  lineHeight: 1, pointerEvents: 'none'
+                }}>
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
+            </button>
             <span className="metric-pill">{user?.email || user?.role || panelLabel}</span>
             <button className="text-button" type="button" onClick={handleLogout}>
               Logout

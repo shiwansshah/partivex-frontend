@@ -110,6 +110,7 @@ function AppRoutes() {
         <Route path="appointments" element={<Appointments />} />
         <Route path="part-requests" element={<PartRequests />} />
         <Route path="reviews" element={<Reviews />} />
+        <Route path="notifications" element={<NotificationsPage />} />
       </Route>
       <Route
         element={
