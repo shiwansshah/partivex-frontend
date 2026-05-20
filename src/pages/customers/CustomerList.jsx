@@ -1,22 +1,65 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { getApiErrorMessage } from '../../api/axiosInstance'
 import PageHeader from '../../components/common/PageHeader'
 import CustomerSearchBar from '../../components/customers/CustomerSearchBar'
 import StatusMessage from '../../components/ui/StatusMessage'
-import { getCustomers, searchCustomers } from '../../services/customerService'
+import { getCustomers } from '../../services/customerService'
 import { buildPanelPath } from '../../utils/panelRoutes'
+
+function normalizeSearchValue(value) {
+  return String(value ?? '').trim().toLowerCase()
+}
+
+function getVehicleSearchText(vehicle) {
+  return [
+    vehicle?.name,
+    vehicle?.model,
+    vehicle?.number,
+    vehicle?.vehicleNumber,
+    vehicle?.id,
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase()
+}
+
+function customerMatchesSearch(customer, term) {
+  const normalizedTerm = normalizeSearchValue(term)
+
+  if (!normalizedTerm) return true
+
+  const searchableText = [
+    customer?.id,
+    customer?.customerId,
+    customer?.fullName,
+    customer?.name,
+    customer?.email,
+    customer?.phoneNumber,
+    customer?.phone,
+    customer?.address,
+    Array.isArray(customer?.vehicles) ? customer.vehicles.map(getVehicleSearchText).join(' ') : '',
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase()
+
+  return searchableText.includes(normalizedTerm)
+}
 
 function CustomerList() {
   const location = useLocation()
   const customersPath = buildPanelPath(location.pathname, '/customers')
   const vehiclesPath = buildPanelPath(location.pathname, '/vehicles')
   const [allCustomers, setAllCustomers] = useState([])
-  const [customers, setCustomers] = useState([])
   const [isLoading, setIsLoading] = useState(true)
-  const [isSearching, setIsSearching] = useState(false)
   const [status, setStatus] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
+
+  const customers = useMemo(
+    () => allCustomers.filter((customer) => customerMatchesSearch(customer, searchTerm)),
+    [allCustomers, searchTerm],
+  )
 
   useEffect(() => {
     let isCurrent = true
@@ -27,7 +70,6 @@ function CustomerList() {
         const data = await getCustomers()
         if (isCurrent) {
           setAllCustomers(data)
-          setCustomers(data)
         }
       } catch (error) {
         if (isCurrent) setStatus(getApiErrorMessage(error, 'Unable to load customers.'))
@@ -44,31 +86,13 @@ function CustomerList() {
   }, [])
 
   async function handleSearch(term) {
-    const normalizedTerm = term.trim()
-    setSearchTerm(normalizedTerm)
-
-    if (!normalizedTerm) {
-      setStatus('')
-      setCustomers(allCustomers)
-      return
-    }
-
-    try {
-      setIsSearching(true)
-      setStatus('')
-      const results = await searchCustomers(normalizedTerm)
-      setCustomers(results)
-    } catch (error) {
-      setStatus(getApiErrorMessage(error, 'Unable to search customers.'))
-    } finally {
-      setIsSearching(false)
-    }
+    setSearchTerm(term)
+    setStatus('')
   }
 
   function handleClear() {
     setSearchTerm('')
     setStatus('')
-    setCustomers(allCustomers)
   }
 
   return (
@@ -94,7 +118,6 @@ function CustomerList() {
           onChange={setSearchTerm}
           onSearch={handleSearch}
           onClear={handleClear}
-          isSearching={isSearching}
         />
 
         <div className="toolbar">
