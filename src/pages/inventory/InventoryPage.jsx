@@ -8,14 +8,25 @@ import { getRequestErrorMessage } from '../../api/axiosClient'
 
 const today = new Date().toISOString().slice(0, 10)
 
-const initialFormValues = {
-  vendorSearch: '',
-  partSearch: '',
-  purchaseQuantity: '',
-  purchaseDate: today,
-  invoiceNumber: '',
-  changedBy: 'Partivex Admin',
-  remarks: '',
+let nextStockLineKey = 1
+
+function createEmptyStockLine() {
+  return {
+    key: `stock-line-${nextStockLineKey++}`,
+    partSearch: '',
+    purchaseQuantity: '',
+  }
+}
+
+function createInitialFormValues() {
+  return {
+    vendorSearch: '',
+    purchaseDate: today,
+    invoiceNumber: '',
+    changedBy: 'Partivex Admin',
+    remarks: '',
+    lines: [createEmptyStockLine()],
+  }
 }
 
 function InventoryPage() {
@@ -25,8 +36,8 @@ function InventoryPage() {
   const [status, setStatus] = useState({ type: '', message: '' })
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
-  const [formValues, setFormValues] = useState(initialFormValues)
-  const [formErrors, setFormErrors] = useState({})
+  const [formValues, setFormValues] = useState(createInitialFormValues)
+  const [formErrors, setFormErrors] = useState({ vendorSearch: '', purchaseDate: '', lineSummary: '', lines: [] })
   const [searchTerm, setSearchTerm] = useState('')
   const [stockFilter, setStockFilter] = useState('all')
 
@@ -35,12 +46,24 @@ function InventoryPage() {
     () => vendors.find((vendor) => optionLabel(vendor.name, vendor.email) === formValues.vendorSearch),
     [formValues.vendorSearch, vendors],
   )
-  const selectedPart = useMemo(
-    () => parts.find((part) => optionLabel(part.name, part.partCode) === formValues.partSearch),
-    [formValues.partSearch, parts],
+
+  const stockLines = useMemo(
+    () =>
+      formValues.lines.map((line) => {
+        const selectedPart = parts.find((part) => optionLabel(part.name, part.partCode) === line.partSearch)
+        const purchaseQuantity = Number(line.purchaseQuantity) || 0
+        return {
+          ...line,
+          quantityValue: line.purchaseQuantity,
+          selectedPart,
+          purchaseQuantity,
+          lineTotal: selectedPart ? selectedPart.unitPrice * purchaseQuantity : 0,
+        }
+      }),
+    [formValues.lines, parts],
   )
-  const purchaseQuantity = Number(formValues.purchaseQuantity) || 0
-  const totalAmount = selectedPart ? selectedPart.unitPrice * purchaseQuantity : 0
+
+  const totalAmount = stockLines.reduce((sum, line) => sum + line.lineTotal, 0)
 
   async function loadData({ showLoading = true, nextStatus = null } = {}) {
     try {
@@ -74,16 +97,80 @@ function InventoryPage() {
     setFormErrors((current) => ({ ...current, [name]: '' }))
   }
 
+  function handleLineChange(key, field, value) {
+    setFormValues((current) => ({
+      ...current,
+      lines: current.lines.map((line) => (line.key === key ? { ...line, [field]: value } : line)),
+    }))
+
+    setFormErrors((current) => ({
+      ...current,
+      lineSummary: '',
+      lines: current.lines.map((lineErrors, index) =>
+        formValues.lines[index]?.key === key
+          ? { ...(current.lines[index] || {}), [field]: '' }
+          : lineErrors || {},
+      ),
+    }))
+  }
+
+  function addStockLine() {
+    setFormValues((current) => ({ ...current, lines: [...current.lines, createEmptyStockLine()] }))
+    setFormErrors((current) => ({ ...current, lineSummary: '', lines: [] }))
+  }
+
+  function removeStockLine(key) {
+    setFormValues((current) => {
+      if (current.lines.length === 1) return current
+      return { ...current, lines: current.lines.filter((line) => line.key !== key) }
+    })
+    setFormErrors((current) => ({ ...current, lineSummary: '', lines: [] }))
+  }
+
   function validateForm() {
-    const nextErrors = {}
-    if (!selectedVendor) nextErrors.vendorSearch = 'Select an active vendor from the list.'
-    if (!selectedPart) nextErrors.partSearch = 'Select an active part from the list.'
-    if (!Number.isInteger(purchaseQuantity) || purchaseQuantity <= 0) {
-      nextErrors.purchaseQuantity = 'Enter a purchase quantity greater than zero.'
+    const nextErrors = {
+      vendorSearch: '',
+      purchaseDate: '',
+      lineSummary: '',
+      lines: formValues.lines.map(() => ({ partSearch: '', purchaseQuantity: '' })),
     }
+
+    if (!selectedVendor) nextErrors.vendorSearch = 'Select an active vendor from the list.'
     if (!formValues.purchaseDate) nextErrors.purchaseDate = 'Purchase date is required.'
+
+    if (stockLines.length === 0) {
+      nextErrors.lineSummary = 'Add at least one stock line.'
+    }
+
+    const seenPartIds = new Map()
+    stockLines.forEach((line, index) => {
+      if (!line.selectedPart) {
+        nextErrors.lines[index].partSearch = 'Select an active part from the list.'
+        return
+      }
+
+      if (!Number.isInteger(line.purchaseQuantity) || line.purchaseQuantity <= 0) {
+        nextErrors.lines[index].purchaseQuantity = 'Enter a purchase quantity greater than zero.'
+      }
+
+      const indexes = seenPartIds.get(line.selectedPart.id) ?? []
+      indexes.push(index)
+      seenPartIds.set(line.selectedPart.id, indexes)
+    })
+
+    for (const indexes of seenPartIds.values()) {
+      if (indexes.length <= 1) continue
+      indexes.forEach((index) => {
+        nextErrors.lines[index].partSearch = 'Each part can only appear once per stock update.'
+      })
+    }
+
     setFormErrors(nextErrors)
-    return Object.keys(nextErrors).length === 0
+
+    return !nextErrors.vendorSearch &&
+      !nextErrors.purchaseDate &&
+      !nextErrors.lineSummary &&
+      nextErrors.lines.every((line) => !line.partSearch && !line.purchaseQuantity)
   }
 
   async function handleSubmit(event) {
@@ -95,19 +182,24 @@ function InventoryPage() {
       setIsSaving(true)
       await addInventoryStock({
         vendorId: selectedVendor.id,
-        partId: selectedPart.id,
-        purchaseQuantity,
         purchaseDate: new Date(formValues.purchaseDate).toISOString(),
         invoiceNumber: formValues.invoiceNumber.trim(),
         changedBy: formValues.changedBy.trim(),
         remarks: formValues.remarks.trim(),
+        lines: stockLines.map((line) => ({
+          partId: line.selectedPart.id,
+          purchaseQuantity: line.purchaseQuantity,
+        })),
       })
       await loadData({
         showLoading: false,
-        nextStatus: { type: 'success', message: 'Stock updated and purchase invoice created.' },
+        nextStatus: {
+          type: 'success',
+          message: `Stock updated and one purchase invoice created for ${stockLines.length} part${stockLines.length === 1 ? '' : 's'}.`,
+        },
       })
-      setFormValues(initialFormValues)
-      setFormErrors({})
+      setFormValues(createInitialFormValues())
+      setFormErrors({ vendorSearch: '', purchaseDate: '', lineSummary: '', lines: [] })
     } catch (error) {
       setStatus({
         type: 'error',
@@ -145,7 +237,7 @@ function InventoryPage() {
         <div className="inventory-hero-copy">
           <span className="auth-brand">Partivex</span>
           <h2>Inventory</h2>
-          <p>Update stock for existing active parts from existing active vendors.</p>
+          <p>Update stock for multiple active parts from the same active vendor in one purchase invoice.</p>
         </div>
         <div className="inventory-hero-actions">
           <Button onClick={() => loadData()} disabled={isLoading || isSaving}>
@@ -160,7 +252,7 @@ function InventoryPage() {
         <div className="section-heading">
           <div>
             <h2>Add / Update Stock</h2>
-            <p>Saving this form increases stock, creates a purchase invoice, and records stock history.</p>
+            <p>Saving this form increases stock, creates one purchase invoice with multiple parts, and records stock history for each line.</p>
           </div>
         </div>
 
@@ -174,10 +266,6 @@ function InventoryPage() {
 
           <div className="purchase-form-header-grid">
             <Input id="vendorSearch" label="Vendor" name="vendorSearch" list="vendor-options" value={formValues.vendorSearch} onChange={handleFieldChange} error={formErrors.vendorSearch} placeholder="Search active vendors..." />
-            <Input id="partSearch" label="Part" name="partSearch" list="part-options" value={formValues.partSearch} onChange={handleFieldChange} error={formErrors.partSearch} placeholder="Search active parts..." />
-            <Input id="currentStock" label="Current Stock" name="currentStock" value={selectedPart?.currentStock ?? ''} readOnly />
-            <Input id="unitPrice" label="Unit Price" name="unitPrice" value={selectedPart ? formatCurrency(selectedPart.unitPrice) : ''} readOnly />
-            <Input id="purchaseQuantity" label="Purchase Quantity" name="purchaseQuantity" type="number" min="1" step="1" value={formValues.purchaseQuantity} onChange={handleFieldChange} error={formErrors.purchaseQuantity} />
             <Input id="totalAmount" label="Total Amount" name="totalAmount" value={formatCurrency(totalAmount)} readOnly />
             <Input id="purchaseDate" label="Purchase Date" name="purchaseDate" type="date" value={formValues.purchaseDate} onChange={handleFieldChange} error={formErrors.purchaseDate} />
             <Input id="invoiceNumber" label="Invoice Number" name="invoiceNumber" value={formValues.invoiceNumber} onChange={handleFieldChange} placeholder="Auto-generated if blank" />
@@ -186,6 +274,63 @@ function InventoryPage() {
               <label htmlFor="remarks">Remarks</label>
               <textarea id="remarks" name="remarks" className="form-control inventory-textarea" value={formValues.remarks} onChange={handleFieldChange} rows="2" />
             </div>
+          </div>
+
+          <div className="purchase-lines-section">
+            <div className="section-heading inventory-line-heading">
+              <div>
+                <h3>Stock Lines</h3>
+                <p>Add each part you want to receive under the same vendor invoice.</p>
+              </div>
+              <Button type="button" variant="secondary" onClick={addStockLine} disabled={isSaving}>
+                Add Another Part
+              </Button>
+            </div>
+
+            {formErrors.lineSummary && <div className="inventory-notice is-error">{formErrors.lineSummary}</div>}
+
+            {stockLines.map((line, index) => (
+              <div className="inventory-line-card" key={line.key}>
+                <div className="inventory-line-card-header">
+                  <div className="inventory-line-card-copy">
+                    <strong>Part Line {index + 1}</strong>
+                    <span>Select one active part and quantity for this purchase line.</span>
+                  </div>
+                  {stockLines.length > 1 && (
+                    <Button type="button" variant="danger" onClick={() => removeStockLine(line.key)} disabled={isSaving}>
+                      Remove
+                    </Button>
+                  )}
+                </div>
+
+                <div className="purchase-form-header-grid">
+                  <Input
+                    id={`partSearch-${line.key}`}
+                    label="Part"
+                    name="partSearch"
+                    list="part-options"
+                    value={line.partSearch}
+                    onChange={(event) => handleLineChange(line.key, 'partSearch', event.target.value)}
+                    error={formErrors.lines[index]?.partSearch}
+                    placeholder="Search active parts..."
+                  />
+                  <Input
+                    id={`purchaseQuantity-${line.key}`}
+                    label="Purchase Quantity"
+                    name="purchaseQuantity"
+                    type="number"
+                    min="1"
+                    step="1"
+                    value={line.quantityValue}
+                    onChange={(event) => handleLineChange(line.key, 'purchaseQuantity', event.target.value)}
+                    error={formErrors.lines[index]?.purchaseQuantity}
+                  />
+                  <Input id={`currentStock-${line.key}`} label="Current Stock" name="currentStock" value={line.selectedPart?.currentStock ?? ''} readOnly />
+                  <Input id={`unitPrice-${line.key}`} label="Unit Price" name="unitPrice" value={line.selectedPart ? formatCurrency(line.selectedPart.unitPrice) : ''} readOnly />
+                  <Input id={`lineTotal-${line.key}`} label="Line Total" name="lineTotal" value={formatCurrency(line.lineTotal)} readOnly />
+                </div>
+              </div>
+            ))}
           </div>
 
           <div className="inventory-form-actions">

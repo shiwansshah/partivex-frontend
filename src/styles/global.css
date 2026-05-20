@@ -1096,6 +1096,36 @@
   gap: var(--space-3);
 }
 
+.inventory-line-heading {
+  align-items: center;
+}
+
+.inventory-line-card {
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: #f8fafc;
+}
+
+.inventory-line-card-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.inventory-line-card-copy {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.inventory-line-card-copy span {
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+}
+
 .inventory-workflow-list>div {
   padding: var(--space-4);
   border: 1px solid var(--color-border);
