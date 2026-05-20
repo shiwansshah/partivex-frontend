@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { getApiErrorMessage } from '../../api/axiosInstance'
 import PageHeader from '../../components/common/PageHeader'
@@ -18,15 +18,39 @@ function AddCustomer() {
   const location = useLocation()
   const navigate = useNavigate()
   const customersPath = buildPanelPath(location.pathname, '/customers')
+  const profileImageInputRef = useRef(null)
   const [values, setValues] = useState(initialValues)
   const [errors, setErrors] = useState({})
   const [status, setStatus] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [profileImageFile, setProfileImageFile] = useState(null)
+  const [profileImagePreview, setProfileImagePreview] = useState('')
 
   function handleChange(event) {
     const { name, value } = event.target
     setValues((current) => ({ ...current, [name]: value }))
   }
+
+  function handleImageChange(event) {
+    const file = event.target.files?.[0] || null
+
+    setProfileImageFile(file)
+    setProfileImagePreview((current) => {
+      if (current?.startsWith('blob:')) {
+        URL.revokeObjectURL(current)
+      }
+
+      return file ? URL.createObjectURL(file) : ''
+    })
+  }
+
+  useEffect(() => {
+    return () => {
+      if (profileImagePreview?.startsWith('blob:')) {
+        URL.revokeObjectURL(profileImagePreview)
+      }
+    }
+  }, [profileImagePreview])
 
   function validate() {
     const nextErrors = {}
@@ -53,6 +77,7 @@ function AddCustomer() {
         fullName: values.fullName.trim(),
         email: values.email.trim(),
         password: values.password,
+        profileImage: profileImageFile,
       })
       navigate(customersPath)
     } catch (error) {
@@ -60,6 +85,52 @@ function AddCustomer() {
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  function handleCancelImage() {
+    setProfileImageFile(null)
+    setProfileImagePreview((current) => {
+      if (current?.startsWith('blob:')) {
+        URL.revokeObjectURL(current)
+      }
+
+      return ''
+    })
+  }
+
+  function renderImageUpload() {
+    return (
+      <div className="customer-form-group">
+        <label htmlFor="profileImage">Customer profile picture</label>
+        <div className="image-upload-area">
+          {profileImagePreview && (
+            <div className="image-preview">
+              <img src={profileImagePreview} alt="Customer profile preview" />
+            </div>
+          )}
+          <input
+            ref={profileImageInputRef}
+            id="profileImage"
+            type="file"
+            accept="image/*"
+            onChange={handleImageChange}
+            hidden
+          />
+          <button
+            type="button"
+            className="image-upload-btn"
+            onClick={() => profileImageInputRef.current?.click()}
+          >
+            {profileImagePreview ? 'Re-upload Picture' : 'Upload Picture'}
+          </button>
+          {profileImageFile && (
+            <button type="button" className="btn-outline" onClick={handleCancelImage}>
+              Remove Picture
+            </button>
+          )}
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -99,6 +170,9 @@ function AddCustomer() {
             onChange={handleChange}
             error={errors.password}
           />
+
+          {renderImageUpload()}
+
           {status && <div className="form-alert">{status}</div>}
           <Button type="submit" disabled={isSubmitting}>
             {isSubmitting ? 'Creating...' : 'Create Customer'}

@@ -32,9 +32,7 @@ function toVehicleFormData(data = {}) {
 export async function createVehicle(data) {
   const payload = toVehicleFormData(data)
   const customerId = isFormData(data) ? data.get('customerId') : data.customerId
-  const response = await axiosInstance.post(`/customers/${customerId}/vehicles`, payload, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  })
+  const response = await axiosInstance.post(`/customers/${customerId}/vehicles`, payload)
   return VehicleDto(response.data)
 }
 
@@ -56,9 +54,7 @@ export async function getVehiclesByCustomer(customerId) {
 
 export async function updateVehicle(id, data) {
   const payload = toVehicleFormData(data)
-  const response = await axiosInstance.put(`/vehicles/${id}`, payload, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  })
+  const response = await axiosInstance.put(`/vehicles/${id}`, payload)
   return VehicleDto(response.data)
 }
 

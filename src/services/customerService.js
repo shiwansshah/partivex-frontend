@@ -63,7 +63,21 @@ export async function getCreditCustomersReport() {
   return normalizeCustomerCollection(response.data)
 }
 
-export async function createCustomer({ fullName, email, password }) {
+export async function createCustomer(customerData) {
+  const { fullName, email, password, profileImage } = customerData
+
+  if (profileImage instanceof File) {
+    const formData = new FormData()
+    formData.append('fullName', fullName)
+    formData.append('email', email)
+    formData.append('password', password)
+    formData.append('profileImage', profileImage)
+    formData.append('image', profileImage)
+
+    const response = await axiosInstance.post('/auth/create-customer', formData)
+    return response.data
+  }
+
   const response = await axiosInstance.post('/auth/create-customer', {
     fullName,
     email,
