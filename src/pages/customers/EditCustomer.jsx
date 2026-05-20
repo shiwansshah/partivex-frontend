@@ -48,6 +48,7 @@ function EditCustomer() {
         phone: values.phone,
         email: values.email,
         address: values.address,
+        profileImage: values.profileImage,
       })
       navigate(`${customersPath}/${id}`)
     } catch (error) {

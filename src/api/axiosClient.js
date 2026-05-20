@@ -12,9 +12,6 @@ export const apiBaseUrl = normalizeApiBaseUrl(envApiBaseUrl)
 
 const axiosClient = axios.create({
   baseURL: apiBaseUrl,
-  headers: {
-    'Content-Type': 'application/json',
-  },
 })
 
 // Attach JWT token to every request if available

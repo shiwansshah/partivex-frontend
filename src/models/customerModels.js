@@ -5,6 +5,7 @@ export function CustomerDto(data = {}) {
     email: data.email ?? '',
     phoneNumber: data.phoneNumber ?? data.phone ?? '',
     address: data.address ?? '',
+    profileImageUrl: data.profileImageUrl ?? data.imageUrl ?? null,
     vehicles: Array.isArray(data.vehicles) ? data.vehicles : [],
   }
 }

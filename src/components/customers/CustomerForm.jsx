@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Button from '../ui/Button'
 import Input from '../ui/Input'
 import { isEmail, required } from '../../utils/validator'
@@ -17,12 +17,17 @@ function CustomerForm({
   isSubmitting = false,
   serverError = '',
 }) {
+  const profileImageInputRef = useRef(null)
   const [formData, setFormData] = useState(() => ({
     ...emptyCustomer,
     ...initialValues,
     phone: initialValues.phone ?? initialValues.phoneNumber ?? '',
   }))
   const [errors, setErrors] = useState({})
+  const [profileImageFile, setProfileImageFile] = useState(null)
+  const [profileImagePreview, setProfileImagePreview] = useState(
+    initialValues.profileImageUrl ?? initialValues.imageUrl ?? '',
+  )
 
   function handleChange(event) {
     const { name, value } = event.target
@@ -32,6 +37,42 @@ function CustomerForm({
       [name]: value,
     }))
   }
+
+  function handleImageChange(event) {
+    const file = event.target.files?.[0] || null
+
+    setProfileImageFile(file)
+    setProfileImagePreview((current) => {
+      if (current?.startsWith('blob:')) {
+        URL.revokeObjectURL(current)
+      }
+
+      return file ? URL.createObjectURL(file) : (initialValues.profileImageUrl ?? initialValues.imageUrl ?? '')
+    })
+  }
+
+  function handleRemoveImage() {
+    setProfileImageFile(null)
+    setProfileImagePreview((current) => {
+      if (current?.startsWith('blob:')) {
+        URL.revokeObjectURL(current)
+      }
+
+      return ''
+    })
+
+    if (profileImageInputRef.current) {
+      profileImageInputRef.current.value = ''
+    }
+  }
+
+  useEffect(() => {
+    return () => {
+      if (profileImagePreview?.startsWith('blob:')) {
+        URL.revokeObjectURL(profileImagePreview)
+      }
+    }
+  }, [profileImagePreview])
 
   function validateForm() {
     const nextErrors = {}
@@ -65,6 +106,7 @@ function CustomerForm({
       phoneNumber: formData.phone.trim(),
       email: formData.email.trim(),
       address: formData.address.trim(),
+      profileImage: profileImageFile,
     })
   }
 
@@ -112,6 +154,42 @@ function CustomerForm({
         value={formData.address}
         onChange={handleChange}
       />
+
+      <div className="customer-form-note">
+        <span>Optional</span>
+        <p>Add or update a customer profile picture.</p>
+      </div>
+
+      <div className="customer-form-group">
+        <label htmlFor="profileImage">Customer profile picture</label>
+        <div className="image-upload-area">
+          {profileImagePreview && (
+            <div className="image-preview">
+              <img src={profileImagePreview} alt="Customer profile preview" />
+            </div>
+          )}
+          <input
+            ref={profileImageInputRef}
+            id="profileImage"
+            type="file"
+            accept="image/*"
+            onChange={handleImageChange}
+            hidden
+          />
+          <button
+            type="button"
+            className="image-upload-btn"
+            onClick={() => profileImageInputRef.current?.click()}
+          >
+            {profileImagePreview ? 'Re-upload Picture' : 'Upload Picture'}
+          </button>
+          {profileImagePreview && (
+            <button type="button" className="btn-outline" onClick={handleRemoveImage}>
+              Remove Picture
+            </button>
+          )}
+        </div>
+      </div>
 
       <div className="form-actions">
         <Button type="submit" className="customer-submit-button" disabled={isSubmitting}>

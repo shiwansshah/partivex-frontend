@@ -31,13 +31,29 @@ export async function getCustomerHistory(id) {
 }
 
 export async function updateCustomer(id, customerData) {
+  const hasProfileImage = customerData?.profileImage instanceof File
+
+  if (hasProfileImage) {
+    const formData = new FormData()
+    formData.append('fullName', customerData.fullName)
+    formData.append('phoneNumber', customerData.phoneNumber)
+    formData.append('phone', customerData.phone ?? customerData.phoneNumber ?? '')
+    formData.append('email', customerData.email ?? '')
+    formData.append('address', customerData.address ?? '')
+    formData.append('profileImage', customerData.profileImage)
+    formData.append('image', customerData.profileImage)
+
+    const response = await axiosInstance.put(`/api/customers/${id}`, formData)
+    return CustomerDto(response.data)
+  }
+
   const response = await axiosInstance.put(`/api/customers/${id}`, customerData)
   return CustomerDto(response.data)
 }
 
 export async function searchCustomers(term) {
   const response = await axiosInstance.get('/api/customers/search', {
-    params: { term },
+    params: { searchTerm: term },
   })
 
   return normalizeCustomerCollection(response.data)
