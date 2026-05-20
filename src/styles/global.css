@@ -1471,6 +1471,156 @@
   color: var(--color-text-secondary);
 }
 
+/* Financial reports */
+
+.financial-report-hero {
+  align-items: flex-start;
+}
+
+.financial-report-controls {
+  width: min(320px, 100%);
+  display: grid;
+  gap: var(--space-3);
+  flex-shrink: 0;
+}
+
+.period-toggle {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  padding: 4px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-body);
+}
+
+.period-toggle button {
+  min-height: 36px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-secondary);
+  background: transparent;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+  cursor: pointer;
+}
+
+.period-toggle button.is-active {
+  color: var(--color-body);
+  background: var(--color-primary);
+}
+
+.financial-kpi-grid,
+.financial-report-grid {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.financial-kpi-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.financial-report-grid {
+  grid-template-columns: minmax(0, 1.35fr) minmax(300px, 0.75fr);
+}
+
+.financial-kpi {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.financial-kpi strong {
+  font-size: var(--text-4xl);
+}
+
+.financial-kpi small,
+.financial-channel span,
+.financial-insight-list span,
+.financial-channel-amount span {
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+}
+
+.financial-kpi.is-profit {
+  border-color: #a7e0b4;
+  background: #edf9f0;
+}
+
+.financial-kpi.is-loss {
+  border-color: #f4b4ae;
+  background: #fff4f2;
+}
+
+.financial-channel-list,
+.financial-insight-list {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.financial-channel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-2) var(--space-4);
+  align-items: center;
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.financial-channel:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.financial-channel>div:first-child,
+.financial-channel-amount,
+.financial-insight-list>div {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.financial-channel-amount {
+  text-align: right;
+}
+
+.financial-meter {
+  grid-column: 1 / -1;
+  height: 8px;
+  overflow: hidden;
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+}
+
+.financial-meter span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--color-primary);
+}
+
+.financial-insight-list {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.financial-insight-list>div {
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: #fafbfc;
+}
+
+.financial-profit-text {
+  color: #116329;
+  font-weight: var(--weight-bold);
+}
+
+.financial-loss-text {
+  color: #b42318;
+  font-weight: var(--weight-bold);
+}
+
+.financial-ledger-table {
+  margin-top: var(--space-4);
+}
+
 @media (max-width: 900px) {
 
   .inventory-hero,
@@ -1497,6 +1647,16 @@
 
   .inventory-toolbar-field {
     min-width: 0;
+  }
+
+  .financial-kpi-grid,
+  .financial-report-grid,
+  .financial-insight-list {
+    grid-template-columns: 1fr;
+  }
+
+  .financial-report-controls {
+    width: 100%;
   }
 }
 

@@ -66,6 +66,7 @@ function AdminLayout() {
           { to: `${basePath}/parts`, label: 'Parts Management' },
           { to: `${basePath}/inventory`, label: 'Inventory Monitoring' },
           { to: `${basePath}/purchases`, label: 'Purchase Invoices' },
+          { to: `${basePath}/financial-reports`, label: 'Financial Reports' },
           { to: `${basePath}/customer-part-invoices`, label: 'Customer Part Invoices' },
           { to: `${basePath}/appointment-invoices`, label: 'Appointment Invoices' },
         ]
