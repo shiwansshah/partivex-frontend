@@ -35,7 +35,6 @@ import Reviews from '../pages/customer/Reviews'
 import CustomerPartInvoicesPage from '../pages/customer-parts/CustomerPartInvoicesPage'
 import AppointmentInvoicesPage from '../pages/appointments/AppointmentInvoicesPage'
 import PartRequestApprovals from '../pages/staff/PartRequestApprovals'
-import SalesPage from '../pages/sales/SalesPage'
 import { getHomePathForRole, hasRole, ROLES } from '../utils/roles'
 
 function RequireAuth({ children }) {
@@ -296,14 +295,6 @@ function AppRoutes() {
           element={
             <RequireStaffFeature featureKey="Vehicles">
               <VehiclesPage />
-            </RequireStaffFeature>
-          }
-        />
-        <Route
-          path="sales"
-          element={
-            <RequireStaffFeature featureKey="Sales">
-              <SalesPage />
             </RequireStaffFeature>
           }
         />

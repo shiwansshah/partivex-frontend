@@ -1,6 +1,6 @@
 import axiosClient from './axiosClient'
 
 export const getFinancialReport = ({ period, referenceDate }) =>
-  axiosClient.get('/financial-reports', {
+  axiosClient.get('/api/financial-reports', {
     params: { period, referenceDate },
   })

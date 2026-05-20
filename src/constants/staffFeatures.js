@@ -15,11 +15,6 @@ export const STAFF_FEATURES = [
     path: '/staff/customers/reports',
   },
   {
-    key: 'Sales',
-    label: 'Sales',
-    path: '/staff/sales',
-  },
-  {
     key: 'PartRequestApprovals',
     label: 'Part Request Approvals',
     path: '/staff/part-requests',
