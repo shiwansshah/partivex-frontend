@@ -47,7 +47,7 @@ function Dashboard() {
     { label: 'Staff', value: formatNumber(summary.staffCount), to: '/admin/staff' },
     { label: 'Customers', value: formatNumber(summary.customerCount), to: '/admin/customers' },
     { label: 'Vehicles', value: formatNumber(summary.vehicleCount), to: '/admin/vehicles' },
-    { label: 'Total sales', value: formatCurrency(summary.totalSales) },
+    { label: 'Recognized sales this month', value: formatCurrency(summary.totalSales) },
     { label: 'Stock quantity', value: formatNumber(summary.totalStockQuantity), to: '/admin/inventory' },
     { label: 'Low stock parts', value: formatNumber(summary.lowStockPartsCount), to: '/admin/inventory' },
   ]
@@ -86,7 +86,7 @@ function Dashboard() {
         <div className="dashboard-chart-grid">
           <article className="surface-panel dashboard-chart-panel">
             <div className="section-heading">
-              <PageHeader title="Sales Trend" subtitle="Paid invoice totals over the last 7 days." />
+              <PageHeader title="Sales Trend" subtitle="Recognized paid/completed invoice totals over the last 7 days." />
             </div>
             <LineChart data={summary.lineGraphData} />
           </article>

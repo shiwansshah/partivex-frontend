@@ -69,7 +69,7 @@ function FinancialReports() {
         <div className="purchase-hero-copy">
           <span className="auth-brand">Partivex</span>
           <h2>Financial Reports</h2>
-          <p>Admin-only purchase, sales, and profit/loss reporting from inventory purchases, part invoices, and appointment invoices.</p>
+          <p>Admin-only purchase, recognized sales, and profit/loss reporting from inventory purchases, paid part invoices, and paid appointment invoices.</p>
         </div>
         <div className="financial-report-controls" aria-label="Report filters">
           <div className="period-toggle">
@@ -128,9 +128,9 @@ function FinancialReports() {
         <>
           <section className="financial-kpi-grid">
             <div className="stat-card financial-kpi">
-              <span>Total sales</span>
+              <span>Recognized sales</span>
               <strong>{formatCurrency(summary.totalSales)}</strong>
-              <small>Parts and appointment invoices</small>
+              <small>Paid/completed parts and appointment invoices</small>
             </div>
             <div className="stat-card financial-kpi">
               <span>Total purchases</span>
@@ -154,7 +154,7 @@ function FinancialReports() {
               <div className="section-heading">
                 <div>
                   <h2>Sales Breakdown</h2>
-                  <p>Customer part sales are generated from customer purchases; appointment sales use the invoice amount entered by staff/admin.</p>
+                  <p>Customer part and appointment sales are counted after the invoice is paid or completed.</p>
                 </div>
               </div>
               <div className="financial-channel-list">
