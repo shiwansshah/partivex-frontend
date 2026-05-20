@@ -86,6 +86,7 @@ function PurchasesPage() {
               <tbody>
                 {visibleInvoices.map((invoice) => {
                   const firstItem = invoice.items[0]
+                  const partLabel = invoice.items.length > 1 ? 'Multiple parts' : firstItem?.partName || '-'
                   return (
                     <Fragment key={invoice.id}>
                       <tr className={selectedInvoice?.id === invoice.id ? 'purchase-row-active' : ''}>
@@ -96,7 +97,7 @@ function PurchasesPage() {
                         </td>
                         <td>{formatDate(invoice.invoiceDate)}</td>
                         <td>{invoice.vendorName}</td>
-                        <td>{firstItem?.partName || 'Multiple parts'}</td>
+                        <td>{partLabel}</td>
                         <td>{invoice.items.reduce((sum, item) => sum + item.quantity, 0)}</td>
                         <td>{formatCurrency(invoice.totalAmount)}</td>
                         <td><span className="status-pill is-good">{invoice.status}</span></td>
