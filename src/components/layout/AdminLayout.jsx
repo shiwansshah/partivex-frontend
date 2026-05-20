@@ -67,7 +67,7 @@ function AdminLayout() {
       const response = await updateSmtpSetting(senderEmail)
       setSenderEmail(response.data.senderEmail || '')
       setSettingsOpen(false)
-      await sweetAlert({ title: 'SMTP sender saved', message: 'Invoice emails will use the updated sender address.', icon: 'success' })
+      await sweetAlert({ title: 'SMTP sender saved', message: 'All system email sending menus will use the updated sender address.', icon: 'success' })
     } catch {
       await sweetAlert({ title: 'Settings failed', message: 'Sender email could not be saved.', icon: 'error' })
     } finally {
@@ -150,7 +150,7 @@ function AdminLayout() {
         <div className="dialog-overlay">
           <form className="dialog-card" onSubmit={submitSettings}>
             <h3>Email sender settings</h3>
-            <p>Set the sender email used for invoice emails.</p>
+            <p>Set the sender email used by invoice and reminder email actions.</p>
             <div className="form-group" style={{ marginTop: 16 }}>
               <label htmlFor="smtp-sender-email">Sender email</label>
               <input id="smtp-sender-email" className="form-control" type="email" value={senderEmail} onChange={(event) => setSenderEmail(event.target.value)} required />

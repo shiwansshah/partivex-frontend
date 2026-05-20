@@ -57,13 +57,18 @@ function PartRequestApprovals() {
 
     try {
       setIsApproving(true)
-      await approveStaffPartRequest(selectedRequest.id, {
+      const response = await approveStaffPartRequest(selectedRequest.id, {
         email,
         partId: partId ? Number(partId) : null,
       })
       setSelectedRequest(null)
       await loadData()
-      await sweetAlert({ title: 'Request approved', message: 'Invoice created and email step completed.', icon: 'success' })
+      const emailResult = response.data?.email
+      await sweetAlert({
+        title: emailResult?.emailSent === false ? 'Request approved' : 'Request approved',
+        message: emailResult?.message || 'Invoice created.',
+        icon: emailResult?.emailSent === false ? 'info' : 'success',
+      })
     } catch (err) {
       await sweetAlert({ title: 'Approval failed', message: getRequestErrorMessage(err, 'Unable to approve request.'), icon: 'error' })
     } finally {
