@@ -1,19 +1,22 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { getApiErrorMessage } from '../../api/axiosInstance'
 import PageHeader from '../../components/common/PageHeader'
+import CustomerSearchBar from '../../components/customers/CustomerSearchBar'
 import StatusMessage from '../../components/ui/StatusMessage'
-import { getCustomers } from '../../services/customerService'
+import { getCustomers, searchCustomers } from '../../services/customerService'
 import { buildPanelPath } from '../../utils/panelRoutes'
 
 function CustomerList() {
   const location = useLocation()
   const customersPath = buildPanelPath(location.pathname, '/customers')
   const vehiclesPath = buildPanelPath(location.pathname, '/vehicles')
+  const [allCustomers, setAllCustomers] = useState([])
   const [customers, setCustomers] = useState([])
-  const [searchTerm, setSearchTerm] = useState('')
   const [isLoading, setIsLoading] = useState(true)
+  const [isSearching, setIsSearching] = useState(false)
   const [status, setStatus] = useState('')
+  const [searchTerm, setSearchTerm] = useState('')
 
   useEffect(() => {
     let isCurrent = true
@@ -22,7 +25,10 @@ function CustomerList() {
       try {
         setStatus('')
         const data = await getCustomers()
-        if (isCurrent) setCustomers(data)
+        if (isCurrent) {
+          setAllCustomers(data)
+          setCustomers(data)
+        }
       } catch (error) {
         if (isCurrent) setStatus(getApiErrorMessage(error, 'Unable to load customers.'))
       } finally {
@@ -37,16 +43,33 @@ function CustomerList() {
     }
   }, [])
 
-  const filteredCustomers = useMemo(() => {
-    const term = searchTerm.trim().toLowerCase()
-    if (!term) return customers
+  async function handleSearch(term) {
+    const normalizedTerm = term.trim()
+    setSearchTerm(normalizedTerm)
 
-    return customers.filter((customer) =>
-      [customer.fullName, customer.email, customer.phoneNumber]
-        .filter(Boolean)
-        .some((value) => value.toLowerCase().includes(term)),
-    )
-  }, [customers, searchTerm])
+    if (!normalizedTerm) {
+      setStatus('')
+      setCustomers(allCustomers)
+      return
+    }
+
+    try {
+      setIsSearching(true)
+      setStatus('')
+      const results = await searchCustomers(normalizedTerm)
+      setCustomers(results)
+    } catch (error) {
+      setStatus(getApiErrorMessage(error, 'Unable to search customers.'))
+    } finally {
+      setIsSearching(false)
+    }
+  }
+
+  function handleClear() {
+    setSearchTerm('')
+    setStatus('')
+    setCustomers(allCustomers)
+  }
 
   return (
     <section className="page-stack">
@@ -56,30 +79,37 @@ function CustomerList() {
             title="Customers"
             subtitle="View registered customer accounts and open their vehicle records."
           />
-          <Link className="button" to={`${customersPath}/add`}>
-            Add Customer
-          </Link>
+          <div className="topbar-actions">
+            <Link className="button button-outline" to={`${customersPath}/reports`}>
+              Reports
+            </Link>
+            <Link className="button" to={`${customersPath}/add`}>
+              Add Customer
+            </Link>
+          </div>
         </div>
 
+        <CustomerSearchBar
+          value={searchTerm}
+          onChange={setSearchTerm}
+          onSearch={handleSearch}
+          onClear={handleClear}
+          isSearching={isSearching}
+        />
+
         <div className="toolbar">
-          <input
-            className="form-control search-input"
-            value={searchTerm}
-            onChange={(event) => setSearchTerm(event.target.value)}
-            placeholder="Search by name, email, or phone"
-            type="search"
-          />
-          <span className="metric-pill">{filteredCustomers.length} customers</span>
+          <span className="metric-pill">{customers.length} customers</span>
+          {searchTerm ? <span className="metric-pill">Filtered by: {searchTerm}</span> : null}
         </div>
 
         {isLoading && <StatusMessage message="Loading customers..." />}
         {status && <StatusMessage type="error" message={status} />}
 
-        {!isLoading && !status && filteredCustomers.length === 0 && (
+        {!isLoading && !status && customers.length === 0 && (
           <StatusMessage type="empty" message="No customers match this search." />
         )}
 
-        {!isLoading && !status && filteredCustomers.length > 0 && (
+        {!isLoading && !status && customers.length > 0 && (
           <div className="table-wrap">
             <table className="table">
               <thead>
@@ -91,7 +121,7 @@ function CustomerList() {
                 </tr>
               </thead>
               <tbody>
-                {filteredCustomers.map((customer) => (
+                {customers.map((customer) => (
                   <tr key={customer.id}>
                     <td>
                       <strong>{customer.fullName || 'Unnamed customer'}</strong>
@@ -102,6 +132,9 @@ function CustomerList() {
                       <div className="table-actions">
                         <Link className="button button-outline" to={`${customersPath}/${customer.id}`}>
                           Details
+                        </Link>
+                        <Link className="button button-outline" to={`${customersPath}/${customer.id}/edit`}>
+                          Edit
                         </Link>
                         <Link className="button button-outline" to={`${vehiclesPath}?customerId=${customer.id}`}>
                           Vehicles

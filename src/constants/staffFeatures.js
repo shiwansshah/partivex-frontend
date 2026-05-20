@@ -15,6 +15,11 @@ export const STAFF_FEATURES = [
     path: '/staff/customers/reports',
   },
   {
+    key: 'Sales',
+    label: 'Sales',
+    path: '/staff/sales',
+  },
+  {
     key: 'PartRequestApprovals',
     label: 'Part Request Approvals',
     path: '/staff/part-requests',
@@ -28,6 +33,11 @@ export const STAFF_FEATURES = [
     key: 'AppointmentInvoices',
     label: 'Appointment Invoices',
     path: '/staff/appointment-invoices',
+  },
+  {
+    key: 'Notifications',
+    label: 'Notifications',
+    path: '/staff/notifications',
   },
 ]
 

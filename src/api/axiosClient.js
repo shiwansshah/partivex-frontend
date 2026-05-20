@@ -1,12 +1,11 @@
 import axios from 'axios'
 import { getToken } from '../utils/tokenStorage'
 
-const DEFAULT_API_BASE_URL = 'http://localhost:5204/api'
+const DEFAULT_API_BASE_URL = 'http://localhost:5204'
 const envApiBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim()
 
 function normalizeApiBaseUrl(value) {
-  const normalized = (value || DEFAULT_API_BASE_URL).replace(/\/+$/, '')
-  return /\/api$/i.test(normalized) ? normalized : `${normalized}/api`
+  return (value || DEFAULT_API_BASE_URL).replace(/\/+$/, '').replace(/\/api$/i, '')
 }
 
 export const apiBaseUrl = normalizeApiBaseUrl(envApiBaseUrl)
