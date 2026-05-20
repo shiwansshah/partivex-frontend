@@ -531,6 +531,28 @@
   gap: var(--space-5);
 }
 
+.form-section {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.form-section h3 {
+  font-size: var(--text-lg);
+  margin: 0;
+}
+
+.form-check-row {
+  align-items: center;
+  display: flex;
+  gap: var(--space-3);
+  font-weight: 700;
+}
+
+.form-check-row input {
+  height: 18px;
+  width: 18px;
+}
+
 .toolbar {
   display: flex;
   align-items: center;
@@ -725,6 +747,129 @@
   font-size: var(--text-5xl);
 }
 
+.admin-dashboard {
+  align-content: start;
+}
+
+.dashboard-hero-panel {
+  overflow: hidden;
+}
+
+.dashboard-stat-grid {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.dashboard-stat-card {
+  min-height: 132px;
+  padding: var(--space-5);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: linear-gradient(180deg, #ffffff 0%, #f4f6f8 100%);
+  color: inherit;
+  text-decoration: none;
+}
+
+.dashboard-stat-card span {
+  display: block;
+  margin-bottom: var(--space-4);
+  color: var(--color-text-secondary);
+  font-size: var(--text-base);
+  font-weight: 700;
+}
+
+.dashboard-stat-card strong {
+  color: var(--color-text);
+  display: block;
+  font-size: var(--text-5xl);
+  line-height: var(--leading-tight);
+  overflow-wrap: anywhere;
+}
+
+.dashboard-chart-grid {
+  display: grid;
+  gap: var(--space-5);
+  grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+}
+
+.dashboard-chart-panel {
+  min-height: 420px;
+}
+
+.dashboard-chart-scroll {
+  overflow-x: auto;
+}
+
+.dashboard-chart {
+  display: block;
+  min-width: 520px;
+  width: 100%;
+}
+
+.dashboard-chart line {
+  stroke: var(--color-border);
+  stroke-width: 2;
+}
+
+.dashboard-chart text {
+  fill: var(--color-text-secondary);
+  font-size: 14px;
+}
+
+.dashboard-chart circle {
+  fill: var(--color-primary);
+  stroke: var(--color-body);
+  stroke-width: 3;
+}
+
+.dashboard-line-path {
+  fill: none;
+  stroke: var(--color-primary);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 4;
+}
+
+.dashboard-bars {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.dashboard-bar-row {
+  display: grid;
+  align-items: center;
+  gap: var(--space-3);
+  grid-template-columns: minmax(120px, 0.8fr) minmax(140px, 1.5fr) minmax(56px, auto);
+}
+
+.dashboard-bar-row span {
+  color: var(--color-text-secondary);
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dashboard-bar-track {
+  height: 14px;
+  overflow: hidden;
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+}
+
+.dashboard-bar-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--color-primary);
+}
+
+.dashboard-bar-row strong {
+  color: var(--color-text);
+  font-size: var(--text-base);
+  text-align: right;
+}
+
 .details-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
@@ -800,8 +945,13 @@
 @media (max-width: 900px) {
 
   .dashboard-grid,
+  .dashboard-chart-grid,
   .vehicles-grid {
     grid-template-columns: 1fr;
+  }
+
+  .dashboard-stat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -950,9 +1100,23 @@
   }
 
   .stats-grid,
+  .dashboard-stat-grid,
   .details-grid,
   .feature-status-grid {
     grid-template-columns: 1fr;
+  }
+
+  .dashboard-chart-panel {
+    min-height: auto;
+  }
+
+  .dashboard-bar-row {
+    align-items: start;
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-bar-row strong {
+    text-align: left;
   }
 
   .toolbar {

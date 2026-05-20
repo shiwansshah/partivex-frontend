@@ -4,8 +4,16 @@ import PageHeader from '../../components/common/PageHeader'
 import Button from '../../components/ui/Button'
 import Input from '../../components/ui/Input'
 import StatusMessage from '../../components/ui/StatusMessage'
+import { STAFF_FEATURES } from '../../constants/staffFeatures'
 import useAuth from '../../hooks/useAuth'
-import { createStaff, deleteStaff, getStaff, updateStaff } from '../../services/staffService'
+import {
+  createStaff,
+  deleteStaff,
+  getStaff,
+  getStaffAccess,
+  updateStaff,
+  updateStaffAccess,
+} from '../../services/staffService'
 import { hasRole, ROLES } from '../../utils/roles'
 import { isEmail, required } from '../../utils/validator'
 
@@ -23,8 +31,12 @@ function StaffPage() {
   const [editingStaff, setEditingStaff] = useState(null)
   const [errors, setErrors] = useState({})
   const [status, setStatus] = useState('')
+  const [featureStatus, setFeatureStatus] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isFeatureLoading, setIsFeatureLoading] = useState(false)
+  const [isFeatureSaving, setIsFeatureSaving] = useState(false)
+  const [selectedFeatureKeys, setSelectedFeatureKeys] = useState([])
 
   const formTitle = useMemo(
     () => (editingStaff ? 'Update staff member' : 'Add staff member'),
@@ -74,9 +86,11 @@ function StaffPage() {
     setEditingStaff(null)
     setValues(initialValues)
     setErrors({})
+    setFeatureStatus('')
+    setSelectedFeatureKeys([])
   }
 
-  function handleEdit(member) {
+  async function handleEdit(member) {
     setEditingStaff(member)
     setValues({
       fullName: member.fullName,
@@ -85,6 +99,28 @@ function StaffPage() {
     })
     setErrors({})
     setStatus('')
+    setFeatureStatus('')
+
+    if (isAdmin) {
+      await loadFeatureAccess(member.id)
+    }
+  }
+
+  async function loadFeatureAccess(staffId) {
+    try {
+      setIsFeatureLoading(true)
+      const access = await getStaffAccess(staffId)
+      setSelectedFeatureKeys(
+        access.features
+          .filter((feature) => feature.isEnabled)
+          .map((feature) => feature.featureKey),
+      )
+    } catch (error) {
+      setFeatureStatus(getApiErrorMessage(error, 'Unable to load staff feature access.'))
+      setSelectedFeatureKeys([])
+    } finally {
+      setIsFeatureLoading(false)
+    }
   }
 
   function validate() {
@@ -118,6 +154,7 @@ function StaffPage() {
           fullName: values.fullName.trim(),
           email: values.email.trim(),
           password: values.password,
+          featureKeys: selectedFeatureKeys,
         })
       }
 
@@ -137,6 +174,29 @@ function StaffPage() {
       await loadStaff()
     } catch (error) {
       setStatus(getApiErrorMessage(error, 'Unable to delete staff member.'))
+    }
+  }
+
+  function handleFeatureToggle(featureKey) {
+    setSelectedFeatureKeys((current) =>
+      current.includes(featureKey)
+        ? current.filter((key) => key !== featureKey)
+        : [...current, featureKey],
+    )
+  }
+
+  async function handleFeatureSave() {
+    if (!editingStaff) return
+
+    try {
+      setIsFeatureSaving(true)
+      setFeatureStatus('')
+      await updateStaffAccess(editingStaff.id, selectedFeatureKeys)
+      setFeatureStatus('Feature access updated successfully.')
+    } catch (error) {
+      setFeatureStatus(getApiErrorMessage(error, 'Unable to update feature access.'))
+    } finally {
+      setIsFeatureSaving(false)
     }
   }
 
@@ -176,15 +236,32 @@ function StaffPage() {
               disabled={Boolean(editingStaff)}
             />
             {!editingStaff && (
-              <Input
-                id="staffPassword"
-                label="Temporary password"
-                name="password"
-                type="password"
-                value={values.password}
-                onChange={handleChange}
-                error={errors.password}
-              />
+              <>
+                <Input
+                  id="staffPassword"
+                  label="Temporary password"
+                  name="password"
+                  type="password"
+                  value={values.password}
+                  onChange={handleChange}
+                  error={errors.password}
+                />
+
+                <div className="form-section">
+                  <h3>Feature Access</h3>
+                  {STAFF_FEATURES.map((feature) => (
+                    <label key={feature.key} className="form-check-row">
+                      <input
+                        type="checkbox"
+                        checked={selectedFeatureKeys.includes(feature.key)}
+                        onChange={() => handleFeatureToggle(feature.key)}
+                        disabled={isSubmitting}
+                      />
+                      <span>{feature.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </>
             )}
             <div className="form-actions">
               <Button type="submit" disabled={isSubmitting}>
@@ -197,6 +274,45 @@ function StaffPage() {
               )}
             </div>
           </form>
+        </div>
+      )}
+
+      {isAdmin && editingStaff && (
+        <div className="surface-panel narrow-panel">
+          <PageHeader
+            title="Feature Access"
+            subtitle={`Choose which staff modules ${editingStaff.fullName || editingStaff.email} can use.`}
+          />
+
+          {featureStatus && (
+            <StatusMessage
+              type={featureStatus.includes('successfully') ? 'success' : 'error'}
+              message={featureStatus}
+            />
+          )}
+          {isFeatureLoading && <StatusMessage message="Loading feature access..." />}
+
+          {!isFeatureLoading && (
+            <div className="managed-form">
+              {STAFF_FEATURES.map((feature) => (
+                <label key={feature.key} className="form-check-row">
+                  <input
+                    type="checkbox"
+                    checked={selectedFeatureKeys.includes(feature.key)}
+                    onChange={() => handleFeatureToggle(feature.key)}
+                    disabled={isFeatureSaving}
+                  />
+                  <span>{feature.label}</span>
+                </label>
+              ))}
+
+              <div className="form-actions">
+                <Button type="button" onClick={handleFeatureSave} disabled={isFeatureSaving}>
+                  {isFeatureSaving ? 'Saving...' : 'Save Feature Access'}
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
