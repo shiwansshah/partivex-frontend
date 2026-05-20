@@ -33,5 +33,5 @@ export const downloadMyAppointmentInvoicePdf = (id) =>
 export const getSmtpSetting = () =>
   axiosClient.get('/smtp-settings')
 
-export const updateSmtpSetting = (senderEmail) =>
-  axiosClient.put('/smtp-settings', { senderEmail })
+export const updateSmtpSetting = (settings) =>
+  axiosClient.put('/smtp-settings', settings)

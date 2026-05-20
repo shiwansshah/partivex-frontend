@@ -14,7 +14,14 @@ function AdminLayout() {
   const panelLabel = isAdmin ? 'Admin Panel' : 'Staff Panel'
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
-  const [senderEmail, setSenderEmail] = useState('')
+  const [smtpSettings, setSmtpSettings] = useState({
+    senderEmail: '',
+    host: '',
+    port: 587,
+    username: '',
+    password: '',
+    enableSsl: true,
+  })
   const [settingsSaving, setSettingsSaving] = useState(false)
 
   const navItems = [
@@ -54,22 +61,48 @@ function AdminLayout() {
     setSettingsOpen(true)
     try {
       const response = await getSmtpSetting()
-      setSenderEmail(response.data.senderEmail || '')
+      setSmtpSettings({
+        senderEmail: response.data.senderEmail || '',
+        host: response.data.host || '',
+        port: response.data.port || 587,
+        username: response.data.username || '',
+        password: '',
+        enableSsl: response.data.enableSsl ?? true,
+      })
     } catch {
-      setSenderEmail('')
+      setSmtpSettings((current) => ({ ...current, password: '' }))
     }
+  }
+
+  function handleSmtpChange(event) {
+    const { name, type, value, checked } = event.target
+    setSmtpSettings((current) => ({
+      ...current,
+      [name]: type === 'checkbox' ? checked : value,
+    }))
   }
 
   async function submitSettings(event) {
     event.preventDefault()
     try {
       setSettingsSaving(true)
-      const response = await updateSmtpSetting(senderEmail)
-      setSenderEmail(response.data.senderEmail || '')
+      const response = await updateSmtpSetting({
+        ...smtpSettings,
+        port: Number(smtpSettings.port) || 587,
+        password: smtpSettings.password.trim() || null,
+      })
+      setSmtpSettings({
+        senderEmail: response.data.senderEmail || '',
+        host: response.data.host || '',
+        port: response.data.port || 587,
+        username: response.data.username || '',
+        password: '',
+        enableSsl: response.data.enableSsl ?? true,
+      })
       setSettingsOpen(false)
-      await sweetAlert({ title: 'SMTP sender saved', message: 'All system email sending menus will use the updated sender address.', icon: 'success' })
+      await sweetAlert({ title: 'SMTP settings saved', message: 'Customer part and appointment invoice email menus will use these SMTP settings.', icon: 'success' })
     } catch {
-      await sweetAlert({ title: 'Settings failed', message: 'Sender email could not be saved.', icon: 'error' })
+      await sweetAlert({ title: 'Settings failed', message: 'SMTP settings could not be saved.', icon: 'error' })
     } finally {
       setSettingsSaving(false)
     }
@@ -149,15 +182,38 @@ function AdminLayout() {
       {settingsOpen && (
         <div className="dialog-overlay">
           <form className="dialog-card" onSubmit={submitSettings}>
-            <h3>Email sender settings</h3>
-            <p>Set the sender email used by invoice and reminder email actions.</p>
+            <h3>Email SMTP settings</h3>
+            <p>Set the real SMTP connection used by customer part and appointment invoice email actions.</p>
             <div className="form-group" style={{ marginTop: 16 }}>
               <label htmlFor="smtp-sender-email">Sender email</label>
-              <input id="smtp-sender-email" className="form-control" type="email" value={senderEmail} onChange={(event) => setSenderEmail(event.target.value)} required />
+              <input id="smtp-sender-email" name="senderEmail" className="form-control" type="email" value={smtpSettings.senderEmail} onChange={handleSmtpChange} required />
+            </div>
+            <div className="form-group">
+              <label htmlFor="smtp-host">SMTP host</label>
+              <input id="smtp-host" name="host" className="form-control" value={smtpSettings.host} onChange={handleSmtpChange} placeholder="smtp.gmail.com" required />
+            </div>
+            <div className="form-group">
+              <label htmlFor="smtp-port">Port</label>
+              <input id="smtp-port" name="port" className="form-control" type="number" min="1" max="65535" value={smtpSettings.port} onChange={handleSmtpChange} required />
+            </div>
+            <div className="form-group">
+              <label htmlFor="smtp-username">Username</label>
+              <input id="smtp-username" name="username" className="form-control" value={smtpSettings.username} onChange={handleSmtpChange} />
+            </div>
+            <div className="form-group">
+              <label htmlFor="smtp-password">Password</label>
+              <input id="smtp-password" name="password" className="form-control" type="password" value={smtpSettings.password} onChange={handleSmtpChange} placeholder="Leave blank to keep saved password" />
+            </div>
+            <label className="form-check">
+              <input name="enableSsl" type="checkbox" checked={smtpSettings.enableSsl} onChange={handleSmtpChange} />
+              <span>Use SSL/TLS</span>
+            </label>
+            <div className="inventory-notice" style={{ marginTop: 12 }}>
+              Customer part invoices, appointment invoices, and overdue reminders all use this SMTP setup.
             </div>
             <div className="dialog-actions">
               <button className="button button-secondary" type="button" onClick={() => setSettingsOpen(false)}>Cancel</button>
-              <button className="button" type="submit" disabled={settingsSaving}>{settingsSaving ? 'Saving...' : 'Save sender'}</button>
+              <button className="button" type="submit" disabled={settingsSaving}>{settingsSaving ? 'Saving...' : 'Save SMTP settings'}</button>
             </div>
           </form>
         </div>
