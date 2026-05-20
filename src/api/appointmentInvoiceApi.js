@@ -12,8 +12,8 @@ export const createAppointmentInvoice = (data) =>
 export const updateAppointmentInvoicePaymentStatus = (id, paymentStatus) =>
   axiosClient.patch(`/appointment-invoices/${id}/payment-status`, { paymentStatus })
 
-export const sendAppointmentInvoiceEmail = (id) =>
-  axiosClient.post(`/appointment-invoices/${id}/email`)
+export const sendAppointmentInvoiceEmail = (id, email) =>
+  axiosClient.post(`/appointment-invoices/${id}/email`, { email })
 
 export const sendOverdueAppointmentInvoiceReminders = () =>
   axiosClient.post('/appointment-invoices/overdue-reminders')

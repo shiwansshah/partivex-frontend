@@ -18,10 +18,13 @@ function AppointmentInvoicesPage() {
   const [invoices, setInvoices] = useState([])
   const [searchTerm, setSearchTerm] = useState('')
   const [invoiceTarget, setInvoiceTarget] = useState(null)
+  const [emailTarget, setEmailTarget] = useState(null)
+  const [email, setEmail] = useState('')
   const [values, setValues] = useState(emptyInvoice)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [isSaving, setIsSaving] = useState(false)
+  const [isSending, setIsSending] = useState(false)
 
   async function loadData() {
     const [appointmentsResponse, invoicesResponse] = await Promise.all([
@@ -94,12 +97,25 @@ function AppointmentInvoicesPage() {
     }
   }
 
-  async function emailInvoice(invoice) {
+  function openEmailModal(invoice) {
+    setEmailTarget(invoice)
+    setEmail(invoice.customerEmail || '')
+  }
+
+  async function submitEmail(event) {
+    event.preventDefault()
+    if (!emailTarget) return
+
     try {
-      const response = await sendAppointmentInvoiceEmail(invoice.id)
+      setIsSending(true)
+      const response = await sendAppointmentInvoiceEmail(emailTarget.id, email)
+      setEmailTarget(null)
+      setEmail('')
       await sweetAlert({ title: response.data.emailSent ? 'Email sent' : 'Invoice ready', message: response.data.message, icon: response.data.emailSent ? 'success' : 'info' })
     } catch (err) {
       await sweetAlert({ title: 'Email failed', message: getRequestErrorMessage(err, 'Could not send appointment invoice email.'), icon: 'error' })
+    } finally {
+      setIsSending(false)
     }
   }
 
@@ -191,7 +207,7 @@ function AppointmentInvoicesPage() {
                   <td>
                     <div className="table-actions">
                       <button className="button button-outline" type="button" onClick={() => updatePayment(invoice, invoice.paymentStatus === 'Paid' ? 'Pending' : 'Paid')}>{invoice.paymentStatus === 'Paid' ? 'Mark pending' : 'Mark paid'}</button>
-                      <button className="button button-outline" type="button" onClick={() => emailInvoice(invoice)}>Email</button>
+                      <button className="button button-outline" type="button" onClick={() => openEmailModal(invoice)}>Email</button>
                       <button className="button button-outline" type="button" onClick={() => downloadInvoice(invoice)}>PDF</button>
                     </div>
                   </td>
@@ -226,6 +242,23 @@ function AppointmentInvoicesPage() {
             <div className="dialog-actions">
               <button className="button button-secondary" type="button" onClick={() => setInvoiceTarget(null)}>Cancel</button>
               <button className="button" type="submit" disabled={isSaving}>{isSaving ? 'Creating...' : 'Create invoice'}</button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {emailTarget && (
+        <div className="dialog-overlay">
+          <form className="dialog-card" onSubmit={submitEmail}>
+            <h3>Send appointment invoice</h3>
+            <p>Send {emailTarget.invoiceNumber} with the invoice PDF attached.</p>
+            <div className="form-group" style={{ marginTop: 16 }}>
+              <label htmlFor="appointment-invoice-email">Receiver email</label>
+              <input id="appointment-invoice-email" className="form-control" type="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
+            </div>
+            <div className="dialog-actions">
+              <button className="button button-secondary" type="button" onClick={() => setEmailTarget(null)}>Cancel</button>
+              <button className="button" type="submit" disabled={isSending}>{isSending ? 'Sending...' : 'Send invoice'}</button>
             </div>
           </form>
         </div>
